@@ -4,8 +4,10 @@
 #include <wrl.h>
 #include <d3d12.h>
 #include<string>
-
 #include "PSOMnager.h"
+
+class Camera2D;
+
 class Sprite
 {
 public:
@@ -30,7 +32,7 @@ public:
     };
 
     void Initialize( std::string textureFilePath);
-    void Update();
+    void Update(const Camera2D* camera=nullptr);
     void Draw();
 
     const Vector2& GetPosition() const {

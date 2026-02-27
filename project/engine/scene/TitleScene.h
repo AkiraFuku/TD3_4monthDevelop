@@ -7,6 +7,7 @@
 #include "ParicleEmitter.h"
 #include "Audio.h"
 #include "TextureManager.h"
+#include "Camera2D.h"
 
 #include "Scene.h"
 #include <memory>
@@ -19,7 +20,9 @@ public:
     void Draw()override;
 private:
     std::unique_ptr<Camera> camera;
+    std::unique_ptr<Camera2D> camera2d;
     std::unique_ptr<Sprite> sprite;
+
 
 
      uint32_t handle_=0;

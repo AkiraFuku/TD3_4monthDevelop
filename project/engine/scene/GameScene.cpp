@@ -18,7 +18,7 @@ void GameScene::Initialize() {
     handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
     Audio::GetInstance()->PlayAudio(handle_, true);
-    LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
+    LightManager::GetInstance()->AddDirectionalLight(); // メインライト
 
 
         TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
@@ -154,9 +154,9 @@ void GameScene::Update() {
             float normalizedX = x / 32767.0f;
             float normalizedY = y / 32767.0f;
 
-            Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-            point = Add(point, Vector3{ normalizedX / 60.0f,normalizedY / 60.0f,0.0f });
-            LightManager::GetInstance()->SetSpotLightDirection(0, point);
+          ////  Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
+          //  point = Add(point, Vector3{ normalizedX / 60.0f,normalizedY / 60.0f,0.0f });
+          //  LightManager::GetInstance()->SetSpotLightDirection(0, point);
 
         }
     }
@@ -271,5 +271,5 @@ void GameScene::Draw() {
     object3d->Draw();
     // ParticleManager::GetInstance()->Draw();
      ///////スプライトの描画
-    //sprite->Draw();
+    sprite->Draw();
 }

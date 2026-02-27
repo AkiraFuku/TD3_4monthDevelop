@@ -12,6 +12,11 @@ void TitleScene::Initialize() {
     camera = std::make_unique<Camera>();
     camera->SetRotate({ 0.0f,0.0f,0.0f });
     camera->SetTranslate({ 0.0f,0.0f,-5.0f });
+
+    camera2d=std::make_unique<Camera2D>();
+    
+
+
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
@@ -97,9 +102,9 @@ void TitleScene::Update() {
 
     if (Input::GetInstance()->GetMouseMove().z)
     {
-        Vector3 camreaTranslate = camera->GetTranslate();
-        camreaTranslate = Add(camreaTranslate, Vector3{ 0.0f,0.0f,static_cast<float>(Input::GetInstance()->GetMouseMove().z) * 0.1f });
-        camera->SetTranslate(camreaTranslate);
+        Vector3 cameraTranslate = camera->GetTranslate();
+        cameraTranslate = Add(cameraTranslate, Vector3{ 0.0f,0.0f,static_cast<float>(Input::GetInstance()->GetMouseMove().z) * 0.1f });
+        camera->SetTranslate(cameraTranslate);
 
     }
     if (Input::GetInstance()->GetJoyStick(0, state))
@@ -117,7 +122,7 @@ void TitleScene::Update() {
     }
 
     camera->Update();
-
+    camera2d->Update();
 
 #ifdef USE_IMGUI
     ImGui::Begin("Debug");
@@ -127,12 +132,17 @@ void TitleScene::Update() {
         sprite->GetPosition();
     ImGui::SliderFloat2("Position", &(Position.x), 0.1f, 1000.0f);
     sprite->SetPosition(Position);
+    ImGui::Text("2DCamera");
+    Vector2 cPosition =
+        camera2d->GetPosition();
+    ImGui::SliderFloat2("cameraPosition", &(cPosition.x), 0.1f, 1000.0f);
+    camera2d->SetPosition(cPosition);
 
     ImGui::End();
 #endif // USE_IMGUI
 
     //sprite->SetRotation(sprite->GetRotation() + 0.1f);
-    sprite->Update();
+    sprite->Update(camera2d.get());
 }
 void TitleScene::Draw() {
 

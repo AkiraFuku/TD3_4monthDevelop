@@ -86,7 +86,7 @@ void LightManager::SetSpotLight(size_t index, const Vector4& color, const Vector
 }
 
 
-void LightManager::AddDirectionalLight(const Vector4& color, const Vector3& direction, float intensity) {
+void LightManager::AddDirectionalLight(const Vector4& color, const Vector3& direction, float intensity ) {
 
     DirectionalLightData light;
     light.color = color;

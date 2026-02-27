@@ -53,7 +53,7 @@ public: // メンバ関数
     };
 
     // ライト追加関数
-    void AddDirectionalLight(const Vector4& color, const Vector3& direction, float intensity);
+    void AddDirectionalLight(const Vector4& color={ 1,1,1,1 }, const Vector3& direction= { 0,-1,0 }, float intensity=1.0f);
     void AddPointLight(const Vector4& color, const Vector3& position, float intensity, float radius, float decay);
     void AddSpotLight(const Vector4& color, const Vector3& position, float intensity, const Vector3& direction, float distance, float decay, float cosAngle, float cosFalloffStart);
 

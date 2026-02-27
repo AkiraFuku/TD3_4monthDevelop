@@ -3,6 +3,7 @@
 #include "MathFunction.h"
 #include "TextureManager.h"
 #include "DXCommon.h"
+#include "Camera2D.h"
 
 void Sprite::Initialize(std::string textureFilePath) {
 
@@ -52,7 +53,7 @@ void Sprite::Initialize(std::string textureFilePath) {
 
     AdjustTextureSize();
 }
-void Sprite::Update() {
+void Sprite::Update(const Camera2D* camera) {
 
     float Left = 0.0f - anchorPoint_.x;
     float right = 1.0f - anchorPoint_.x;
@@ -106,12 +107,27 @@ void Sprite::Update() {
 
     Transform transform{ {size_.x,size_.y,1.0f},{0.0f,0.0f,rotation_},{position_.x,position_.y,0.0f} };
 
-    Matrix4x4 worldMatrix = MakeAfineMatrix(transform.scale, transform.rotate, transform.translate);
-    Matrix4x4 viewMatrix = Makeidetity4x4();
-    Matrix4x4 projectionMatrix = MakeOrthographicMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kClientWidth), static_cast<float>(WinApp::kClientHeight), 0.0f, 100.0f);
-    //スプライトのワールド行列とビュー行列とプロジェクション行列を掛け算
-    Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-    transformationMatrixData_->WVP = worldViewProjectionMatrix;
+  Matrix4x4 worldMatrix = MakeAfineMatrix(transform.scale, transform.rotate, transform.translate);
+    
+    Matrix4x4 vpMatrix;
+
+    if (camera) {
+        // カメラが存在する場合、その行列を使用
+        vpMatrix = camera->GetViewProjectionMatrix();
+    } else {
+        // カメラがない場合、現在のソースコードにある標準の平行投影行列を使用
+        // ビュー行列は単位行列（Identity）として扱う
+        Matrix4x4 viewMatrix = Makeidetity4x4();
+        Matrix4x4 projectionMatrix = MakeOrthographicMatrix(
+            0.0f, 0.0f, 
+            static_cast<float>(WinApp::kClientWidth), 
+            static_cast<float>(WinApp::kClientHeight), 
+            0.0f, 100.0f
+        );
+        vpMatrix = Multiply(viewMatrix, projectionMatrix);
+    }
+
+    transformationMatrixData_->WVP = Multiply(worldMatrix, vpMatrix);;
     transformationMatrixData_->World = worldMatrix;
 
 
