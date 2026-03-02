@@ -58,6 +58,7 @@ public:
 
     void Draw();
 
+
     ModelData GetModelData(){return modelData_;}
     //マテリアルの読み込み
     static MaterialData LoadMaterialTemplateFile(const std::string& directryPath, const std::string& filename);
@@ -72,6 +73,8 @@ private:
 
 
     ModelData modelData_;
+
+    std::string name_="name";
 
     //頂点リソース
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;

@@ -13,7 +13,7 @@
 void Model::Initialize(const std::string& directryPath, const std::string& filename)
 {
 
-
+    name_ = filename;
     modelData_ = LoadModelFile(directryPath, filename);
     if (modelData_.material.textureFilePath.empty()) {
         modelData_.material.textureFilePath = "resources/uvChecker.png"; // 確実に存在する画像を指定
@@ -37,7 +37,7 @@ void Model::Initialize(const std::string& directryPath, const std::string& filen
 void Model::Update()
 {
 #ifdef USE_IMGUI
-    ImGui::Begin("Settings");
+    ImGui::Begin((std::string("Settings: ") + name_).c_str());
             int* pEnableLighting = reinterpret_cast<int*>(&materialData_->enableLighting);
             ImGui::Checkbox("Enable Lighting", (bool*)pEnableLighting);
             if (materialData_->enableLighting) {
