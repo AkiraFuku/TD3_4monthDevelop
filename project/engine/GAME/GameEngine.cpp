@@ -13,6 +13,7 @@ void GameEngine::Initialize() {
 
    
    SceneManager::GetInstance()->ChangeScene("TitleScene");
+   SceneManager::GetInstance()->ChangeScene("GameScene");
 
 #ifdef _DEBUG
 

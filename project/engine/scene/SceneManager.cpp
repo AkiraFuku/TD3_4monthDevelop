@@ -25,21 +25,7 @@ SceneManager::~SceneManager()
 
 void SceneManager::Update() {
     // シーン切り替え処理
-    if (nextScene_) {
 
-        if (scene_)
-        {
-            scene_->Finalize();
-            scene_ = nullptr;
-
-        }
-        scene_ = std::move(nextScene_);
-       
-
-        scene_->SetSceneManager(this);
-        scene_->Initialize();
-
-    }
 
     if (scene_) {
         scene_->Update();
@@ -57,4 +43,20 @@ void SceneManager::ChangeScene(const std::string& sceneName)
     assert(sceneFactory_);
     assert(nextScene_ == nullptr);
     nextScene_ = sceneFactory_->CreateScene(sceneName);
+
+    if (nextScene_) {
+
+        if (scene_)
+        {
+            scene_->Finalize();
+            scene_ = nullptr;
+
+        }
+
+        scene_ = std::move(nextScene_);
+
+        scene_->SetSceneManager(this);
+        scene_->Initialize();
+
+    }
 }
