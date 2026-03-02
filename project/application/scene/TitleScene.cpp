@@ -117,6 +117,15 @@ void TitleScene::Update() {
     }
 
     camera->Update();
+    if (isDebugCamera_)
+    {
+        debugCamera_.Update(camera->GetTransform());
+        camera->SetViewMatrix(debugCamera_.GetViewMatrix());
+    } else
+    {
+        camera->UpdateView();
+    }
+    camera->UpdateViewProjection();
 
 
 #ifdef USE_IMGUI

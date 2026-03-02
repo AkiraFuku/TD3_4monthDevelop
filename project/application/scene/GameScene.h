@@ -9,6 +9,10 @@
 #include "TextureManager.h"
 #include "Scene.h"
 #include <memory>
+#include "Player.h"
+#include "Terrain.h"
+#include "DebugCamera.h"
+
 class GameScene :public Scene
 {
 public:
@@ -23,5 +27,12 @@ private:
     std::unique_ptr<Object3d> object3d;
     std::unique_ptr<ParicleEmitter> emitter;
   uint32_t handle_=0;
+
+  DebugCamera debugCamera_;
+  bool isDebugCamera_ = false;
+
+  Player* player_;
+  Terrain* terrain_;
+
 };
 
