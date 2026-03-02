@@ -33,12 +33,6 @@
     <Filter Include="engine\base">
       <UniqueIdentifier>{db6c1153-66bc-4c64-8848-d9474d9029ec}</UniqueIdentifier>
     </Filter>
-    <Filter Include="engine\scene">
-      <UniqueIdentifier>{d0b0505b-1c36-4229-bd35-512f3496fd14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="engine\App">
-      <UniqueIdentifier>{aac9a291-1ec1-419d-a78b-4b6475066212}</UniqueIdentifier>
-    </Filter>
     <Filter Include="engine\io">
       <UniqueIdentifier>{7cf8d20a-921e-4b99-b150-b77089f72e52}</UniqueIdentifier>
     </Filter>
@@ -63,6 +57,12 @@
     </Filter>
     <Filter Include="シェーダー ファイル\sprite">
       <UniqueIdentifier>{59a31dd0-920a-45c1-997f-36c5996bd533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="engine\scene">
+      <UniqueIdentifier>{d0b0505b-1c36-4229-bd35-512f3496fd14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="engine\App">
+      <UniqueIdentifier>{aac9a291-1ec1-419d-a78b-4b6475066212}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +185,9 @@
     </ClCompile>
     <ClCompile Include="LightManager.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="application\object\Player.cpp">
+      <Filter>engine\App</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -312,6 +315,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="LightManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="application\object\Player.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

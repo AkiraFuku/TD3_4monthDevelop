@@ -9,6 +9,9 @@
 #include "TextureManager.h"
 #include "Scene.h"
 #include <memory>
+
+#include "Player.h"
+
 class GameScene :public Scene
 {
 public:
@@ -16,6 +19,7 @@ public:
     void Finalize()override;
     void Update()override;
     void Draw()override;
+
 private:
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Sprite> sprite;
@@ -23,5 +27,8 @@ private:
     std::unique_ptr<Object3d> object3d;
     std::unique_ptr<ParicleEmitter> emitter;
   uint32_t handle_=0;
+
+  Player* player_;
+
 };
 

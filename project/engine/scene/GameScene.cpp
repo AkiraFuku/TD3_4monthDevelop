@@ -65,6 +65,9 @@ void GameScene::Initialize() {
     camera->SetTranslate({ 0.0f,0.0f,-10.0f });
     Transform M = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
     emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
+
+
+    player_->Initialize();
 }
 void GameScene::Finalize() {
 
@@ -72,6 +75,8 @@ void GameScene::Finalize() {
     LightManager::GetInstance()->ClearLights();
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
+
+    player_->Finalize();
 }
 void GameScene::Update() {
     emitter->Update();
@@ -109,6 +114,12 @@ void GameScene::Update() {
     }
     if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
     {
+
+    }
+
+    if (Input::GetInstance()->TriggerKeyUp(DIK_RETURN)) {
+
+        GetSceneManager()->ChangeScene("TitleScene");
 
     }
 
@@ -269,15 +280,27 @@ void GameScene::Update() {
     sprite->SetPosition(Position);
 
     ImGui::End();
+
+
+    ImGui::Begin("Player Window");
+
+    
+
+    ImGui::End();
 #endif // USE_IMGUI
 
     //sprite->SetRotation(sprite->GetRotation() + 0.1f);
     sprite->Update();
+
+    player_->Update();
 }
+
 void GameScene::Draw() {
     object3d2->Draw();
     object3d->Draw();
     // ParticleManager::GetInstance()->Draw();
      ///////スプライトの描画
     //sprite->Draw();
+
+    player_->Draw();
 }

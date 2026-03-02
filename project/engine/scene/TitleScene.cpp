@@ -93,6 +93,12 @@ void TitleScene::Update() {
 
     }
 
+    if (Input::GetInstance()->TriggerKeyUp(DIK_RETURN)) {
+
+        GetSceneManager()->ChangeScene("GameScene");
+
+    }
+
     //マウスホイールの入力取得
 
     if (Input::GetInstance()->GetMouseMove().z)
