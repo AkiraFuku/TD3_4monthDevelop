@@ -64,6 +64,9 @@
     <Filter Include="シェーダー ファイル\sprite">
       <UniqueIdentifier>{59a31dd0-920a-45c1-997f-36c5996bd533}</UniqueIdentifier>
     </Filter>
+    <Filter Include="scene">
+      <UniqueIdentifier>{af45ce30-5cdb-4203-af12-7c7f3994d932}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -165,26 +168,26 @@
     <ClCompile Include="engine\GAME\GameEngine.cpp">
       <Filter>engine\GAME</Filter>
     </ClCompile>
-    <ClCompile Include="engine\scene\GameScene.cpp">
-      <Filter>engine\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\scene\TitleScene.cpp">
-      <Filter>engine\scene</Filter>
-    </ClCompile>
     <ClCompile Include="engine\scene\Scene.cpp">
       <Filter>engine\scene</Filter>
     </ClCompile>
     <ClCompile Include="engine\scene\SceneManager.cpp">
       <Filter>engine\scene</Filter>
     </ClCompile>
-    <ClCompile Include="engine\scene\SceneFactory.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="engine\base\PSOMnager.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>engine\base</Filter>
     </ClCompile>
-    <ClCompile Include="LightManager.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="engine\scene\SceneFactory.cpp">
+      <Filter>engine\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\Tool\LightManager.cpp">
+      <Filter>engine\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\TitleScene.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\GameScene.cpp">
+      <Filter>scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -290,29 +293,29 @@
     <ClInclude Include="engine\GAME\Framework.h">
       <Filter>engine\GAME</Filter>
     </ClInclude>
-    <ClInclude Include="engine\scene\GameScene.h">
-      <Filter>engine\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\scene\TitleScene.h">
-      <Filter>engine\scene</Filter>
-    </ClInclude>
     <ClInclude Include="engine\scene\Scene.h">
       <Filter>engine\scene</Filter>
     </ClInclude>
     <ClInclude Include="engine\scene\SceneManager.h">
       <Filter>engine\scene</Filter>
     </ClInclude>
-    <ClInclude Include="engine\Tool\AbstractSceneFactory.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="engine\base\PSOMnager.h">
+      <Filter>engine\base</Filter>
     </ClInclude>
     <ClInclude Include="engine\scene\SceneFactory.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>engine\scene</Filter>
     </ClInclude>
-    <ClInclude Include="engine\base\PSOMnager.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="engine\scene\AbstractSceneFactory.h">
+      <Filter>engine\scene</Filter>
     </ClInclude>
-    <ClInclude Include="LightManager.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="engine\Tool\LightManager.h">
+      <Filter>engine\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\TitleScene.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\GameScene.h">
+      <Filter>scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

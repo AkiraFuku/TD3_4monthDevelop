@@ -3,7 +3,6 @@
 #include <Model.h>
 #include <memory>
 #include "DXCommon.h"
-class ModelCommon;
 class ModelManager
 {
 public:
@@ -18,7 +17,7 @@ public:
     friend struct std::default_delete<ModelManager>;
     void CreateSphereModel(const std::string& modelName, uint32_t subdivision = 16);
 private:
-    std::unique_ptr<ModelCommon> modelCommon_;
+   // std::unique_ptr<ModelCommon> modelCommon_;
 
     ModelManager() = default;
     ~ModelManager() = default;
