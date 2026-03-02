@@ -10,6 +10,10 @@
 
 #include "Scene.h"
 #include <memory>
+
+#include "DebugCamera.h"
+
+
 class TitleScene :public Scene
 {
 public:
@@ -21,6 +25,8 @@ private:
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Sprite> sprite;
 
+    DebugCamera debugCamera_;
+    bool isDebugCamera_ = false;
 
      uint32_t handle_=0;
 };
