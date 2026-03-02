@@ -183,10 +183,10 @@
     <ClCompile Include="engine\Tool\LightManager.cpp">
       <Filter>engine\Tool</Filter>
     </ClCompile>
-    <ClCompile Include="Scene\TitleScene.cpp">
+    <ClCompile Include="application\scene\TitleScene.cpp">
       <Filter>scene</Filter>
     </ClCompile>
-    <ClCompile Include="Scene\GameScene.cpp">
+    <ClCompile Include="application\scene\GameScene.cpp">
       <Filter>scene</Filter>
     </ClCompile>
   </ItemGroup>
@@ -311,10 +311,10 @@
     <ClInclude Include="engine\Tool\LightManager.h">
       <Filter>engine\Tool</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\TitleScene.h">
+    <ClInclude Include="application\scene\TitleScene.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\GameScene.h">
+    <ClInclude Include="application\scene\GameScene.h">
       <Filter>scene</Filter>
     </ClInclude>
   </ItemGroup>
