@@ -15,6 +15,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="application\DebugCamera.cpp" />
+    <ClCompile Include="application\DebugCameraFunction.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
     <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
@@ -59,8 +61,11 @@
     <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
     <ClCompile Include="application\object\Player.cpp" />
+    <ClCompile Include="application\object\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="application\DebugCamera.h" />
+    <ClInclude Include="application\DebugCameraFunction.h" />
     <ClInclude Include="engine\Tool\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />
@@ -104,6 +109,7 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="application\object\Player.h" />
+    <ClInclude Include="application\object\Terrain.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
@@ -225,7 +231,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)application\object;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)application\object;$(ProjectDir)application\terrain;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -253,7 +259,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)application\object;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)application\object;$(ProjectDir)application\terrain;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -284,7 +290,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)application\object;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)application\object;$(ProjectDir)application\terrain;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

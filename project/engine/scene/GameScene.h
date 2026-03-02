@@ -11,6 +11,8 @@
 #include <memory>
 
 #include "Player.h"
+#include "Terrain.h"
+#include "application/DebugCamera.h"
 
 class GameScene :public Scene
 {
@@ -28,7 +30,11 @@ private:
     std::unique_ptr<ParicleEmitter> emitter;
   uint32_t handle_=0;
 
+  DebugCamera debugCamera_;
+  bool isDebugCamera_ = false;
+
   Player* player_;
+  Terrain* terrain_;
 
 };
 

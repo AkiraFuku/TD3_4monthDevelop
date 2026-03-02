@@ -1,24 +1,24 @@
-#include "Player.h"
+#include "Terrain.h"
 #include "ModelManager.h"
 #include "imgui.h"
 
-void Player::Initialize()
+void Terrain::Initialize()
 {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("player/player.obj");
-    object_->SetModel("player/player.obj");
+    ModelManager::GetInstance()->LoadModel("terrain/terrain.obj");
+    object_->SetModel("terrain/terrain.obj");
 }
 
-void Player::Finalize()
+void Terrain::Finalize()
 {
-    
+
 }
 
-void Player::Update()
+void Terrain::Update()
 {
-    ImGui::Begin("Player Window");
+    ImGui::Begin("Terrain Window");
 
     Vector3 scale = object_->GetScale();
     if (ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.1f, 10.0f))
@@ -44,7 +44,7 @@ void Player::Update()
     object_->Update();
 }
 
-void Player::Draw()
+void Terrain::Draw()
 {
     object_->Draw();
 }

@@ -73,31 +73,7 @@ void TitleScene::Update() {
 
     // Aボタンを押していたら
 
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
-
-
-
-        // Aボタンを押したときの処理
-
-        if (Audio::GetInstance()->IsPlaying(handle_))
-        {
-            
-            Audio::GetInstance()->StopAudio(handle_);
-        }
-
-        GetSceneManager()->ChangeScene("GameScene");
-
-    }
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
-    {
-
-    }
-
-    if (Input::GetInstance()->TriggerKeyUp(DIK_RETURN)) {
-
-        GetSceneManager()->ChangeScene("GameScene");
-
-    }
+    
 
     //マウスホイールの入力取得
 
@@ -123,6 +99,15 @@ void TitleScene::Update() {
     }
 
     camera->Update();
+    if (isDebugCamera_)
+    {
+        debugCamera_.Update(camera->GetTransform());
+        camera->SetViewMatrix(debugCamera_.GetViewMatrix());
+    } else
+    {
+        camera->UpdateView();
+    }
+    camera->UpdateViewProjection();
 
 
 #ifdef USE_IMGUI
@@ -139,6 +124,32 @@ void TitleScene::Update() {
 
     //sprite->SetRotation(sprite->GetRotation() + 0.1f);
     sprite->Update();
+
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+
+
+
+        // Aボタンを押したときの処理
+
+        if (Audio::GetInstance()->IsPlaying(handle_))
+        {
+
+            Audio::GetInstance()->StopAudio(handle_);
+        }
+
+        GetSceneManager()->ChangeScene("GameScene");
+
+    }
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
+    {
+
+    }
+
+    if (Input::GetInstance()->TriggerKeyUp(DIK_RETURN)) {
+
+        GetSceneManager()->ChangeScene("GameScene");
+
+    }
 }
 void TitleScene::Draw() {
 

@@ -63,11 +63,16 @@ void GameScene::Initialize() {
     object3d->SetModel("MySphere");
 
     camera->SetTranslate({ 0.0f,0.0f,-10.0f });
+    camera->SetFarCrip(1000.0f);
     Transform M = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
     emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
 
-
+    player_ = new Player(); 
     player_->Initialize();
+
+    terrain_ = new Terrain();
+    terrain_->Initialize();
+
 }
 void GameScene::Finalize() {
 
@@ -77,6 +82,10 @@ void GameScene::Finalize() {
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
     player_->Finalize();
+    delete player_;
+
+    terrain_->Finalize();
+    delete terrain_;
 }
 void GameScene::Update() {
     emitter->Update();
@@ -91,37 +100,7 @@ void GameScene::Update() {
 
 
 
-    // Aボタンを押していたら
-
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
-
-
-
-
-        // Aボタンを押したときの処理
-
-        if (Audio::GetInstance()->IsPlaying(handle_))
-        {
-
-            Audio::GetInstance()->StopAudio(handle_);
-        }
-
-
-
-        GetSceneManager()->ChangeScene("TitleScene");
-
-
-    }
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
-    {
-
-    }
-
-    if (Input::GetInstance()->TriggerKeyUp(DIK_RETURN)) {
-
-        GetSceneManager()->ChangeScene("TitleScene");
-
-    }
+   
 
     //マウスホイールの入力取得
 
@@ -181,6 +160,17 @@ void GameScene::Update() {
     }
 
     camera->Update();
+    if (isDebugCamera_)
+    {
+        debugCamera_.Update(camera->GetTransform());
+        camera->SetViewMatrix(debugCamera_.GetViewMatrix());
+    }
+    else
+    {
+        camera->UpdateView();
+    }
+    camera->UpdateViewProjection();
+
     object3d->Update();
     object3d2->Update();
 
@@ -281,26 +271,61 @@ void GameScene::Update() {
 
     ImGui::End();
 
-
-    ImGui::Begin("Player Window");
-
-    
-
+    ImGui::Begin("DebugCamera Setting");
+    ImGui::Checkbox("DebugCamera", &isDebugCamera_);
     ImGui::End();
+   
 #endif // USE_IMGUI
 
     //sprite->SetRotation(sprite->GetRotation() + 0.1f);
     sprite->Update();
 
     player_->Update();
+
+    terrain_->Update();
+
+
+    // Aボタンを押していたら
+
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+
+
+
+
+        // Aボタンを押したときの処理
+
+        if (Audio::GetInstance()->IsPlaying(handle_))
+        {
+
+            Audio::GetInstance()->StopAudio(handle_);
+        }
+
+
+
+        GetSceneManager()->ChangeScene("TitleScene");
+
+
+    }
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
+    {
+
+    }
+
+    if (Input::GetInstance()->TriggerKeyUp(DIK_RETURN)) {
+
+        GetSceneManager()->ChangeScene("TitleScene");
+
+    }
 }
 
 void GameScene::Draw() {
-    object3d2->Draw();
-    object3d->Draw();
+    // object3d2->Draw();
+    // object3d->Draw();
     // ParticleManager::GetInstance()->Draw();
      ///////スプライトの描画
     //sprite->Draw();
 
     player_->Draw();
+
+    terrain_->Draw();
 }

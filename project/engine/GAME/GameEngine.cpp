@@ -13,7 +13,6 @@ void GameEngine::Initialize() {
 
    
    SceneManager::GetInstance()->ChangeScene("TitleScene");
-   SceneManager::GetInstance()->ChangeScene("GameScene");
 
 #ifdef _DEBUG
 
@@ -22,11 +21,13 @@ void GameEngine::Initialize() {
 #endif
 
 };
+
 void GameEngine::Finalize() {  
     SceneManager::GetInstance()->Finalize();
    
     Framework::Finalize();
 };
+
 void GameEngine::Update() {
     Framework::Update();
    
@@ -34,6 +35,7 @@ void GameEngine::Update() {
     ParticleManager::GetInstance()->Update();
  
 };
+
 void GameEngine::Draw() {
 
    
