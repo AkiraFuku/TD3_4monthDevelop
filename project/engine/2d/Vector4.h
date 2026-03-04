@@ -15,11 +15,6 @@ struct Matrix3x3{
    float m[3][3];
 };
 
-struct Vector3{
-    float x;
-    float y;
-    float z;
-};
 struct Transform{
     Vector3 scale;
     Vector3 rotate;

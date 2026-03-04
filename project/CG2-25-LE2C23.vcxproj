@@ -21,6 +21,9 @@
     <ClCompile Include="application\object\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
+    <ClCompile Include="engine\math\Mass.cpp" />
+    <ClCompile Include="engine\math\Quanternion.cpp" />
+    <ClCompile Include="engine\math\RotateFunction.cpp" />
     <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
     <ClCompile Include="engine\3d\Vector3.cpp" />
@@ -70,6 +73,9 @@
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />
     <ClInclude Include="application\object\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
+    <ClInclude Include="engine\math\Mass.h" />
+    <ClInclude Include="engine\math\Quanternion.h" />
+    <ClInclude Include="engine\math\RotateFunction.h" />
     <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />

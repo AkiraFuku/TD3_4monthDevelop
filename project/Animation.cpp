@@ -3,9 +3,10 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <cassert>
-Animation LoadAnimationFile(const std::string& directoryPath, const std::string& filename)
+#include <imgui.h>
+Animation::AnimationData Animation::LoadAnimationFile(const std::string& directoryPath, const std::string& filename)
 {
-    Animation animation;
+    AnimationData animation;
     Assimp::Importer importer;
     std::string filePath = directoryPath + "/" + filename;
     const aiScene* scene = importer.ReadFile(filePath.c_str(),0);
@@ -43,7 +44,20 @@ float ticksPerSecond = (float)(animationAssimp->mTicksPerSecond != 0 ? animation
         }
     }
 
+
     return animation;
 
 
+}
+void Animation::Initialize(const std::string& directoryPath, const std::string& filename)
+{
+    AnimeData_ = LoadAnimationFile(directoryPath,filename);
+}
+
+void Animation::Update()
+{
+    currentTime_ += 0.016f; // 仮の時間の進行（例: 60 FPSで約16msごとに更新）
+    if (currentTime_ > AnimeData_.duration) {
+        currentTime_ = 0.0f; // アニメーションをループさせる
+    }
 }

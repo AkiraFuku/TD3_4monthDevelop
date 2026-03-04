@@ -2,12 +2,15 @@
 #include <vector>
 #include "Vector2.h"
 #include "Vector4.h"
+#include "Vector3.h"
 #include <wrl.h>
 #include <d3d12.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "MathFunction.h"
+
+#include "Animation.h"
 
 class Model
 {
@@ -57,7 +60,9 @@ public:
     void Update();
 
     void Draw();
-
+    void SetAnimation(Animation* animation) {
+        animation_ = animation;
+    }
 
     ModelData GetModelData(){return modelData_;}
     //マテリアルの読み込み
@@ -73,6 +78,8 @@ private:
 
 
     ModelData modelData_;
+
+    Animation* animation_ = nullptr;
 
     std::string name_="name";
 
