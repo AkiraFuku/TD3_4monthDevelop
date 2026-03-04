@@ -38,46 +38,30 @@ void Model::Update()
 {
 #ifdef USE_IMGUI
     ImGui::Begin((std::string("Settings: ") + name_).c_str());
-            int* pEnableLighting = reinterpret_cast<int*>(&materialData_->enableLighting);
-            ImGui::Checkbox("Enable Lighting", (bool*)pEnableLighting);
-            if (materialData_->enableLighting) {
-                // 拡散反射 (Diffuse) の設定
-                ImGui::Text("Diffuse (Base)");
-                const char* diffuseItems[] = { "Lambert", "Half-Lambert" };
-                ImGui::Combo("Diffuse Type", &materialData_->diffuseType, diffuseItems, IM_ARRAYSIZE(diffuseItems));
+    int* pEnableLighting = reinterpret_cast<int*>(&materialData_->enableLighting);
+    ImGui::Checkbox("Enable Lighting", (bool*)pEnableLighting);
+    if (materialData_->enableLighting) {
+        ImGui::Text("Diffuse (Base)");
+        const char* diffuseItems[] = { "Lambert", "Half-Lambert" };
+        ImGui::Combo("Diffuse Type", &materialData_->diffuseType, diffuseItems, IM_ARRAYSIZE(diffuseItems));
 
-                // 鏡面反射 (Specular) の設定
-                ImGui::Text("Specular (Shininess)");
-                const char* specularItems[] = { "None", "Phong", "Blinn-Phong" };
-                ImGui::Combo("Specular Type", &materialData_->specularType, specularItems, IM_ARRAYSIZE(specularItems));
+        ImGui::Text("Specular (Shininess)");
+        const char* specularItems[] = { "None", "Phong", "Blinn-Phong" };
+        ImGui::Combo("Specular Type", &materialData_->specularType, specularItems, IM_ARRAYSIZE(specularItems));
 
-                // 光沢度
-                ImGui::DragFloat("Shininess", &materialData_->shininess, 0.1f, 1.0f, 256.0f);
-            }
-          
+        ImGui::DragFloat("Shininess", &materialData_->shininess, 0.1f, 1.0f, 256.0f);
+    }
 
-            ImGui::End();
-
-
+    ImGui::End();
 
 #endif // USE_IMGUI
 
-
-
-            if (animation_)
-            {
-                animation_->Update();
-                Animation::NodeAnimation& nodeAnimation = animation_->GetAnimationData().nodeAnimations[modelData_.rootNode.name];
-
-                Vector3 translation = animation_->CalculateValue(nodeAnimation.translate.keyFrames,animation_->GetCurrentTime_() );
-                Quaternion rotation = animation_->CalculateValue(nodeAnimation.rotate.keyFrames, animation_->GetCurrentTime_());
-                Vector3 scale = animation_->CalculateValue(nodeAnimation.scale.keyFrames,animation_->GetCurrentTime_() );
-
-                Matrix4x4 localMatrix = MakeAfineMatrix(translation, rotation, scale);
-                modelData_.rootNode.localMatrix = localMatrix;
-            }
-
-
+    if (animation_)
+    {
+        animation_->Update();
+        
+        ApplyAnimation(modelData_.rootNode, animation_->GetCurrentTime_());
+    }
 }
 void Model::Draw() {
     //VBVの設定
@@ -125,6 +109,24 @@ void Model::CreateMaterialResource() {
     materialData_->specularType=BlinnPhong;
     materialData_->diffuseType=HarfLambert;
 
+}
+void Model::ApplyAnimation(Node& node, float time)
+{
+    const auto& nodeAnimations = animation_->GetAnimationData().nodeAnimations;
+
+    // このノードにアニメーションがあれば計算
+    if (nodeAnimations.find(node.name) != nodeAnimations.end()) {
+        const auto& anim = nodeAnimations.at(node.name);
+        Vector3 t = animation_->CalculateValue(anim.translate.keyFrames, time);
+        Quaternion r = animation_->CalculateValue(anim.rotate.keyFrames, time);
+        Vector3 s = animation_->CalculateValue(anim.scale.keyFrames, time);
+        node.localMatrix = MakeAfineMatrix(s, r, t);
+    }
+
+    // 子供のノードにも再帰的に適用
+    for (auto& child : node.children) {
+        ApplyAnimation(child, time);
+    }
 }
 Model::MaterialData  Model::LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename) {
     //1. 変数の宣言

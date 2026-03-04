@@ -28,7 +28,7 @@ float ticksPerSecond = (float)(animationAssimp->mTicksPerSecond != 0 ? animation
             keyframe.value = { keyAssimp.mValue.x,keyAssimp.mValue.y,keyAssimp.mValue.z };
             nodeAnimation.translate.keyFrames.push_back(keyframe);
         }
-        for (uint32_t keyIndex = 0; keyIndex <nodeAnimationAssimp->mNumPositionKeys ; ++keyIndex)
+        for (uint32_t keyIndex = 0; keyIndex <nodeAnimationAssimp->mNumRotationKeys ; ++keyIndex)
         {
             aiQuatKey& keyAssimp = nodeAnimationAssimp->mRotationKeys[keyIndex];
             KeyFrameQuaternion keyframe;

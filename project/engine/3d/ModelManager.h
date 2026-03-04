@@ -10,7 +10,7 @@ public:
     static ModelManager* GetInstance();
     void Finalize();
     //Modelロード
-    void LoadModel(const std::string& filePath);
+    void LoadModel(const std::string& directoryPath,const std::string& filePath);
     //Model検索
     std::shared_ptr<Model> findModel(const std::string& filePath);
     static std::unique_ptr<ModelManager> instance;

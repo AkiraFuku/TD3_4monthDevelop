@@ -11,7 +11,6 @@
 #include "PSOMnager.h"
 #include "MathFunction.h"
 class Animation;
-Animation;Animation;Animation;Animation;Animation;Animation;
 class Object3d
 {
 

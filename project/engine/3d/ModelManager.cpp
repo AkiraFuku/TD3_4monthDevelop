@@ -17,13 +17,13 @@ void ModelManager::Finalize() {
     instance.reset();
 }
 
-void ModelManager::LoadModel(const std::string& filePath)
+void ModelManager::LoadModel(const std::string& directoryPath,const std::string& filePath)
 {
     //読み込み済か確認
     if (models.contains(filePath))return;
     //読み込み.初期化
    std::shared_ptr<Model> model = std::make_shared<Model>();
-    model->Initialize( "resources", filePath);
+    model->Initialize(directoryPath, filePath);
     //格納
     models.insert(std::make_pair(filePath, std::move(model)));
 
@@ -37,7 +37,7 @@ std::shared_ptr<Model> ModelManager::findModel(const std::string& filePath)
     }
 
 
-    LoadModel(filePath);
+    LoadModel( "resources",filePath);
     if (models.contains(filePath)) {
         return models.at(filePath);
     }

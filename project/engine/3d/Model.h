@@ -99,5 +99,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
     Material* materialData_ = nullptr;
     void CreateMaterialResource();
+    void ApplyAnimation(Node& node, float time);
 };
 
