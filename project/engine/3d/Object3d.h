@@ -10,6 +10,8 @@
 #include "Object3dCommon.h"
 #include "PSOMnager.h"
 #include "MathFunction.h"
+class Animation;
+Animation;Animation;Animation;Animation;Animation;Animation;
 class Object3d
 {
 
@@ -70,6 +72,16 @@ public:
     }
     void SetFillMode(FillMode fillMode) {
         fillMode_ = fillMode;
+    }
+    void SetAnimations(Animation* animation) {
+        if (model_) {
+            model_->SetAnimation(animation);
+        }
+    }
+    void SetAnimationTime(float time) {
+        if (model_) {
+            model_->SetAnimationTime(time);
+        }
     }
 
     //void SetRadius(float radius) { radius_ = radius; }

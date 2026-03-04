@@ -4,6 +4,8 @@
 #include <assimp/postprocess.h>
 #include <cassert>
 #include <imgui.h>
+#include "RotateFunction.h"
+#include "MathFunction.h"
 Animation::AnimationData Animation::LoadAnimationFile(const std::string& directoryPath, const std::string& filename)
 {
     AnimationData animation;
@@ -60,4 +62,47 @@ void Animation::Update()
     if (currentTime_ > AnimeData_.duration) {
         currentTime_ = 0.0f; // アニメーションをループさせる
     }
+
+
+}
+
+Vector3 Animation::CalculateValue(const std::vector<KeyFrameVector3>& keyframes, float time)
+{
+    assert(!keyframes.empty()); // キーフレームが空でないことを確認
+    if (keyframes.size() == 1 || time <= keyframes[0].time)
+    {
+        return keyframes[0].value;
+    }
+
+    for (size_t index = 0; index < keyframes.size() - 1; ++index)
+    {
+        size_t nextIndex = index + 1;
+        if (time <= keyframes[nextIndex].time)
+        {
+            float t = (time - keyframes[index].time) / (keyframes[nextIndex].time - keyframes[index].time);
+            return Lerp(keyframes[index].value, keyframes[nextIndex].value, t);
+        }
+
+    }
+
+    return Vector3();
+}
+Quaternion Animation::CalculateValue(const std::vector<KeyFrameQuaternion>& keyframes, float time)
+{
+    assert(!keyframes.empty()); // キーフレームが空でないことを確認
+    if (keyframes.size() == 1 || time <= keyframes[0].time)
+    {
+        return keyframes[0].value;
+    }
+     for (size_t index = 0; index < keyframes.size() - 1; ++index)
+    {
+        size_t nextIndex = index + 1;
+        if (time <= keyframes[nextIndex].time)
+        {
+            float t = (time - keyframes[index].time) / (keyframes[nextIndex].time - keyframes[index].time);
+            return Slerp(keyframes[index].value, keyframes[nextIndex].value, t);
+        }
+
+    }
+    return Quaternion();
 }

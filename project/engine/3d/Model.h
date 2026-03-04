@@ -63,6 +63,13 @@ public:
     void SetAnimation(Animation* animation) {
         animation_ = animation;
     }
+     void SetAnimationTime(float time){
+
+         if(animation_){
+            animation_->SetCurrentTime(time);
+         }
+     
+     }
 
     ModelData GetModelData(){return modelData_;}
     //マテリアルの読み込み

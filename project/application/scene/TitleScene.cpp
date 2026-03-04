@@ -39,10 +39,22 @@ void TitleScene::Initialize() {
 
 
 
+    animation = std::make_unique<Animation>();
+
+    animation->Initialize("resources/", "monsterBallAnim.fbx");
+
 
 
 
     ModelManager::GetInstance()->LoadModel("plane.obj");
+        object3d = std::make_unique<Object3d>();
+        object3d->Initialize();
+        object3d->SetModel("plane.obj");
+        object3d->SetCamera(camera.get());
+
+        object3d
+      
+
 
 
 }

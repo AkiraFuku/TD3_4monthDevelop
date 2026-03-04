@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+
 class Animation
 {
 public:
@@ -51,11 +52,21 @@ public:
      void SetCurrentTime(float time) {
          currentTime_ = time;
      }
+     float GetCurrentTime_() const {
+         return currentTime_;
+     }
+
+
+     Vector3 CalculateValue(const std::vector<KeyFrameVector3>& keyframes, float time);
+
+    Quaternion CalculateValue(const std::vector<KeyFrameQuaternion>& keyframes, float time);
 
 private:
     AnimationData AnimeData_;
 
     float currentTime_ = 0.0f; // 現在のアニメーション時間
+
+
 
 };
 

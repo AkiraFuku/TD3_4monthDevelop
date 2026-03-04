@@ -59,7 +59,23 @@ void Model::Update()
             ImGui::End();
 
 
+
 #endif // USE_IMGUI
+
+
+
+            if (animation_)
+            {
+                animation_->Update();
+                Animation::NodeAnimation& nodeAnimation = animation_->GetAnimationData().nodeAnimations[modelData_.rootNode.name];
+
+                Vector3 translation = animation_->CalculateValue(nodeAnimation.translate.keyFrames,animation_->GetCurrentTime_() );
+                Quaternion rotation = animation_->CalculateValue(nodeAnimation.rotate.keyFrames, animation_->GetCurrentTime_());
+                Vector3 scale = animation_->CalculateValue(nodeAnimation.scale.keyFrames,animation_->GetCurrentTime_() );
+
+                Matrix4x4 localMatrix = MakeAfineMatrix(translation, rotation, scale);
+                modelData_.rootNode.localMatrix = localMatrix;
+            }
 
 
 }
