@@ -17,7 +17,7 @@ public:
     friend struct std::default_delete<ModelManager>;
     void CreateSphereModel(const std::string& modelName, uint32_t subdivision = 16);
 private:
-   // std::unique_ptr<ModelCommon> modelCommon_;
+  
 
     ModelManager() = default;
     ~ModelManager() = default;
