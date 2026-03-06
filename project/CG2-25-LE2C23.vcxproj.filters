@@ -365,6 +365,9 @@
     <ClInclude Include="engine\math\RotateFunction.h">
       <Filter>engine\math</Filter>
     </ClInclude>
+    <ClInclude Include="engine\math\Transform.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

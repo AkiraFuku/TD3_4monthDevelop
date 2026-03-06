@@ -64,7 +64,7 @@ void GameScene::Initialize() {
 
     camera->SetTranslate({ 0.0f,0.0f,-10.0f });
     camera->SetFarCrip(1000.0f);
-    Transform M = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+    EulerTransform M = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
     emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
 
     player_ = new Player();

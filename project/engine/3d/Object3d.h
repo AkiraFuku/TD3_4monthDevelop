@@ -97,7 +97,7 @@ private:
     CameraForGPU* cameraData_ = nullptr;
     void  CreateCameraResource();
     //トランスフォーム
-    Transform transform_ = {};
+    EulerTransform transform_ = {};
     //カメラ　
     Camera* camera_ = nullptr;
 
