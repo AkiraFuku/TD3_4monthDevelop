@@ -5,7 +5,7 @@
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "ParticleManager.h"//フレームワークに移植
-#include "PSOMnager.h"
+#include "PSOManager.h"
 #include "LightManager.h"
 
 void TitleScene::Initialize() {

@@ -323,7 +323,7 @@
     <ClInclude Include="engine\scene\SceneManager.h">
       <Filter>engine\scene</Filter>
     </ClInclude>
-    <ClInclude Include="engine\base\PSOMnager.h">
+    <ClInclude Include="engine\base\PSOManager.h">
       <Filter>engine\base</Filter>
     </ClInclude>
     <ClInclude Include="engine\scene\SceneFactory.h">

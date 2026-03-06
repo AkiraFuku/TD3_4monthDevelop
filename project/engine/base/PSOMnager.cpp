@@ -1,4 +1,4 @@
-#include "PSOMnager.h" // ファイル名変更に合わせてインクルードも変更
+#include "PSOManager.h" // ファイル名変更に合わせてインクルードも変更
 #include "DXCommon.h"
 #include "Logger.h"
 #include <cassert>
@@ -10,30 +10,30 @@
 
 using namespace Microsoft::WRL;
 
-std::unique_ptr<PSOMnager> PSOMnager::instance_ = nullptr;
+std::unique_ptr<PSOManager> PSOManager::instance_ = nullptr;
 
-PSOMnager* PSOMnager::GetInstance() {
+PSOManager* PSOManager::GetInstance() {
     if (!instance_) {
-        instance_.reset(new PSOMnager());
+        instance_.reset(new PSOManager());
     }
     return instance_.get();
 }
 
 
 
-void PSOMnager::Initialize() {
+void PSOManager::Initialize() {
     psoCache_.clear();
     rootSignatureCache_.clear();
     shaderCache_.clear();
 }
 
-void PSOMnager::Finalize() {
+void PSOManager::Finalize() {
     psoCache_.clear();
     rootSignatureCache_.clear();
     shaderCache_.clear();
 }
 
-const PsoSet& PSOMnager::GetPsoSet(const PsoProperty& property) {
+const PsoSet& PSOManager::GetPsoSet(const PsoProperty& property) {
     auto it = psoCache_.find(property);
     if (it != psoCache_.end()) {
         return it->second;
@@ -45,7 +45,7 @@ const PsoSet& PSOMnager::GetPsoSet(const PsoProperty& property) {
 // -------------------------------------------------------------------------
 // シェーダー管理（重複コンパイル防止）
 // -------------------------------------------------------------------------
-void PSOMnager::EnsureShaders(PipelineType type, ComPtr<IDxcBlob>& outVS, ComPtr<IDxcBlob>& outPS) {
+void PSOManager::EnsureShaders(PipelineType type, ComPtr<IDxcBlob>& outVS, ComPtr<IDxcBlob>& outPS) {
     // 既にキャッシュにあればそれを返す
     if (shaderCache_.contains(type)) {
         outVS = shaderCache_[type].vs;
@@ -91,7 +91,7 @@ void PSOMnager::EnsureShaders(PipelineType type, ComPtr<IDxcBlob>& outVS, ComPtr
 // -------------------------------------------------------------------------
 // RootSignature 生成
 // -------------------------------------------------------------------------
-void PSOMnager::CreateRootSignature(PipelineType type) {
+void PSOManager::CreateRootSignature(PipelineType type) {
     if (rootSignatureCache_.contains(type)) {
         return;
     }
@@ -273,7 +273,7 @@ void PSOMnager::CreateRootSignature(PipelineType type) {
 // -------------------------------------------------------------------------
 // PSO 生成
 // -------------------------------------------------------------------------
-void PSOMnager::CreatePso(const PsoProperty& property) {
+void PSOManager::CreatePso(const PsoProperty& property) {
     auto device = DXCommon::GetInstance()->GetDevice();
 
     // 1. RootSignature
@@ -371,7 +371,7 @@ void PSOMnager::CreatePso(const PsoProperty& property) {
     psoCache_[property] = psoSet;
 }
 
-D3D12_BLEND_DESC PSOMnager::CreateBlendDesc(BlendMode mode) {
+D3D12_BLEND_DESC PSOManager::CreateBlendDesc(BlendMode mode) {
     D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
     blendDesc.RenderTarget[0].BlendEnable = TRUE;

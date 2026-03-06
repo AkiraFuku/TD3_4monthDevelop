@@ -4,15 +4,16 @@
 #include <memory>
 #include <unordered_map>
 #include <string>
-
+#include <vector>
+#include <functional>
 struct IDxcBlob;
 // パイプラインの種類
-enum class PipelineType {
-    Sprite,     // 2Dスプライト
-    Object3d,   // 3Dモデル
-    Particle,   // パーティクル
-};
-
+//enum class PipelineType {
+//    Sprite,     // 2Dスプライト
+//    Object3d,   // 3Dモデル
+//    Particle,   // パーティクル
+//};
+//
 // ブレンドモード
 enum class BlendMode {
     None, Normal, Add, Subtract, Multiply, Screen
@@ -23,33 +24,33 @@ enum class FillMode {
 };
 // PSO取得用キー
 struct PsoProperty {
-    PipelineType type;
+  /*  PipelineType type;*/
     BlendMode blendMode=BlendMode::None;
     FillMode fillMode=FillMode::kSolid;
 
-    bool operator==(const PsoProperty& other) const {
+   /* bool operator==(const PsoProperty& other) const {
         return type == other.type && blendMode == other.blendMode;
-    }
+    }*/
 };
 
 // ハッシュ関数
-struct PsoPropertyHasher {
-    std::size_t operator()(const PsoProperty& p) const {
-        return std::hash<int>()(static_cast<int>(p.type)) ^
-            (std::hash<int>()(static_cast<int>(p.blendMode)) << 1);
-    }
-};
+//struct PsoPropertyHasher {
+//    std::size_t operator()(const PsoProperty& p) const {
+//        return std::hash<int>()(static_cast<int>(p.type)) ^
+//            (std::hash<int>()(static_cast<int>(p.blendMode)) << 1);
+//    }
+//};
 
 // PSOセット（RootSig + PSO）
 struct PsoSet {
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 };
-class PSOMnager
+class PSOManager
 {
 public:
-    static PSOMnager* GetInstance();
-    friend struct std::default_delete<PSOMnager>;
+    static PSOManager* GetInstance();
+    friend struct std::default_delete<PSOManager>;
     void Initialize();
     void Finalize();
 
@@ -57,10 +58,10 @@ public:
     const PsoSet& GetPsoSet(const PsoProperty& property);
 
 private:
-    PSOMnager() = default;
-    ~PSOMnager() = default;
-    PSOMnager(const PSOMnager&) = delete;
-    PSOMnager& operator=(const PSOMnager&) = delete;
+    PSOManager() = default;
+    ~PSOManager() = default;
+    PSOManager(const PSOManager&) = delete;
+    PSOManager& operator=(const PSOManager&) = delete;
 
     // --- 内部生成関数 ---
     // PSOを生成する
@@ -75,7 +76,7 @@ private:
 
     void EnsureShaders(PipelineType type, Microsoft::WRL::ComPtr<IDxcBlob>& outVS, Microsoft::WRL::ComPtr<IDxcBlob>& outPS);
     
-    static std::unique_ptr<PSOMnager> instance_;
+    static std::unique_ptr<PSOManager> instance_;
 
     // キャッシュ
     // PSOは「タイプ×ブレンド」で管理

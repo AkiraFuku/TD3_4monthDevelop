@@ -4,7 +4,7 @@
 #include "SrvManager.h"
 #include "MathFunction.h"
 #include <numbers>
-#include "PSOMnager.h"
+#include "PSOManager.h"
 #pragma once
 std::unique_ptr<ParticleManager>  ParticleManager::instance;
 uint32_t ParticleManager::kMaxNumInstance = 1024;
@@ -16,7 +16,7 @@ void ParticleManager::Initialize() {
 
 
     PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
-    PsoSet psoset = PSOMnager::GetInstance()->GetPsoSet(pso);
+    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);
     graphicsPipelineState_ = psoset.pipelineState;
     rootSignature_ = psoset.rootSignature;
 
@@ -186,7 +186,7 @@ void ParticleManager::Emit(const std::string name, const Vector3& postion, uint3
 void ParticleManager::CreateRootSignature()
 {
     PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
-    PsoSet psoset = PSOMnager::GetInstance()->GetPsoSet(pso);
+    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);
     graphicsPipelineState_ = psoset.pipelineState;
     rootSignature_ = psoset.rootSignature;
 }
