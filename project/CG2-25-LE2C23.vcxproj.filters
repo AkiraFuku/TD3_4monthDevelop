@@ -174,7 +174,7 @@
     <ClCompile Include="engine\scene\SceneManager.cpp">
       <Filter>engine\scene</Filter>
     </ClCompile>
-    <ClCompile Include="engine\base\PSOMnager.cpp">
+    <ClCompile Include="engine\base\PSOManager.cpp">
       <Filter>engine\base</Filter>
     </ClCompile>
     <ClCompile Include="engine\scene\SceneFactory.cpp">
@@ -323,7 +323,7 @@
     <ClInclude Include="engine\scene\SceneManager.h">
       <Filter>engine\scene</Filter>
     </ClInclude>
-    <ClInclude Include="engine\base\PSOMnager.h">
+    <ClInclude Include="engine\base\PSOManager.h">
       <Filter>engine\base</Filter>
     </ClInclude>
     <ClInclude Include="engine\scene\SceneFactory.h">

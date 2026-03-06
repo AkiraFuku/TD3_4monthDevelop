@@ -8,7 +8,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Object3dCommon.h"
-#include "PSOMnager.h"
+#include "PSOManager.h"
 #include "MathFunction.h"
 class Animation;
 class Object3d

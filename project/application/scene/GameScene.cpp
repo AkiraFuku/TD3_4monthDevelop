@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
-#include "PSOMnager.h"
+#include "PSOManager.h"
 #include "LightManager.h"
 #include <numbers>
 void GameScene::Initialize() {

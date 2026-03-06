@@ -45,11 +45,11 @@ struct PsoSet {
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 };
-class PSOMnager
+class PSOManager
 {
 public:
-    static PSOMnager* GetInstance();
-    friend struct std::default_delete<PSOMnager>;
+    static PSOManager* GetInstance();
+    friend struct std::default_delete<PSOManager>;
     void Initialize();
     void Finalize();
 
@@ -57,10 +57,10 @@ public:
     const PsoSet& GetPsoSet(const PsoProperty& property);
 
 private:
-    PSOMnager() = default;
-    ~PSOMnager() = default;
-    PSOMnager(const PSOMnager&) = delete;
-    PSOMnager& operator=(const PSOMnager&) = delete;
+    PSOManager() = default;
+    ~PSOManager() = default;
+    PSOManager(const PSOManager&) = delete;
+    PSOManager& operator=(const PSOManager&) = delete;
 
     // --- 内部生成関数 ---
     // PSOを生成する
@@ -75,7 +75,7 @@ private:
 
     void EnsureShaders(PipelineType type, Microsoft::WRL::ComPtr<IDxcBlob>& outVS, Microsoft::WRL::ComPtr<IDxcBlob>& outPS);
     
-    static std::unique_ptr<PSOMnager> instance_;
+    static std::unique_ptr<PSOManager> instance_;
 
     // キャッシュ
     // PSOは「タイプ×ブレンド」で管理
