@@ -10,8 +10,6 @@
 #include <cstdint>
 #include "Camera.h"
 #include "Transform.h"
-#include "PSOManager.h"
-
 class ParticleManager
 {
 public:
@@ -105,7 +103,7 @@ private:
     void CreateMaterialBuffer();
     void CreatePSO();
 
-      PsoSettings settings_;
+
 
 
     Camera* camera_ = nullptr;

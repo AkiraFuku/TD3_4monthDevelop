@@ -8,7 +8,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Object3dCommon.h"
-#include "PSOMnager.h"
+#include "PSOManager.h"
 #include "MathFunction.h"
 class Animation;
 class Object3d
@@ -67,10 +67,10 @@ public:
     }
 
     void SetBlendMode(BlendMode blendMode) {
-        blendMode_ = blendMode;
+       settings_.blendMode = blendMode;
     }
     void SetFillMode(FillMode fillMode) {
-        fillMode_ = fillMode;
+        settings_.fillMode = fillMode;
     }
     void SetAnimations(Animation* animation) {
         if (model_) {
@@ -82,6 +82,7 @@ public:
             model_->SetAnimationTime(time);
         }
     }
+
 
     //void SetRadius(float radius) { radius_ = radius; }
 private:
@@ -100,8 +101,8 @@ private:
     EulerTransform transform_ = {};
     //カメラ　
     Camera* camera_ = nullptr;
-
-    FillMode fillMode_ = FillMode::kSolid;
-    BlendMode blendMode_ = BlendMode::None;
+     PsoSettings settings_;
+   /* FillMode fillMode_ = FillMode::kSolid;
+    BlendMode blendMode_ = BlendMode::None;*/
 };
 

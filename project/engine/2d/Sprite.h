@@ -5,7 +5,7 @@
 #include <d3d12.h>
 #include<string>
 
-#include "PSOMnager.h"
+#include "PSOManager.h"
 class Sprite
 {
 public:
@@ -101,18 +101,18 @@ public:
         this->textureSize = textureSize;
     }
     void SetBlendMode(BlendMode blendMode) {
-        blendMode_ = blendMode;
+        settings_.blendMode = blendMode;
     }
     BlendMode GetBlendMode() const {
-        return blendMode_;
+        return settings_.blendMode;
     }
-    void SetFillMode(FillMode fillMode) { fillMode_ = fillMode; }
+    void SetFillMode(FillMode fillMode) { settings_.fillMode = fillMode; }
     //テクスチャ変更
     void SetTextureByFilePath(const std::string& textureFilePath);
 
 private:
     void AdjustTextureSize();
-    BlendMode blendMode_ = BlendMode::Normal;
+   /* BlendMode blendMode_ = BlendMode::Normal;*/
 private:
     
 
@@ -147,6 +147,8 @@ private:
     TransformationMatrix* transformationMatrixData_ = nullptr;
     uint32_t textureIndex_ = 0;
     std::string textureFilePath_;
-    FillMode fillMode_ = FillMode::kSolid;
+  /*  FillMode fillMode_ = FillMode::kSolid;*/
+
+     PsoSettings settings_;
 };
 

@@ -1,6 +1,6 @@
 #include "Object3dCommon.h"
 #include "Logger.h"
-#include "PSOMnager.h"
+
 
 // 静的メンバ変数の初期化
 std::unique_ptr<Object3dCommon> Object3dCommon::instance = nullptr;
@@ -16,9 +16,82 @@ void Object3dCommon::Finalize() {
   instance.reset(); // 解放
 }
 void Object3dCommon::Initialize()
-{
-       PsoProperty pso={PipelineType::Object3d,BlendMode::None,FillMode::kSolid};
-    PsoSet psoset=PSOMnager::GetInstance()->GetPsoSet(pso);
+{  settings_.pipelineName = "Model_Default";
+    settings_.vsPath = L"resources/shaders/Object3d/Object3D.vs.hlsl";
+    settings_.psPath = L"resources/shaders/Object3d/Object3D.ps.hlsl";
+    settings_.blendMode = BlendMode::Normal;
+    settings_.cullMode = D3D12_CULL_MODE_BACK;
+
+    settings_.rootSigBuilder = [](std::vector<D3D12_ROOT_PARAMETER>& params, std::vector<D3D12_STATIC_SAMPLER_DESC>& samplers) {
+
+        D3D12_STATIC_SAMPLER_DESC sampler{};
+        sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+        sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+        sampler.MaxLOD = D3D12_FLOAT32_MAX;
+        sampler.ShaderRegister = 0;
+        sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        samplers.push_back(sampler);
+
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
+        descRangeTexture[0].BaseShaderRegister = 0; // t0
+        descRangeTexture[0].NumDescriptors = 1;
+        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+        params.resize(8);
+        // Enum定義 (可読性のため)
+        enum {
+            kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
+        };
+
+        // 0. Material (CBV b0, Pixel)
+        params[kMaterial].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        params[kMaterial].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        params[kMaterial].Descriptor.ShaderRegister = 0;
+
+        // 1. Transform (CBV b0, Vertex)
+        params[kTransform].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        params[kTransform].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        params[kTransform].Descriptor.ShaderRegister = 0;
+
+        // 2. Texture (Table t0, Pixel)
+        params[kTexture].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        params[kTexture].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        params[kTexture].DescriptorTable.pDescriptorRanges = descRangeTexture;
+        params[kTexture].DescriptorTable.NumDescriptorRanges = 1;
+
+        // ★変更: 3. DirectionalLight (SRV t1)
+        params[DirLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        params[DirLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        params[DirLight].Descriptor.ShaderRegister = 1; // t1
+
+        // ★追加: 4. PointLight (SRV t2)
+        params[PointLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        params[PointLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        params[PointLight].Descriptor.ShaderRegister = 2; // t2
+
+        // ★追加: 5. SpotLight (SRV t3)
+        params[SpotLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        params[SpotLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        params[SpotLight].Descriptor.ShaderRegister = 3; // t3
+
+        // ★追加: 6. LightCounts (CBV b3)
+        params[Count].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        params[Count].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        params[Count].Descriptor.ShaderRegister = 3; // b3 (b0,b1,b2は使用済みと仮定、あるいは空いている番号)
+        //カメラ
+        params[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 定数バッファビュー
+        params[kCamera].Descriptor.ShaderRegister = 2; // レジスタ番号 2 (b2)
+        params[kCamera].Descriptor.RegisterSpace = 0;
+        params[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
+//
+
+        };
+
+     //  PsoProperty pso={PipelineType::Object3d,BlendMode::None,FillMode::kSolid};
+    PsoSet psoset=PSOManager::GetInstance()->GetPsoSet(settings_);
     graphicsPipelineState_=psoset.pipelineState;
     rootSignature_=psoset.rootSignature;
 

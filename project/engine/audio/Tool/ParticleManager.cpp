@@ -4,6 +4,7 @@
 #include "SrvManager.h"
 #include "MathFunction.h"
 #include <numbers>
+#include "PSOMnager.h"
 #pragma once
 std::unique_ptr<ParticleManager>  ParticleManager::instance;
 uint32_t ParticleManager::kMaxNumInstance = 1024;
@@ -14,64 +15,8 @@ void ParticleManager::Initialize() {
     //パイプラインステート生成
 
 
-    settings_.pipelineName = "Particle_Default";
-    settings_.vsPath = L"resources/shaders/Particle/Particle.vs.hlsl";
-    settings_.psPath = L"resources/shaders/Sprite/Sprite.ps.hlsl";
-    settings_.blendMode = BlendMode::Add;
-    settings_.cullMode = D3D12_CULL_MODE_BACK;
-
-    settings_.rootSigBuilder = [](std::vector<D3D12_ROOT_PARAMETER>& params, std::vector<D3D12_STATIC_SAMPLER_DESC>& samplers) {
-
-        D3D12_STATIC_SAMPLER_DESC sampler{};
-        sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-        sampler.MaxLOD = D3D12_FLOAT32_MAX;
-        sampler.ShaderRegister = 0;
-        sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        samplers.push_back(sampler);
-
-        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
-        descRangeTexture[0].BaseShaderRegister = 0; // t0
-        descRangeTexture[0].NumDescriptors = 1;
-        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-        // パーティクル用インスタンシングレンジ (VS t0)
- // ※ staticにしないとスコープを抜けてデータが壊れる可能性があるため注意
- //   ここでは関数内完結させるため、vector等で管理するか、static配列にする
-        static D3D12_DESCRIPTOR_RANGE descRangeInstancing[1]{};
-        descRangeInstancing[0].BaseShaderRegister = 0; // t0 (VS)
-        descRangeInstancing[0].NumDescriptors = 1;
-        descRangeInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        descRangeInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-        params.resize(4);
-
-        // [Param 0] Material (CBV b0, Pixel)
-        params[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        params[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        params[0].Descriptor.ShaderRegister = 0;
-
-        // [Param 1] Instancing Data (DescriptorTable t0, Vertex) ★ここが重要
-        params[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        params[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-        params[1].DescriptorTable.pDescriptorRanges = descRangeInstancing;
-        params[1].DescriptorTable.NumDescriptorRanges = 1;
-
-        // [Param 2] Texture (DescriptorTable t0, Pixel)
-        params[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        params[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        params[2].DescriptorTable.pDescriptorRanges = descRangeTexture;
-        params[2].DescriptorTable.NumDescriptorRanges = 1;
-
-        // [Param 3] DirectionalLight (CBV b1, Pixel)
-        params[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        params[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        params[3].Descriptor.ShaderRegister = 1;
-        };
-    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(settings_);
+    PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
+    PsoSet psoset = PSOMnager::GetInstance()->GetPsoSet(pso);
     graphicsPipelineState_ = psoset.pipelineState;
     rootSignature_ = psoset.rootSignature;
 
@@ -240,8 +185,8 @@ void ParticleManager::Emit(const std::string name, const Vector3& postion, uint3
 
 void ParticleManager::CreateRootSignature()
 {
-   /// PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
-    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(settings_);
+    PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
+    PsoSet psoset = PSOMnager::GetInstance()->GetPsoSet(pso);
     graphicsPipelineState_ = psoset.pipelineState;
     rootSignature_ = psoset.rootSignature;
 }

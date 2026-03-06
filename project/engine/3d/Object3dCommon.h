@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "DXCommon.h"
 #include "Camera.h"
+#include "PSOManager.h"
 class Object3dCommon
 {
 public:
@@ -13,7 +14,7 @@ public:
     void Finalize();
 
     void Initialize();
-    
+
     void Object3dCommonDraw();
     void SetDefaultCamera(Camera* camera) {
         defaultCamera_ = camera;
@@ -22,7 +23,11 @@ public:
         return defaultCamera_;
     }
     static std::unique_ptr<Object3dCommon> instance;
-     friend struct std::default_delete<Object3dCommon>;
+    friend struct std::default_delete<Object3dCommon>;
+
+    PsoSettings GetPsoSettings() const {
+        return settings_;
+    }
 private:
 
     // シングルトンパターン
@@ -33,7 +38,7 @@ private:
 
     HRESULT hr_;
 
-   
+
 
     //ルートシグネチャ
     Microsoft::WRL::ComPtr<ID3D12RootSignature>rootSignature_;
@@ -42,5 +47,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState_;
     void CreatePSO();
     Camera* defaultCamera_ = nullptr;
+
+    PsoSettings settings_;
 };
 

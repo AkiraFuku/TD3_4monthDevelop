@@ -2,6 +2,7 @@
 #include "d3d12.h"
 #include <wrl/client.h>
 #include <cstdint>
+#include "PSOManager.h"
 
 #include <memory>
 class SpriteCommon
@@ -13,7 +14,9 @@ public:
 
     void Initialize();
 
-   
+   PsoSettings GetPsoSettings() const {
+        return settings_;
+   }
     void SpriteCommonDraw();
 
     static std::unique_ptr<SpriteCommon> instance;
@@ -27,7 +30,8 @@ private:
     HRESULT hr_;
 
     
-
+    
+    PsoSettings settings_;
     //ルートシグネチャ
     Microsoft::WRL::ComPtr<ID3D12RootSignature>rootSignature_;
     //グラフィックパイプラインステート

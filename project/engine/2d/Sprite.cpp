@@ -51,6 +51,8 @@ void Sprite::Initialize(std::string textureFilePath) {
     textureIndex_ = TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
 
     AdjustTextureSize();
+
+      settings_=SpriteCommon::GetInstance()->GetPsoSettings();
 }
 void Sprite::Update() {
 
@@ -121,8 +123,12 @@ void Sprite::Draw()
 {
     SpriteCommon::GetInstance()->SpriteCommonDraw();
     // Object3d用のパイプラインタイプと、自身のブレンドモードを指定
-    PsoProperty psoProp = { PipelineType::Sprite, blendMode_,fillMode_ };
-    PsoSet psoSet = PSOMnager::GetInstance()->GetPsoSet(psoProp);
+    //PsoProperty psoProp = { PipelineType::Sprite, blendMode_,fillMode_ };
+     
+    //settings_.blendMode = blendMode_;
+    //settings_.fillMode = fillMode_;
+   
+    PsoSet psoSet = PSOManager::GetInstance()->GetPsoSet(settings_);
 
     // PSOをセット
     DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
