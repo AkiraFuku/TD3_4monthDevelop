@@ -37,4 +37,12 @@ private:
   Terrain *terrain_;
   std::unique_ptr<Egg> egg_;
   std::unique_ptr<Goal> goal_;
+  /*Player* player_;
+  Terrain* terrain_;*/
+
+  // ----- Player -----
+  std::unique_ptr<Player> player_;
+  
+  //プレイヤーの位置
+  Vector3 playerPos_ = {-10.0f,0.0f, 0.0f};
 };

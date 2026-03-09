@@ -10,8 +10,8 @@
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
-    camera->SetRotate({ 0.0f,0.0f,0.0f });
-    camera->SetTranslate({ 0.0f,0.0f,-5.0f });
+    camera->SetRotate({ 1.57f,0.0f,0.0f });
+    camera->SetTranslate({ 0.0f,24.0f,0.0f });
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
@@ -62,16 +62,16 @@ void GameScene::Initialize() {
     object3d2->SetModel("terrain.obj");
     object3d->SetModel("MySphere");
 
-    camera->SetTranslate({ 0.0f,0.0f,-10.0f });
+    /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
     camera->SetFarCrip(1000.0f);
     Transform M = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
     emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
 
-    player_ = new Player();
+    /*player_ = new Player();
     player_->Initialize();
 
     terrain_ = new Terrain();
-    terrain_->Initialize();
+    terrain_->Initialize();*/
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
@@ -83,6 +83,9 @@ void GameScene::Initialize() {
 
     goal_->SetEgg(egg_.get());
 
+    player_ = std::make_unique<Player>();
+    player_->Initialize(playerPos_);
+
 }
 void GameScene::Finalize() {
 
@@ -91,11 +94,11 @@ void GameScene::Finalize() {
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
-    player_->Finalize();
+    /*player_->Finalize();
     delete player_;
 
     terrain_->Finalize();
-    delete terrain_;
+    delete terrain_;*/
 }
 void GameScene::Update() {
     emitter->Update();
@@ -208,109 +211,136 @@ void GameScene::Update() {
 
 
 #ifdef USE_IMGUI
-    ImGui::Begin("Debug");
-    ImGui::Text("Sphere");
-    Vector3 pos = object3d->GetTranslate();
-    Vector3 scale = object3d->GetScale();
-    ImGui::SliderFloat3("Pos", &(pos.x), 0.1f, 1000.0f);
-    ImGui::DragFloat3("scale", &(scale.x), 0.1f, 1000.0f);
-    object3d->SetTranslate(pos);
-    object3d->SetScale(scale);
-    if (LightManager::GetInstance()->GetPointLightCount() > 0) {
-        ImGui::Begin("Light Setting");
 
-        // 0番目のポイントライトのデータを参照で取得
-        // "auto&" にすることで、ここで書き換えた内容が直接LightManager内のデータに反映されます
-        auto& pointLight2 = LightManager::GetInstance()->GetPointLight(1);
+    ImGui::Begin("Camera Setting");
 
-        // 位置の調整
-        ImGui::DragFloat3("Point Light2 Pos", &pointLight2.position.x, 0.1f);
+    // カメラの現在位置を取得
+    Vector3 camPos = camera->GetTranslate();
+    // カメラの現在の回転を取得（※CameraクラスにGetRotate関数が実装されている前提です）
+    Vector3 camRot = camera->GetRotate();
 
-        // 色の調整
-        ImGui::ColorEdit4("Point Light2 Color", &pointLight2.color.x);
-
-        // 強度の調整
-        ImGui::DragFloat("Point Light2 Intensity", &pointLight2.intensity, 0.1f, 0.0f, 100.0f);
-
-        // 減衰率の調整
-        ImGui::DragFloat("Point Light2 Decay", &pointLight2.decay, 0.1f, 0.0f, 10.0f);
-        auto& pointLight1 = LightManager::GetInstance()->GetPointLight(0);
-
-        // 位置の調整
-        ImGui::DragFloat3("Point Light Pos", &pointLight1.position.x, 0.1f);
-
-        // 色の調整
-        ImGui::ColorEdit4("Point Light Color", &pointLight1.color.x);
-
-        // 強度の調整
-        ImGui::DragFloat("Point Light Intensity", &pointLight1.intensity, 0.1f, 0.0f, 100.0f);
-
-        // 減衰率の調整
-        ImGui::DragFloat("Point Light Decay", &pointLight1.decay, 0.1f, 0.0f, 10.0f);
-        ImGui::DragFloat("Point Light rad", &pointLight1.radius, 0.1f, 0.0f, 10.0f);
-        auto& spotLight2 = LightManager::GetInstance()->GetSpotLight(1);
-
-        // 位置の調整
-        ImGui::DragFloat3("spot Light2 Pos", &spotLight2.position.x, 0.1f);
-        ImGui::DragFloat3("spot Light Pos", &spotLight2.direction.x, 0.1f);
-
-        // 色の調整
-        ImGui::ColorEdit4("spot Light2 Color", &spotLight2.color.x);
-
-        // 強度の調整
-        ImGui::DragFloat("spot Light2 Intensity", &spotLight2.intensity, 0.1f, 0.0f, 100.0f);
-
-        // 減衰率の調整
-        ImGui::DragFloat("spot Light2 Decay", &spotLight2.decay, 0.1f, 0.0f, 10.0f);
-        auto& spotLight1 = LightManager::GetInstance()->GetSpotLight(0);
-
-        // 位置の調整
-        ImGui::DragFloat3("spot Light Pos", &spotLight1.position.x, 0.1f);
-        ImGui::DragFloat3("spot Light ", &spotLight1.direction.x, 0.1f);
-
-        // 色の調整
-        ImGui::ColorEdit4("spot Light Color", &spotLight1.color.x);
-
-        // 強度の調整
-        ImGui::DragFloat("spot Light Intensity", &spotLight1.intensity, 0.1f, 0.0f, 100.0f);
-
-        // 減衰率の調整
-        ImGui::DragFloat("spot Light Decay", &spotLight1.decay, 0.1f, 0.0f, 10.0f);
-        ImGui::DragFloat("spot Light rad", &spotLight1.distance, 0.1f, 0.0f, 10.0f);
-
-        ImGui::End();
+    // 位置の調整 (0.1f単位でドラッグして変更)
+    if (ImGui::DragFloat3("Camera Position", &camPos.x, 0.1f)) {
+      camera->SetTranslate(camPos);
     }
 
-
-
-    /*  if (ImGui::ColorEdit4("LightColor", &lightColor.x)) {
-
-          object3d->SetDirectionalLightColor(lightColor);
-      }
-      Vector3 direction= object3d->GetDirectionalLightDirection();
-      if(ImGui::DragFloat3("Light Direction", &direction.x)){
-      object3d->SetDirectionalLightDirection(direction);
-      }
-      float intensity= object3d->GetDirectionalLightIntensity();
-      if(ImGui::InputFloat("intensity",&intensity)){
-       object3d->SetDirectionalLightIntensity(intensity);
-      }*/
-    ImGui::Text("Sprite");
-    Vector2 Position =
-        sprite->GetPosition();
-    ImGui::SliderFloat2("Position", &(Position.x), 0.1f, 1000.0f);
-    sprite->SetPosition(Position);
+    // 回転の調整
+    // (0.01f単位でドラッグして変更、ラジアンか度数法に合わせて調整してください)
+    if (ImGui::DragFloat3("Camera Rotation", &camRot.x, 0.01f)) {
+      camera->SetRotate(camRot);
+    }
 
     ImGui::End();
 
-    ImGui::Begin("DebugCamera Setting");
-    ImGui::Checkbox("DebugCamera", &isDebugCamera_);
-    ImGui::End();
+    //ImGui::Begin("Debug");
+    //ImGui::Text("Sphere");
+    //Vector3 pos = object3d->GetTranslate();
+    //Vector3 scale = object3d->GetScale();
+    //ImGui::SliderFloat3("Pos", &(pos.x), 0.1f, 1000.0f);
+    //ImGui::DragFloat3("scale", &(scale.x), 0.1f, 1000.0f);
+    //object3d->SetTranslate(pos);
+    //object3d->SetScale(scale);
+    //if (LightManager::GetInstance()->GetPointLightCount() > 0) {
+    //    ImGui::Begin("Light Setting");
+
+    //    // 0番目のポイントライトのデータを参照で取得
+    //    // "auto&" にすることで、ここで書き換えた内容が直接LightManager内のデータに反映されます
+    //    auto& pointLight2 = LightManager::GetInstance()->GetPointLight(1);
+
+    //    // 位置の調整
+    //    ImGui::DragFloat3("Point Light2 Pos", &pointLight2.position.x, 0.1f);
+
+    //    // 色の調整
+    //    ImGui::ColorEdit4("Point Light2 Color", &pointLight2.color.x);
+
+    //    // 強度の調整
+    //    ImGui::DragFloat("Point Light2 Intensity", &pointLight2.intensity, 0.1f, 0.0f, 100.0f);
+
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("Point Light2 Decay", &pointLight2.decay, 0.1f, 0.0f, 10.0f);
+    //    auto& pointLight1 = LightManager::GetInstance()->GetPointLight(0);
+
+    //    // 位置の調整
+    //    ImGui::DragFloat3("Point Light Pos", &pointLight1.position.x, 0.1f);
+
+    //    // 色の調整
+    //    ImGui::ColorEdit4("Point Light Color", &pointLight1.color.x);
+
+    //    // 強度の調整
+    //    ImGui::DragFloat("Point Light Intensity", &pointLight1.intensity, 0.1f, 0.0f, 100.0f);
+
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("Point Light Decay", &pointLight1.decay, 0.1f, 0.0f, 10.0f);
+    //    ImGui::DragFloat("Point Light rad", &pointLight1.radius, 0.1f, 0.0f, 10.0f);
+    //    auto& spotLight2 = LightManager::GetInstance()->GetSpotLight(1);
+
+    //    // 位置の調整
+    //    ImGui::DragFloat3("spot Light2 Pos", &spotLight2.position.x, 0.1f);
+    //    ImGui::DragFloat3("spot Light Pos", &spotLight2.direction.x, 0.1f);
+
+    //    // 色の調整
+    //    ImGui::ColorEdit4("spot Light2 Color", &spotLight2.color.x);
+
+    //    // 強度の調整
+    //    ImGui::DragFloat("spot Light2 Intensity", &spotLight2.intensity, 0.1f, 0.0f, 100.0f);
+
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("spot Light2 Decay", &spotLight2.decay, 0.1f, 0.0f, 10.0f);
+    //    auto& spotLight1 = LightManager::GetInstance()->GetSpotLight(0);
+
+    //    // 位置の調整
+    //    ImGui::DragFloat3("spot Light Pos", &spotLight1.position.x, 0.1f);
+    //    ImGui::DragFloat3("spot Light ", &spotLight1.direction.x, 0.1f);
+
+    //    // 色の調整
+    //    ImGui::ColorEdit4("spot Light Color", &spotLight1.color.x);
+
+    //    // 強度の調整
+    //    ImGui::DragFloat("spot Light Intensity", &spotLight1.intensity, 0.1f, 0.0f, 100.0f);
+
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("spot Light Decay", &spotLight1.decay, 0.1f, 0.0f, 10.0f);
+    //    ImGui::DragFloat("spot Light rad", &spotLight1.distance, 0.1f, 0.0f, 10.0f);
+
+    //    ImGui::End();
+    //}
+
+
+
+    ///*  if (ImGui::ColorEdit4("LightColor", &lightColor.x)) {
+
+    //      object3d->SetDirectionalLightColor(lightColor);
+    //  }
+    //  Vector3 direction= object3d->GetDirectionalLightDirection();
+    //  if(ImGui::DragFloat3("Light Direction", &direction.x)){
+    //  object3d->SetDirectionalLightDirection(direction);
+    //  }
+    //  float intensity= object3d->GetDirectionalLightIntensity();
+    //  if(ImGui::InputFloat("intensity",&intensity)){
+    //   object3d->SetDirectionalLightIntensity(intensity);
+    //  }*/
+    //ImGui::Text("Sprite");
+    //Vector2 Position =
+    //    sprite->GetPosition();
+    //ImGui::SliderFloat2("Position", &(Position.x), 0.1f, 1000.0f);
+    //sprite->SetPosition(Position);
+
+    //ImGui::End();
+
+    //ImGui::Begin("DebugCamera Setting");
+    //ImGui::Checkbox("DebugCamera", &isDebugCamera_);
+    //ImGui::End();
+
+
 
 #endif // USE_IMGUI
 
     //sprite->SetRotation(sprite->GetRotation() + 0.1f);
     sprite->Update();
+
+    /*player_->Update();
+
+    terrain_->Update();*/
 
     player_->Update();
 
@@ -340,4 +370,6 @@ void GameScene::Draw() {
     // ParticleManager::GetInstance()->Draw();
      ///////スプライトの描画
     //sprite->Draw();
+
+    player_->Draw();
 }
