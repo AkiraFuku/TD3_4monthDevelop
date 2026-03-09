@@ -14,13 +14,13 @@ void Player::Initialize()
 
 void Player::Finalize()
 {
-    
+    Input::GetInstance()->Finalize();
 }
 
 void Player::Update()
 {
   
-
+    Move();
 
     ImGui::Begin("Player Window");
 
@@ -51,4 +51,26 @@ void Player::Update()
 void Player::Draw()
 {
     object_->Draw();
+}
+
+void Player::Move()
+{
+    // [移動]
+    if (Input::GetInstance()->PushedKeyDown(DIK_D)) 
+    {
+        velocity_.x = 0.5f;
+    }
+    if (Input::GetInstance()->PushedKeyDown(DIK_A)) 
+    {
+        velocity_.x = -0.5f;
+    }
+
+    if (Input::GetInstance()->PushedKeyDown(DIK_W))
+    {
+        velocity_.z = 0.5f;
+    }
+    if (Input::GetInstance()->PushedKeyDown(DIK_S))
+    {
+        velocity_.z = -0.5f;
+    }
 }
