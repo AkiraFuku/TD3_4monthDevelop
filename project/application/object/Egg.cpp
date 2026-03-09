@@ -45,12 +45,12 @@ void Egg::Update()
     Vector3 translates = object_->GetTranslate();
 
     // ゴール判定確認用の移動処理
-    if (Input::GetInstance()->PushedKeyDown(DIK_W))
+    if (Input::GetInstance()->PushedKeyDown(DIK_UP))
     {
         // 奥に進む
         translates.z += 0.1f;
     }
-    else if (Input::GetInstance()->PushedKeyDown(DIK_S))
+    else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
     {
         // 手前に進む
         translates.z -= 0.1f;
