@@ -29,7 +29,6 @@ public:
   /// </summary>
   void UpdateMove();
 
-    void Move();
 
 public: // 外部入出力
   // ----- Getter -----
