@@ -104,7 +104,7 @@ void GameScene::Finalize() {
     delete egg_;
 
     goal_->Finalize();
-    delete goal_;
+    delete goal_;*/
 }
 void GameScene::Update() {
     emitter->Update();
