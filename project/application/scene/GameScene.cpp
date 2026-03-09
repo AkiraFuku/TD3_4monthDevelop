@@ -344,7 +344,7 @@ void GameScene::Update() {
 
     player_->Update();
 
-    terrain_->Update();
+    //terrain_->Update();
 
     // 卵の更新処理
     egg_->Update();

@@ -33,8 +33,8 @@ private:
   DebugCamera debugCamera_;
   bool isDebugCamera_ = false;
 
-  Player *player_;
-  Terrain *terrain_;
+  /*Player *player_;
+  Terrain *terrain_;*/
   std::unique_ptr<Egg> egg_;
   std::unique_ptr<Goal> goal_;
   /*Player* player_;
