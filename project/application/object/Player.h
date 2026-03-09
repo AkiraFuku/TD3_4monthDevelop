@@ -16,6 +16,8 @@ public:
     
     void Draw();
 
+    void Move();
+
 public: // 外部入出力
 
 
