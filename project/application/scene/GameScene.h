@@ -12,6 +12,8 @@
 #include "Player.h"
 #include "Terrain.h"
 #include "DebugCamera.h"
+#include "Egg.h"
+#include "Goal.h"
 
 class GameScene :public Scene
 {
@@ -33,6 +35,8 @@ private:
 
   Player* player_;
   Terrain* terrain_;
+  Egg* egg_;
+  Goal* goal_;
 
 };
 
