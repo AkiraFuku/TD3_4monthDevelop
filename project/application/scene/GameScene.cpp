@@ -74,14 +74,14 @@ void GameScene::Initialize() {
     terrain_->Initialize();
 
     // 卵の初期化
-    egg_ = new Egg();
+    egg_ = std::make_unique<Egg>();
     egg_->Initialize();
 
     // ゴールの初期化
-    goal_ = new Goal();
+    goal_ = std::make_unique<Goal>();
     goal_->Initialize();
 
-    goal_->SetEgg(egg_);
+    goal_->SetEgg(egg_.get());
 
 }
 void GameScene::Finalize() {
@@ -96,9 +96,6 @@ void GameScene::Finalize() {
 
     terrain_->Finalize();
     delete terrain_;
-
-    egg_->Finalize();
-    delete egg_;
 }
 void GameScene::Update() {
     emitter->Update();
