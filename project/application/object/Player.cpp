@@ -14,7 +14,7 @@ void Player::Initialize()
 
 void Player::Finalize()
 {
-    Input::GetInstance()->Finalize();
+ 
 }
 
 void Player::Update()
