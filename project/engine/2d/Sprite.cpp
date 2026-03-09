@@ -121,8 +121,7 @@ void Sprite::Draw()
 {
     SpriteCommon::GetInstance()->SpriteCommonDraw();
     // Object3d用のパイプラインタイプと、自身のブレンドモードを指定
-    PsoProperty psoProp = { PipelineType::Sprite, blendMode_,fillMode_ };
-    PsoSet psoSet = PSOManager::GetInstance()->GetPsoSet(psoProp);
+   auto& psoSet = PSOManager::GetInstance()->GetPso("Sprite", blendMode_, fillMode_);
 
     // PSOをセット
     DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());

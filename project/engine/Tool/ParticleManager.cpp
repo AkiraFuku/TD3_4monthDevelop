@@ -15,10 +15,54 @@ void ParticleManager::Initialize() {
     //パイプラインステート生成
 
 
-    PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
-    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);
-    graphicsPipelineState_ = psoset.pipelineState;
-    rootSignature_ = psoset.rootSignature;
+    auto psoManager = PSOManager::GetInstance();
+
+    psoManager->RegisterPsoGenerator("Particle", []() {
+        PsoConfig config;
+        config.vsPath = L"resources/shaders/Particle/Particle.vs.hlsl";
+        config.psPath = L"resources/shaders/Particle/Particle.ps.hlsl";
+
+
+      /*  config.inputElements = {
+    { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };*/
+
+
+        static D3D12_DESCRIPTOR_RANGE descRange[1]{};
+        descRange[0].BaseShaderRegister = 0; // t0
+        descRange[0].NumDescriptors = 1;
+        descRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        config.rootParameters.resize(3);
+        // 0: Material (b0)
+        config.rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        config.rootParameters[0].Descriptor.ShaderRegister = 0;
+        config.rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // 1: ParticleInstancingData (t1: StructuredBuffer)
+        config.rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        config.rootParameters[1].Descriptor.ShaderRegister = 1;
+        config.rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        // 2: Texture (t0)
+        config.rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        config.rootParameters[2].DescriptorTable.pDescriptorRanges = descRange;
+        config.rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+        config.rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        // 加算合成などのために深度の書き込みを制限する場合
+        config.depthEnable = true;
+        config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 粒子同士で隠面消去しない
+        config.cullMode = D3D12_CULL_MODE_NONE;
+
+        return config;
+        });
+
+    // パーティクルは通常「加算(Add)」をデフォルトにする場合が多い
+    auto& pso = psoManager->GetPso("Particle", BlendMode::Add);
+    rootSignature_ = pso.rootSignature;
+    graphicsPipelineState_ = pso.pipelineState;
 
     //  CreatePSO();
       //頂点データの初期化（座標等）
@@ -184,11 +228,11 @@ void ParticleManager::Emit(const std::string name, const Vector3& postion, uint3
 }
 
 void ParticleManager::CreateRootSignature()
-{
+{/*
     PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
     PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);
     graphicsPipelineState_ = psoset.pipelineState;
-    rootSignature_ = psoset.rootSignature;
+    rootSignature_ = psoset.rootSignature;*/
 }
 void ParticleManager::CreateVertexBuffer() {
     VertexData vertices[] = {

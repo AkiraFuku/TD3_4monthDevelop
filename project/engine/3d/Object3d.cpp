@@ -30,10 +30,10 @@ void Object3d::Update()
     if (camera_)
     {
         cameraData_->worldPosition = camera_->GetTranslate();
-      worldViewProjectionMatrix = Multiply( Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix), camera_->GetViewProtectionMatrix());
-     //   worldViewProjectionMatrix = Multiply( worldMatrix, camera_->GetViewProtectionMatrix());
+        worldViewProjectionMatrix = Multiply(Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix), camera_->GetViewProtectionMatrix());
+        //   worldViewProjectionMatrix = Multiply( worldMatrix, camera_->GetViewProtectionMatrix());
     } else {
-        worldViewProjectionMatrix =Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix);
+        worldViewProjectionMatrix = Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix);
     }
     //行列をGPUに転送
     wvpResource_->WVP = worldViewProjectionMatrix;
@@ -58,11 +58,9 @@ void Object3d::Draw()
     // カメラがセットされていない場合は描画できないので終了
     if (!camera_) return;
 
-    
-    Object3dCommon::GetInstance()->Object3dCommonDraw();
-    PsoProperty psoProp = { PipelineType::Object3d, blendMode_ ,fillMode_ };
-    PsoSet psoSet = PSOManager::GetInstance()->GetPsoSet(psoProp);
 
+    Object3dCommon::GetInstance()->Object3dCommonDraw();
+    auto& psoSet = PSOManager::GetInstance()->GetPso("Object3d", blendMode_, fillMode_);
     // PSOをセット
     DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
     //WVP行列リソースの設定

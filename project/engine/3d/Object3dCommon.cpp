@@ -5,7 +5,7 @@
 // 静的メンバ変数の初期化
 std::unique_ptr<Object3dCommon> Object3dCommon::instance = nullptr;
 Object3dCommon* Object3dCommon::GetInstance() {
-   if (instance == nullptr) {
+    if (instance == nullptr) {
         // privateコンストラクタのため reset(new ...) を使用
         instance.reset(new Object3dCommon());
     }
@@ -13,21 +13,91 @@ Object3dCommon* Object3dCommon::GetInstance() {
 }
 
 void Object3dCommon::Finalize() {
-  instance.reset(); // 解放
+    instance.reset(); // 解放
 }
 void Object3dCommon::Initialize()
-{
-       PsoProperty pso={PipelineType::Object3d,BlendMode::None,FillMode::kSolid};
-    PsoSet psoset=PSOManager::GetInstance()->GetPsoSet(pso);
-    graphicsPipelineState_=psoset.pipelineState;
-    rootSignature_=psoset.rootSignature;
+{auto psoManager = PSOManager::GetInstance();
 
-    
- //   CreatePSO();
+    // "Object3d" という名前でパイプライン生成レシピを登録
+    psoManager->RegisterPsoGenerator("Object3d", []() {
+        PsoConfig config;
+
+        // 1. シェーダーパスの設定
+        config.vsPath = L"resources/shaders/Object3d/Object3D.vs.hlsl";
+        config.psPath = L"resources/shaders/Object3d/Object3D.ps.hlsl";
+
+        // 2. インプットレイアウトの設定
+      /* config.inputElements = {
+         { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT },
+        };*/
+        // 3. ルートパラメータの設定 (Object3d.cpp の元々の定義を反映)
+        // ※ staticにしないと、関数を抜けた時に descriptorRange 等のポインタが無効になるため注意
+        static D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
+        descRangeTexture[0].BaseShaderRegister = 0; // t0
+        descRangeTexture[0].NumDescriptors = 1;
+        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        config.rootParameters.resize(8);
+        // Enum定義 (可読性のため)
+        enum {
+            kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
+        };
+        // Material (b0)
+        config.rootParameters[kMaterial].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        config.rootParameters[kMaterial].Descriptor.ShaderRegister = 0;
+        config.rootParameters[kMaterial].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // Transform (b0 - Vertex)
+        config.rootParameters[kTransform].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        config.rootParameters[kTransform].Descriptor.ShaderRegister = 0;
+        config.rootParameters[kTransform].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        // Texture (t0)
+        config.rootParameters[kTexture].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        config.rootParameters[kTexture].DescriptorTable.pDescriptorRanges = descRangeTexture;
+        config.rootParameters[kTexture].DescriptorTable.NumDescriptorRanges = 1;
+        config.rootParameters[kTexture].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // DirectionalLight (t1)
+        config.rootParameters[DirLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        config.rootParameters[DirLight].Descriptor.ShaderRegister = 1;
+        config.rootParameters[DirLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // PointLight (t2)
+        config.rootParameters[PointLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        config.rootParameters[PointLight].Descriptor.ShaderRegister = 2;
+        config.rootParameters[PointLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // SpotLight (t3)
+        config.rootParameters[SpotLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        config.rootParameters[SpotLight].Descriptor.ShaderRegister = 3;
+        config.rootParameters[SpotLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // LightCounts (b3)
+        config.rootParameters[Count].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        config.rootParameters[Count].Descriptor.ShaderRegister = 3;
+        config.rootParameters[Count].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // Camera (b2)
+        config.rootParameters[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        config.rootParameters[kCamera].Descriptor.ShaderRegister = 2;
+        config.rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        // 4. ラスタライザ・深度設定
+        config.cullMode = D3D12_CULL_MODE_NONE; // Object3d はカリングなし
+        config.depthEnable = true;
+        config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
+        return config;
+    });
+
+    // 初期化時にデフォルトのPSOを取得しておく（キャッシュ生成）
+    auto& defaultPso = psoManager->GetPso("Object3d", BlendMode::None, FillMode::kSolid);
+    rootSignature_ = defaultPso.rootSignature;
+    graphicsPipelineState_ = defaultPso.pipelineState;
+
+
+    //   CreatePSO();
 }
 void Object3dCommon::Object3dCommonDraw()
 {
-      // RootSignatureの設定
+    // RootSignatureの設定
     DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootSignature(rootSignature_.Get());
     //  //PSOの設定
     DXCommon::GetInstance()->GetCommandList()->SetPipelineState(graphicsPipelineState_.Get());
@@ -36,7 +106,7 @@ void Object3dCommon::Object3dCommonDraw()
 }
 void Object3dCommon::CreateRootSignature()
 {
-///ディスクプリプターレンジの作成
+    ///ディスクプリプターレンジの作成
     D3D12_DESCRIPTOR_RANGE descriptorRange[1]{};
     descriptorRange[0].BaseShaderRegister = 0;//シェーダーのレジスタ番号0
     descriptorRange[0].NumDescriptors = 1;//ディスクリプタの数1つ
@@ -103,8 +173,8 @@ void Object3dCommon::CreateRootSignature()
     );
     assert(SUCCEEDED(hr_));
 }
-void Object3dCommon::CreatePSO(){
-     CreateRootSignature();
+void Object3dCommon::CreatePSO() {
+    CreateRootSignature();
     //InputLayoutの設定
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
     inputElementDescs[0].SemanticName = "POSITION";
