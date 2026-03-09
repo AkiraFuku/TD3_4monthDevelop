@@ -3,8 +3,7 @@
 #include"Object3D.h"
 #include "Model.h"
 #include "Camera.h"
-
-class Player
+class Egg
 {
 public:
 
@@ -13,10 +12,11 @@ public:
     void Finalize();
 
     void Update();
-    
+
     void Draw();
 
-    void Move();
+    // ワールド座標を取得
+    Vector3 GetWorldPosition();
 
 public: // 外部入出力
 
@@ -27,12 +27,9 @@ public: // 外部入出力
 private:
 
     std::unique_ptr<Object3d> object_;
-    
+
     Vector3 scale_ = { 1.0f,1.0f,1.0f };
     Vector3 rotate_ = { 0.0f,0.0f,0.0f };
     Vector3 translate_ = { 0.0f,0.0f,0.0f };
-
-    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
-    Vector3 acceleration_ = { 0.1f, 0.1f, 0.1f };
 };
 

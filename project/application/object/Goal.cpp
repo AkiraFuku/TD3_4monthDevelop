@@ -1,28 +1,31 @@
-#include "Player.h"
+#include "Goal.h"
 #include "ModelManager.h"
 #include "imgui.h"
-#include "Input.h"
+#include "Egg.h"
+#include "SceneManager.h"
 
-void Player::Initialize()
+void Goal::Initialize()
 {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
     ModelManager::GetInstance()->LoadModel("player/player.obj");
     object_->SetModel("player/player.obj");
+
+    Vector3 translate = object_->GetTranslate();
+    translate.y -= 4.0f; // ゴールの位置を少し下げる
+    translate.z -= 2.0f;
+    object_->SetTranslate(translate);
 }
 
-void Player::Finalize()
+void Goal::Finalize()
 {
- 
+
 }
 
-void Player::Update()
+void Goal::Update()
 {
-  
-    Move();
-
-    ImGui::Begin("Player Window");
+    ImGui::Begin("Goal Window");
 
     Vector3 scale = object_->GetScale();
     if (ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.1f, 10.0f))
@@ -48,29 +51,21 @@ void Player::Update()
     object_->Update();
 }
 
-void Player::Draw()
+void Goal::Draw()
 {
     object_->Draw();
 }
 
-void Player::Move()
+void Goal::Clear()
 {
-    // [移動]
-    if (Input::GetInstance()->PushedKeyDown(DIK_D)) 
-    {
-        velocity_.x = 0.5f;
-    }
-    if (Input::GetInstance()->PushedKeyDown(DIK_A)) 
-    {
-        velocity_.x = -0.5f;
-    }
+    // 卵とゴールの当たり判定
+    Vector3 goalPos = object_->GetTranslate();
+    Vector3 eggPos = egg_->GetWorldPosition();
 
-    if (Input::GetInstance()->PushedKeyDown(DIK_W))
-    {
-        velocity_.z = 0.5f;
-    }
-    if (Input::GetInstance()->PushedKeyDown(DIK_S))
-    {
-        velocity_.z = -0.5f;
+    // 卵がゴールの真上にあったら
+    if (goalPos.x - 1.0f < eggPos.x && eggPos.x < goalPos.x + 1.0f &&
+        goalPos.z - 1.0f < eggPos.z && eggPos.z < goalPos.z + 1.0f) {
+        // シーン遷移
+        SceneManager::GetInstance()->ChangeScene("TitleScene");
     }
 }

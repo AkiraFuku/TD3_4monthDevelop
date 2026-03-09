@@ -73,6 +73,16 @@ void GameScene::Initialize() {
     terrain_ = new Terrain();
     terrain_->Initialize();
 
+    // 卵の初期化
+    egg_ = new Egg();
+    egg_->Initialize();
+
+    // ゴールの初期化
+    goal_ = new Goal();
+    goal_->Initialize();
+
+    goal_->SetEgg(egg_);
+
 }
 void GameScene::Finalize() {
 
@@ -86,6 +96,12 @@ void GameScene::Finalize() {
 
     terrain_->Finalize();
     delete terrain_;
+
+    egg_->Finalize();
+    delete egg_;
+
+    goal_->Finalize();
+    delete goal_;
 }
 void GameScene::Update() {
     emitter->Update();
@@ -305,12 +321,27 @@ void GameScene::Update() {
     player_->Update();
 
     terrain_->Update();
+
+    // 卵の更新処理
+    egg_->Update();
+
+    // ゴールの更新処理
+    goal_->Update();
+
+    // ゴールクリアの判定
+    goal_->Clear();
 }
 void GameScene::Draw() {
 
-    player_->Draw();
+    //player_->Draw();
 
-    terrain_->Draw();
+    //terrain_->Draw();
+
+    // 卵の描画処理
+    egg_->Draw();
+
+    // ゴールの描画処理
+    goal_->Draw();
     
     // ParticleManager::GetInstance()->Draw();
      ///////スプライトの描画
