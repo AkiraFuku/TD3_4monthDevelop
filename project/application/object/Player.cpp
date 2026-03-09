@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "ModelManager.h"
 #include "imgui.h"
+#include "Input.h"
 
 void Player::Initialize()
 {
@@ -18,6 +19,9 @@ void Player::Finalize()
 
 void Player::Update()
 {
+  
+
+
     ImGui::Begin("Player Window");
 
     Vector3 scale = object_->GetScale();
