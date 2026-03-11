@@ -1,4 +1,6 @@
 #include "ModelManager.h"
+#include "TextureManager.h"
+
 std::unique_ptr<ModelManager> ModelManager::instance = nullptr;
 void ModelManager::Initialize() {
  
@@ -59,4 +61,19 @@ void ModelManager::CreateSphereModel(const std::string& modelName, uint32_t subd
     // 2. マップに登録
     // これで "Sphere" などの名前で検索できるようになります
     models.insert(std::make_pair(modelName, std::move(model)));
+}
+
+void ModelManager::CreatePlaneFromTex(const std::string& modelName, const std::string& textureFilePath)
+{
+    if (models.contains(modelName)) return;
+
+    // 何かしらパスが正しいかどうかを確認する処理が必要
+
+    std::shared_ptr<Model> model(Model::CreatePlaneFromTex(textureFilePath));
+
+    model->SetName(modelName);
+
+    models.insert(std::make_pair(modelName, std::move(model)));
+
+    
 }

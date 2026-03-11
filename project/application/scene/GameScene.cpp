@@ -7,6 +7,7 @@
 #include "PSOMnager.h"
 #include "LightManager.h"
 #include <numbers>
+
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
@@ -58,9 +59,12 @@ void GameScene::Initialize() {
     ModelManager::GetInstance()->LoadModel("axis.obj");
     ModelManager::GetInstance()->LoadModel("terrain.obj");
     ModelManager::GetInstance()->CreateSphereModel("MySphere", 16);
+   
+    
     // object3d2->SetTranslate(Vector3{ 0.0f,10.0f,0.0f });
     object3d2->SetModel("terrain.obj");
     object3d->SetModel("MySphere");
+ 
 
     /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
     camera->SetFarCrip(1000.0f);
@@ -85,6 +89,9 @@ void GameScene::Initialize() {
 
     player_ = std::make_unique<Player>();
     player_->Initialize(playerPos_);
+
+    collisionMask_ = CollisionMask::GetInstance();
+    collisionMask_->Initialize();
 
 }
 void GameScene::Finalize() {
@@ -214,6 +221,7 @@ void GameScene::Update() {
     camera->UpdateViewProjection();
     object3d->Update();
     object3d2->Update();
+   
 
 
 #ifdef USE_IMGUI
@@ -333,9 +341,9 @@ void GameScene::Update() {
 
     //ImGui::End();
 
-    //ImGui::Begin("DebugCamera Setting");
-    //ImGui::Checkbox("DebugCamera", &isDebugCamera_);
-    //ImGui::End();
+    ImGui::Begin("DebugCamera Setting");
+    ImGui::Checkbox("DebugCamera", &isDebugCamera_);
+    ImGui::End();
 
 
 
@@ -360,6 +368,8 @@ void GameScene::Update() {
 
     // ゴールクリアの判定
     goal_->Clear();
+
+    collisionMask_->Update();
 }
 void GameScene::Draw() {
 
@@ -378,4 +388,6 @@ void GameScene::Draw() {
     //sprite->Draw();
 
     player_->Draw();
+
+    collisionMask_->Draw();
 }
