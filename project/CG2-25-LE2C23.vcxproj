@@ -65,6 +65,9 @@
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
+    <ClCompile Include="ThreadManager.cpp" />
+    <ClCompile Include="ThreadPhysics.cpp" />
+    <ClCompile Include="ThreadRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -116,6 +119,10 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
+    <ClInclude Include="PhysicsNode.h" />
+    <ClInclude Include="ThreadManager.h" />
+    <ClInclude Include="ThreadPhysics.h" />
+    <ClInclude Include="ThreadRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
