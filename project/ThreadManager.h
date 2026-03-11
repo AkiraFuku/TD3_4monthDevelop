@@ -33,6 +33,9 @@ public:
   // 全ての糸を消去する
   void ClearThreads();
 
+  // 既存の physicsList_ を外部から読み取れるようにする
+  const std::vector<std::unique_ptr<ThreadPhysics>>& GetPhysicsList() const { return physicsList_; }
+
 private:
   // 複数本の物理演算オブジェクト
   std::vector<std::unique_ptr<ThreadPhysics>> physicsList_;
