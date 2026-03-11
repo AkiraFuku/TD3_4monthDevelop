@@ -81,9 +81,14 @@ void GameScene::Initialize() {
   terrain_ = new Terrain();
   terrain_->Initialize();*/
 
-  // 卵の初期化
-  egg_ = std::make_unique<Egg>();
-  egg_->Initialize();
+    // プレイヤーの初期化
+    player_ = std::make_unique<Player>();
+    player_->Initialize(playerPos_);
+
+    // 卵の初期化
+    egg_ = std::make_unique<Egg>();
+    egg_->Initialize();
+    egg_->SetPlayer(player_.get());
 
   // ゴールの初期化
   goal_ = std::make_unique<Goal>();
@@ -91,9 +96,6 @@ void GameScene::Initialize() {
 
   goal_->SetEgg(egg_.get());
 
-  // ----- Player -----
-  player_ = std::make_unique<Player>();
-  player_->Initialize(playerPos_);
 
   // ----- Thread -----
   thread_ = std::make_unique<ThreadManager>();
@@ -361,8 +363,13 @@ void GameScene::Update() {
   // ゴールの更新処理
   goal_->Update();
 
-  // ゴールクリアの判定
-  goal_->Clear();
+    
+    // 当たり判定の確認
+    CheckAllCollisions();
+
+    // ゴールクリアの判定
+    goal_->Clear();
+
 }
 void GameScene::Draw() {
 
@@ -380,7 +387,86 @@ void GameScene::Draw() {
   ///////スプライトの描画
   // sprite->Draw();
 
-  player_->Draw();
+    player_->Draw();
 
-  thread_->Draw();
+    thread_->Draw();
 }
+
+void GameScene::CheckAllCollisions()
+{
+    // 判定対象1と2の座標
+    AABB playerAABB = player_->GetAABB();
+    AABB eggAABB = egg_->GetAABB();
+
+    if (isCollision(playerAABB, eggAABB)) {
+        // プレイヤーと卵が衝突している場合の処理
+        egg_->OnCollision(player_.get());
+
+        // めり込み防止（位置補正）
+        ResolveCollision(player_.get(), playerAABB, eggAABB);
+    }
+    else
+    {
+        // 衝突していない場合はヒットフラグをリセット
+        egg_->SetHitFlag(false);
+    }
+}
+
+bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
+{
+    if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x && aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y && aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+        return true;
+    }
+
+    return false;
+}
+
+void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB)
+{
+    // 各軸ごとのめり込み量を計算
+    // min(右側のめり込み, 左側のめり込み) をとる
+    float overlapX = std::min(playerAABB.max.x - otherAABB.min.x, otherAABB.max.x - playerAABB.min.x);
+    float overlapY = std::min(playerAABB.max.y - otherAABB.min.y, otherAABB.max.y - playerAABB.min.y);
+    float overlapZ = std::min(playerAABB.max.z - otherAABB.min.z, otherAABB.max.z - playerAABB.min.z);
+
+    Vector3 currentPos = player->GetPosition();
+
+    // 最もめり込みが小さい軸（最短分離軸）を特定して押し戻す
+    if (overlapX < overlapY && overlapX < overlapZ) {
+        // X軸方向の押し戻し
+        if (playerAABB.min.x < otherAABB.min.x)
+        {
+            currentPos.x -= overlapX;
+        }// 左へ
+        else
+        {
+            currentPos.x += overlapX; // 右へ
+        }
+    }
+    else if (overlapZ < overlapX && overlapZ < overlapY) {
+        // Z軸方向の押し戻し
+        if (playerAABB.min.z < otherAABB.min.z)
+        {
+            currentPos.z -= overlapZ; // 手前へ
+        }
+        else
+        {
+            currentPos.z += overlapZ; // 奥へ
+        }
+    }
+    else {
+        // Y軸方向の押し戻し（床や天井）
+        if (playerAABB.min.y < otherAABB.min.y)
+        {
+            currentPos.y -= overlapY; // 下へ
+        }
+        else
+        {
+            currentPos.y += overlapY; // 上へ
+        }
+    }
+
+    // 修正した座標を反映
+    player->SetPosition(currentPos);
+}
+  
