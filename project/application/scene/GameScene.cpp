@@ -117,6 +117,8 @@ void GameScene::Finalize() {
 
   ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
+  collisionMask_->Finalize();
+
   /*player_->Finalize();
   delete player_;
 
