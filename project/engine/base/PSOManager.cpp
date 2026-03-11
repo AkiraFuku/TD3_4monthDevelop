@@ -25,17 +25,17 @@ PSOManager* PSOManager::GetInstance() {
 void PSOManager::Initialize() {
     psoCache_.clear();
     rootSigCache_.clear();
-    psoConfig_.clear();
+    psoConfigs_.clear();
 }
 
 void PSOManager::Finalize() {
     psoCache_.clear();
     rootSigCache_.clear();
-    psoConfig_.clear();
+    psoConfigs_.clear();
 }
 
 void PSOManager::RegisterPsoGenerator(const std::string& name, const PsoConfig& psoConfig) {
-    psoConfig_[name] = psoConfig;
+    psoConfigs_[name] = psoConfig;
 }
 
 D3D12_STATIC_SAMPLER_DESC PSOManager::StaticSamplers()
@@ -81,10 +81,10 @@ void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<I
 
     auto dxCommon = DXCommon::GetInstance();
 
-    psoConfig_[name];
+    psoConfigs_[name];
 
-    vs = dxCommon->CompileShader(psoConfig_[name].vsPath, L"vs_6_0");
-    ps = dxCommon->CompileShader(psoConfig_[name].psPath, L"ps_6_0");
+    vs = dxCommon->CompileShader(psoConfigs_[name].vsPath, L"vs_6_0");
+    ps = dxCommon->CompileShader(psoConfigs_[name].psPath, L"ps_6_0");
 
 
 
@@ -289,112 +289,57 @@ void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<I
 // -------------------------------------------------------------------------
 // PSO 生成
 // -------------------------------------------------------------------------
-void PSOManager::CreatePso(const std::string& name, BlendMode blend, FillMode fill) {
+ void PSOManager::CreatePso(const std::string& name, BlendMode blend, FillMode fill) {
     auto device = DXCommon::GetInstance()->GetDevice();
+    const auto& config = psoConfigs_.at(name);
 
-    ////// 1. RootSignature
-    //CreateRootSignature();
-    //auto rootSignature = rootSignatureCache_[property.type];
-
-    ////InputLayoutの設定
-    //D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
-    //inputElementDescs[0].SemanticName = "POSITION";
-    //inputElementDescs[0].SemanticIndex = 0;
-    //inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    //inputElementDescs[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-    ////
-    //inputElementDescs[1].SemanticName = "TEXCOORD";
-    //inputElementDescs[1].SemanticIndex = 0;
-    //inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-    //inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-    ////
-    //inputElementDescs[2].SemanticName = "NORMAL";
-    //inputElementDescs[2].SemanticIndex = 0;
-    //inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-    //inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-    const auto& config = psoConfig_.at(name);
-
-    // 1. RootSignature の取得 (Generatorを呼び出す)
+    // 1. RootSignature のキャッシュ確認と生成
     if (!rootSigCache_.contains(name)) {
-        if (config.rootSignatureGenerator) {
-            rootSigCache_[name] = config.rootSignatureGenerator();
-        } else {
-            assert(false && "RootSignatureGeneratorが設定されていません");
-        }
+        assert(config.rootSignatureGenerator && "RootSignatureGenerator is null");
+        rootSigCache_[name] = config.rootSignatureGenerator();
     }
     auto rootSignature = rootSigCache_[name];
 
-    // 2. InputLayout の取得 (Generatorからvectorを取得)
+    // 2. InputLayout の取得
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
     if (config.inputLayoutGenerator) {
         inputElements = config.inputLayoutGenerator();
     }
 
-
-    D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
-    inputLayoutDesc.pInputElementDescs = inputElements.data();
-    inputLayoutDesc.NumElements = static_cast<UINT>(inputElements.size());
-
-
-    // 2. Shader (キャッシュ対応版)
-    ComPtr<IDxcBlob> vsBlob;
-    ComPtr<IDxcBlob> psBlob;
+    // 3. Shader の取得
+    Microsoft::WRL::ComPtr<IDxcBlob> vsBlob, psBlob;
     EnsureShaders(name, vsBlob, psBlob);
 
-
-
-    //// 4. Rasterizer & Depth
-    //D3D12_RASTERIZER_DESC rasterizerDesc{};
-    //if (fill == FillMode::kWireFrame) {
-    //    rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME; // ワイヤーフレーム
-    //} else {
-    //    rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;     // 通常塗りつぶし
-    //}
-
-    //D3D12_DEPTH_STENCIL_DESC depthDesc{};
-    //depthDesc.DepthEnable = true;
-    ////書き込み
-    //depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    ////比較関数
-    //depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-
-    //// タイプごとの設定微調整
-    //switch (property.type) {
-    //case PipelineType::Sprite:
-    //    rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK; // 2Dはカリングしないことが多い
-    //    depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    //    break;
-    //case PipelineType::Object3d:
-    //    rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-    //    depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    //    break;
-    //case PipelineType::Particle:
-    //    rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-    //    depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 半透明パーティクルはZ書き込みOFF
-    //}
-
-    // 5. Blend
- //   D3D12_BLEND_DESC blendDesc = CreateBlendDesc(blend);
     // 4. PSO構築
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     psoDesc.pRootSignature = rootSignature.Get();
 
-    psoDesc.InputLayout = inputLayoutDesc;
+    // InputLayout
+    psoDesc.InputLayout = { inputElements.data(), static_cast<UINT>(inputElements.size()) };
 
+    // Shaders
     psoDesc.VS = { vsBlob->GetBufferPointer(), vsBlob->GetBufferSize() };
     psoDesc.PS = { psBlob->GetBufferPointer(), psBlob->GetBufferSize() };
 
+    // Blend State
     psoDesc.BlendState = CreateBlendDesc(blend);
+
+    // Rasterizer State
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.RasterizerState.FillMode = (fill == FillMode::kWireFrame) ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
     psoDesc.RasterizerState.CullMode = config.cullMode;
     psoDesc.RasterizerState.DepthClipEnable = TRUE;
 
+    // DepthStencil State (Configからの値を優先)
     psoDesc.DepthStencilState = config.depth;
     psoDesc.DepthStencilState.DepthEnable = config.depthEnable;
     psoDesc.DepthStencilState.DepthWriteMask = config.depthWriteMask;
-    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    // 深度比較関数が設定されていない場合のデフォルト
+    if(psoDesc.DepthStencilState.DepthFunc == 0) {
+        psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    }
 
+    // フォーマット設定 (環境に合わせて適宜変更)
     psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     psoDesc.NumRenderTargets = 1;
@@ -405,27 +350,120 @@ void PSOManager::CreatePso(const std::string& name, BlendMode blend, FillMode fi
     PsoSet psoSet;
     psoSet.rootSignature = rootSignature;
     HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoSet.pipelineState));
-    assert(SUCCEEDED(hr));
+    assert(SUCCEEDED(hr) && "Failed to create Pipeline State");
 
     psoCache_[{name, blend, fill}] = psoSet;
 }
-//    // 6. PSO構築
+//void PSOManager::CreatePso(const std::string& name, BlendMode blend, FillMode fill) {
+//    auto device = DXCommon::GetInstance()->GetDevice();
+//
+//    ////// 1. RootSignature
+//    //CreateRootSignature();
+//    //auto rootSignature = rootSignatureCache_[property.type];
+//
+//    ////InputLayoutの設定
+//    //D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
+//    //inputElementDescs[0].SemanticName = "POSITION";
+//    //inputElementDescs[0].SemanticIndex = 0;
+//    //inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+//    //inputElementDescs[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+//    ////
+//    //inputElementDescs[1].SemanticName = "TEXCOORD";
+//    //inputElementDescs[1].SemanticIndex = 0;
+//    //inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+//    //inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+//    ////
+//    //inputElementDescs[2].SemanticName = "NORMAL";
+//    //inputElementDescs[2].SemanticIndex = 0;
+//    //inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+//    //inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+//
+//    const auto& config = psoConfig_.at(name);
+//
+//    // 1. RootSignature の取得 (Generatorを呼び出す)
+//    if (!rootSigCache_.contains(name)) {
+//        if (config.rootSignatureGenerator) {
+//            rootSigCache_[name] = config.rootSignatureGenerator();
+//        } else {
+//            assert(false && "RootSignatureGeneratorが設定されていません");
+//        }
+//    }
+//    auto rootSignature = rootSigCache_[name];
+//
+//    // 2. InputLayout の取得 (Generatorからvectorを取得)
+//    std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
+//    if (config.inputLayoutGenerator) {
+//        inputElements = config.inputLayoutGenerator();
+//    }
+//
+//
+//    D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
+//    inputLayoutDesc.pInputElementDescs = inputElements.data();
+//    inputLayoutDesc.NumElements = static_cast<UINT>(inputElements.size());
+//
+//
+//    // 2. Shader (キャッシュ対応版)
+//    ComPtr<IDxcBlob> vsBlob;
+//    ComPtr<IDxcBlob> psBlob;
+//    EnsureShaders(name, vsBlob, psBlob);
+//
+//
+//
+//    //// 4. Rasterizer & Depth
+//    //D3D12_RASTERIZER_DESC rasterizerDesc{};
+//    //if (fill == FillMode::kWireFrame) {
+//    //    rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME; // ワイヤーフレーム
+//    //} else {
+//    //    rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;     // 通常塗りつぶし
+//    //}
+//
+//    //D3D12_DEPTH_STENCIL_DESC depthDesc{};
+//    //depthDesc.DepthEnable = true;
+//    ////書き込み
+//    //depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+//    ////比較関数
+//    //depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+//
+//    //// タイプごとの設定微調整
+//    //switch (property.type) {
+//    //case PipelineType::Sprite:
+//    //    rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK; // 2Dはカリングしないことが多い
+//    //    depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+//    //    break;
+//    //case PipelineType::Object3d:
+//    //    rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+//    //    depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+//    //    break;
+//    //case PipelineType::Particle:
+//    //    rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+//    //    depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 半透明パーティクルはZ書き込みOFF
+//    //}
+//
+//    // 5. Blend
+// //   D3D12_BLEND_DESC blendDesc = CreateBlendDesc(blend);
+//    // 4. PSO構築
 //    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 //    psoDesc.pRootSignature = rootSignature.Get();
+//
 //    psoDesc.InputLayout = inputLayoutDesc;
+//
 //    psoDesc.VS = { vsBlob->GetBufferPointer(), vsBlob->GetBufferSize() };
 //    psoDesc.PS = { psBlob->GetBufferPointer(), psBlob->GetBufferSize() };
-//    psoDesc.BlendState = blendDesc;
-//    psoDesc.RasterizerState = rasterizerDesc;
-//    psoDesc.NumRenderTargets = 1;
-//    // ★注意: ここはSwapChainの形式に合わせる必要があります
-//    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-//    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-//    psoDesc.SampleDesc.Count = 1;
-//    psoDesc.DepthStencilState = depthDesc;
-//    psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 //
-//    //カラー
+//    psoDesc.BlendState = CreateBlendDesc(blend);
+//    psoDesc.RasterizerState.FillMode = (fill == FillMode::kWireFrame) ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
+//    psoDesc.RasterizerState.CullMode = config.cullMode;
+//    psoDesc.RasterizerState.DepthClipEnable = TRUE;
+//
+//    psoDesc.DepthStencilState = config.depth;
+//    psoDesc.DepthStencilState.DepthEnable = config.depthEnable;
+//    psoDesc.DepthStencilState.DepthWriteMask = config.depthWriteMask;
+//    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+//
+//    psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+//    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+//    psoDesc.NumRenderTargets = 1;
+//    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 //    psoDesc.SampleDesc.Count = 1;
 //    psoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 //
@@ -434,8 +472,35 @@ void PSOManager::CreatePso(const std::string& name, BlendMode blend, FillMode fi
 //    HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoSet.pipelineState));
 //    assert(SUCCEEDED(hr));
 //
-//    psoCache_[name] = psoSet;
+//    psoCache_[{name, blend, fill}] = psoSet;
 //}
+////    // 6. PSO構築
+////    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
+////    psoDesc.pRootSignature = rootSignature.Get();
+////    psoDesc.InputLayout = inputLayoutDesc;
+////    psoDesc.VS = { vsBlob->GetBufferPointer(), vsBlob->GetBufferSize() };
+////    psoDesc.PS = { psBlob->GetBufferPointer(), psBlob->GetBufferSize() };
+////    psoDesc.BlendState = blendDesc;
+////    psoDesc.RasterizerState = rasterizerDesc;
+////    psoDesc.NumRenderTargets = 1;
+////    // ★注意: ここはSwapChainの形式に合わせる必要があります
+////    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+////    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+////    psoDesc.SampleDesc.Count = 1;
+////    psoDesc.DepthStencilState = depthDesc;
+////    psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+////
+////    //カラー
+////    psoDesc.SampleDesc.Count = 1;
+////    psoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+////
+////    PsoSet psoSet;
+////    psoSet.rootSignature = rootSignature;
+////    HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoSet.pipelineState));
+////    assert(SUCCEEDED(hr));
+////
+////    psoCache_[name] = psoSet;
+////}
 
 D3D12_BLEND_DESC PSOManager::CreateBlendDesc(BlendMode mode) {
     D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);

@@ -15,8 +15,8 @@ void ParticleManager::Initialize() {
     //パイプラインステート生成
 
     PsoConfig psoConfig{};
-    psoConfig.vsPath=L"resources/shaders/Particle/Particle.vs.hlsl";
-    psoConfig.psPath=L"resources/shaders/Particle/Particle.ps.hlsl";
+    psoConfig.vsPath = L"resources/shaders/Particle/Particle.vs.hlsl";
+    psoConfig.psPath = L"resources/shaders/Particle/Particle.ps.hlsl";
     psoConfig.rootSignatureGenerator = []() -> Microsoft::WRL::ComPtr<ID3D12RootSignature> {
         // ルートシグネチャの生成
         D3D12_DESCRIPTOR_RANGE descriptorRange[1]{};
@@ -72,14 +72,105 @@ void ParticleManager::Initialize() {
             return nullptr;
         }
         return rootSignature;
-    };
+        };
 
 
 
 
-    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);
-    graphicsPipelineState_ = psoset.pipelineState;
-    rootSignature_ = psoset.rootSignature;
+    PsoConfig config{};
+    config.vsPath = L"resources/shaders/Particle/Particle.vs.hlsl";
+    config.psPath = L"resources/shaders/Particle/Particle.ps.hlsl";
+
+
+    config.rootSignatureGenerator = []() {
+        std::vector<D3D12_ROOT_PARAMETER> rootParameters;
+        std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
+        D3D12_STATIC_SAMPLER_DESC sampler{};
+        sampler = PSOManager::GetInstance()->StaticSamplers();
+
+        staticSamplers.push_back(sampler);
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
+        descRangeTexture[0].BaseShaderRegister = 0; // t0
+        descRangeTexture[0].NumDescriptors = 1;
+        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+
+        // パーティクル用インスタンシングレンジ (VS t0)
+            // ※ staticにしないとスコープを抜けてデータが壊れる可能性があるため注意
+            //   ここでは関数内完結させるため、vector等で管理するか、static配列にする
+        static D3D12_DESCRIPTOR_RANGE descRangeInstancing[1]{};
+        descRangeInstancing[0].BaseShaderRegister = 0; // t0 (VS)
+        descRangeInstancing[0].NumDescriptors = 1;
+        descRangeInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRangeInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        rootParameters.resize(4);
+
+        // [Param 0] Material (CBV b0, Pixel)
+        rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[0].Descriptor.ShaderRegister = 0;
+
+        // [Param 1] Instancing Data (DescriptorTable t0, Vertex) ★ここが重要
+        rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        rootParameters[1].DescriptorTable.pDescriptorRanges = descRangeInstancing;
+        rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+
+        // [Param 2] Texture (DescriptorTable t0, Pixel)
+        rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[2].DescriptorTable.pDescriptorRanges = descRangeTexture;
+        rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+
+        // [Param 3] DirectionalLight (CBV b1, Pixel)
+        rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[3].Descriptor.ShaderRegister = 1;
+        // シリアライズ
+        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
+        descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        descriptionRootSignature.pParameters = rootParameters.data();
+        descriptionRootSignature.NumParameters = (UINT)rootParameters.size();
+        descriptionRootSignature.pStaticSamplers = staticSamplers.data();
+        descriptionRootSignature.NumStaticSamplers = (UINT)staticSamplers.size();
+
+
+        Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
+        Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+
+        HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+        if (FAILED(hr)) {
+            Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+            assert(false);
+        }
+
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
+        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        assert(SUCCEEDED(hr));
+
+
+
+        return rootSignature;
+        };
+    config.inputLayoutGenerator = []() {
+        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };
+        };
+    // 深度設定
+    config.depthEnable = true;
+    config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    config.cullMode = D3D12_CULL_MODE_NONE; // パーティクルは両面描画することが多いので、カリングなしに設定
+
+    // PSOManagerに名前を付けて登録
+    PSOManager::GetInstance()->RegisterPsoGenerator("Particle", config);
+    auto psoSet = PSOManager::GetInstance()->GetPso("Particle");
+    graphicsPipelineState_ = psoSet.pipelineState;
+    rootSignature_ = psoSet.rootSignature;
 
     //  CreatePSO();
       //頂点データの初期化（座標等）
@@ -246,10 +337,10 @@ void ParticleManager::Emit(const std::string name, const Vector3& postion, uint3
 
 void ParticleManager::CreateRootSignature()
 {
-    PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
-    PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);
-    graphicsPipelineState_ = psoset.pipelineState;
-    rootSignature_ = psoset.rootSignature;
+    ///* PsoProperty pso = { PipelineType::Particle,BlendMode::Add };
+    // PsoSet psoset = PSOManager::GetInstance()->GetPsoSet(pso);*/
+    // graphicsPipelineState_ = psoset.pipelineState;
+    // rootSignature_ = psoset.rootSignature;
 }
 void ParticleManager::CreateVertexBuffer() {
     VertexData vertices[] = {
