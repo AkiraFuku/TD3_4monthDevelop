@@ -1,8 +1,11 @@
-#define DEFINEMINMAX
+#define NOMINMAX
+
 #include "ThreadManager.h"
 
 #include "Camera.h"
+#include "MathFunction.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 
