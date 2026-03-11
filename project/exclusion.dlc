@@ -20,3 +20,6 @@ dinput
 dxguid
 Assimp
 aabb
+aabb
+texcord
+Deleter

@@ -1,24 +1,23 @@
 #include "PathFinder.h"
 #include "CollisionMask.h"
+#include "ThreadManager.h"
+#include "ThreadPhysics.h" // PhysicsNodeの構造を知るために必要
 #include <cmath>
 #include <algorithm>
 
-std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height) {
+std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height, ThreadManager* tm) {
     std::vector<Node*> openList;
     std::vector<Node*> closedList;
     std::vector<Point> finalPath;
 
-    // 1. スタートノードを作成してOpenリストへ
     openList.push_back(new Node(start, 0, CalcH(start, goal), nullptr));
 
     while (!openList.empty()) {
-        // 2. Openリストの中で最小のFスコアを持つノードを探す
         auto it = std::min_element(openList.begin(), openList.end(), [](Node* a, Node* b) {
             return a->f < b->f;
             });
         Node* current = *it;
 
-        // 3. ゴールに到達したか
         if (current->pos == goal) {
             Node* temp = current;
             while (temp != nullptr) {
@@ -26,32 +25,46 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 temp = temp->parent;
             }
             std::reverse(finalPath.begin(), finalPath.end());
-            break; // ループ終了
+            break;
         }
 
-        // 4. 現在のノードをClosedへ移動
         openList.erase(it);
         closedList.push_back(current);
 
-        // 5. 上下左右の4方向を調べる
         Point directions[] = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} };
         for (auto& dir : directions) {
             Point nextPos = { current->pos.x + dir.x, current->pos.y + dir.y };
 
-            // マップ範囲外チェック
             if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height) continue;
 
-            // ★重要：CollisionMask を直接参照して壁判定
-            if (CollisionMask::GetInstance()->IsWall((float)nextPos.x, (float)nextPos.y)) continue;
+            // --- 壁と糸の複合判定 ---
+            bool isWall = CollisionMask::GetInstance()->IsWall((float)nextPos.x, (float)nextPos.y);
+            bool hasThread = false;
 
-            // 既にClosedにある場合はスキップ
+            if (tm) {
+                // ThreadManager内の全糸ノードをチェック
+                for (auto& physics : tm->GetPhysicsList()) {
+                    for (const auto& node : physics->GetNodes()) {
+                        float dx = node.currentPos.x - (float)nextPos.x;
+                        float dz = node.currentPos.z - (float)nextPos.y;
+                        // 判定距離（マスの中心から約0.8マス以内なら「糸がある」とみなす）
+                        if ((dx * dx + dz * dz) < 0.64f) {
+                            hasThread = true;
+                            break;
+                        }
+                    }
+                    if (hasThread) break;
+                }
+            }
+
+            // 壁かつ糸がない場所は通れない
+            if (isWall && !hasThread) continue;
+
             bool inClosed = false;
             for (auto n : closedList) { if (n->pos == nextPos) { inClosed = true; break; } }
             if (inClosed) continue;
 
             int newG = current->g + 1;
-
-            // 既にOpenにあるかチェック
             Node* openNode = nullptr;
             for (auto n : openList) { if (n->pos == nextPos) { openNode = n; break; } }
 
@@ -66,14 +79,12 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
         }
     }
 
-    // メモリの全解放（絶対に忘れないこと！）
     for (auto n : openList) delete n;
     for (auto n : closedList) delete n;
 
-    return finalPath; // 見つからなければ空のvectorを返す
+    return finalPath;
 }
 
 int PathFinder::CalcH(Point a, Point b) {
-    // マンハッタン距離
     return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 }
