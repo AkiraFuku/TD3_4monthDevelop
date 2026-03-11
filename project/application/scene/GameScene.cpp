@@ -9,7 +9,7 @@
 #include <numbers>
 
 void GameScene::Initialize() {
-
+  
   camera = std::make_unique<Camera>();
   camera->SetRotate({0.0f, 0.0f, 0.0f});
   camera->SetTranslate({0.0f, 0.0f, -30.0f});
@@ -96,12 +96,17 @@ void GameScene::Initialize() {
 
   goal_->SetEgg(egg_.get());
 
+  
+    collisionMask_ = CollisionMask::GetInstance();
+    collisionMask_->Initialize();
+
 
   // ----- Thread -----
   thread_ = std::make_unique<ThreadManager>();
   thread_->Initialize(50, 20, camera.get());
   thread_->AddThread({-3.0f, 0.0f, -3.0f}, {3.0f, 0.0f, 3.0f});
   thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
+
 }
 void GameScene::Finalize() {
 
@@ -200,18 +205,19 @@ void GameScene::Update() {
           Add(point, Vector3{normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
       LightManager::GetInstance()->SetSpotLightDirection(0, point);
     }
-  }
-
-  camera->Update();
-  if (isDebugCamera_) {
-    debugCamera_.Update(camera->GetTransform());
-    camera->SetViewMatrix(debugCamera_.GetViewMatrix());
-  } else {
-    camera->UpdateView();
-  }
-  camera->UpdateViewProjection();
-  object3d->Update();
-  object3d2->Update();
+    
+    camera->Update();
+    if (isDebugCamera_)
+    {
+        debugCamera_.Update(camera->GetTransform());
+        camera->SetViewMatrix(debugCamera_.GetViewMatrix());
+    } else
+    {
+        camera->UpdateView();
+    }
+    camera->UpdateViewProjection();
+    object3d->Update();
+    object3d2->Update();
 
 #ifdef USE_IMGUI
 
@@ -337,22 +343,18 @@ void GameScene::Update() {
 
   // ImGui::End();
 
-  // ImGui::Begin("DebugCamera Setting");
-  // ImGui::Checkbox("DebugCamera", &isDebugCamera_);
-  // ImGui::End();
-
+    ImGui::Begin("DebugCamera Setting");
+    ImGui::Checkbox("DebugCamera", &isDebugCamera_);
+    ImGui::End();
+    
 #endif // USE_IMGUI
 
   // sprite->SetRotation(sprite->GetRotation() + 0.1f);
   sprite->Update();
 
-  /*player_->Update();
-
   terrain_->Update();*/
 
   player_->Update();
-
-  // terrain_->Update();
 
   // 卵の更新処理
   egg_->Update();
@@ -362,6 +364,8 @@ void GameScene::Update() {
 
   // ゴールの更新処理
   goal_->Update();
+    
+  collisionMask_->Update();
 
     
     // 当たり判定の確認
@@ -374,7 +378,6 @@ void GameScene::Update() {
 void GameScene::Draw() {
 
   // player_->Draw();
-
   // terrain_->Draw();
 
   // 卵の描画処理
@@ -390,6 +393,8 @@ void GameScene::Draw() {
     player_->Draw();
 
     thread_->Draw();
+  
+    collisionMask_->Draw();
 }
 
 void GameScene::CheckAllCollisions()
@@ -417,7 +422,6 @@ bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
     if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x && aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y && aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
         return true;
     }
-
     return false;
 }
 
@@ -465,8 +469,6 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             currentPos.y += overlapY; // 上へ
         }
     }
-
     // 修正した座標を反映
     player->SetPosition(currentPos);
 }
-  

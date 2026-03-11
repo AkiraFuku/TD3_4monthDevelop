@@ -5,6 +5,8 @@
 #include "Object3D.h"
 #include "DrawFunction.h"
 
+class CollisionMask;
+
 class Player {
 public:
   /// <summary>
@@ -32,6 +34,11 @@ public:
   /// 移動処理
   /// </summary>
   void UpdateMove();
+
+  /// <summary>
+  /// 衝突判定
+  /// </summary>
+  void IsCollision();
 
   /// <summary>
   /// 移動距離確定

@@ -1,8 +1,8 @@
 #include "Player.h"
-
 #include "Input.h"
 #include "ModelManager.h"
 #include "imgui.h"
+#include "CollisionMask.h"
 
 /// <summary>
 /// 初期化
@@ -35,6 +35,8 @@ void Player::Update() {
     // 移動処理
     UpdateMove();
 
+    
+
 #ifdef USE_IMGUI
 
     ImGui::Begin("Player Window");
@@ -58,7 +60,10 @@ void Player::Update() {
 
 #endif
 
-    // 移動距離確定7
+    // 衝突判定
+    IsCollision();
+
+    // 移動距離確定
     ResultMove();
 
     // モデルの更新
@@ -116,6 +121,22 @@ void Player::UpdateMove() {
     }
 
     
+}
+
+void Player::IsCollision()
+{
+    float nextX = translate_.x + moveVel_.x;
+    if(CollisionMask::GetInstance()->IsWall(nextX, translate_.z))
+    {
+        moveVel_.x = 0.0f;
+    }
+
+    float nextZ = translate_.z + moveVel_.z;
+    if(CollisionMask::GetInstance()->IsWall(translate_.x, nextZ))
+    {
+        moveVel_.z = 0.0f;
+    }
+
 }
 
 void Player::ResultMove()

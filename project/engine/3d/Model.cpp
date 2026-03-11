@@ -280,6 +280,47 @@ Model* Model::CreateSphere(uint32_t subdivision)
     return model;
 }
 
+Model* Model::CreatePlaneFromTex(const std::string& textureFilePath)
+{
+    Model* model = new Model();
+
+    // 1. テクスチャのロードとサイズ取得
+    TextureManager::GetInstance()->LoadTexture(textureFilePath);
+    const DirectX::TexMetadata& metadata = TextureManager::GetInstance()->GetMetaData(textureFilePath);
+
+    float w = (static_cast<float>(metadata.width) / 2.0f) / 4.0f;
+    float h = (static_cast<float>(metadata.height) / 2.0f) / 4.0f;
+
+    // 2. 頂点データの生成
+   // 4つの頂点を作成
+    Model::VertexData a = { {-w,  h, 0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }; // 左上
+    Model::VertexData b = { { w,  h, 0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }; // 右上
+    Model::VertexData c = { {-w, -h, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }; // 左下
+    Model::VertexData d = { { w, -h, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }; // 右下
+
+    // 頂点をpush_backして三角形2つ（計6頂点）を構築
+    // 三角形1: A -> B -> C
+    model->modelData_.vertices.push_back(a);
+    model->modelData_.vertices.push_back(b);
+    model->modelData_.vertices.push_back(c);
+
+    // 三角形2: C -> B -> D
+    model->modelData_.vertices.push_back(c);
+    model->modelData_.vertices.push_back(b);
+    model->modelData_.vertices.push_back(d);
+
+    // 3. マテリアル設定
+    model->modelData_.material.textureFilePath = textureFilePath;
+    model->modelData_.material.textureIndex =
+        TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
+
+    // 4. バッファ等の初期化（既存メソッドを再利用）
+    model->CreateVertexBuffer();
+    model->CreateMaterialResource();
+
+    return model;
+}
+
  Model::Node Model::ReadNode(aiNode* node)
 {
    Node result;
