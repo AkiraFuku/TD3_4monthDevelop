@@ -82,7 +82,8 @@ void Player::UpdateMove() {
     // キー入力に応じて方向ベクトルを決定
     if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
         moveDirection.x += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
+    }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
         moveDirection.x -= 1.0f;
     }
     else
@@ -92,7 +93,8 @@ void Player::UpdateMove() {
 
     if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
         moveDirection.z += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
+    }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
         moveDirection.z -= 1.0f;
     }
     else
@@ -103,7 +105,7 @@ void Player::UpdateMove() {
     if (moveDirection.x != 0.0f || moveDirection.z != 0.0f) {
         // ベクトルの長さを計算
         float length = std::sqrtf(moveDirection.x * moveDirection.x +
-                                  moveDirection.z * moveDirection.z);
+            moveDirection.z * moveDirection.z);
         // 正規化
         if (length != 0.0f) {
             moveDirection.x /= length;
@@ -115,7 +117,7 @@ void Player::UpdateMove() {
         moveVel_.z += moveDirection.z * velocity_.z;
     }
 
-    
+
 }
 
 void Player::ResultMove()
