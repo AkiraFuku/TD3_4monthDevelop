@@ -11,14 +11,17 @@ public:
   /// </summary>
   /// <param name="pos">初期位置</param>
   void Initialize(const Vector3 &pos);
+  
   /// <summary>
   /// 終了
   /// </summary>
   void Finalize();
+  
   /// <summary>
   /// 更新
   /// </summary>
   void Update();
+
   /// <summary>
   /// 描画
   /// </summary>
@@ -29,7 +32,10 @@ public:
   /// </summary>
   void UpdateMove();
 
-    void Move();
+  /// <summary>
+  /// 移動距離確定
+  /// </summary>
+  void ResultMove();
 
 public: // 外部入出力
   // ----- Getter -----
@@ -45,4 +51,6 @@ private:
   Vector3 scale_ = {1.0f, 1.0f, 1.0f};
   Vector3 rotate_ = {0.0f, 0.0f, 0.0f};
   Vector3 translate_ = {0.0f, 0.0f, 0.0f};
+
+  Vector3 moveVel_;
 };
