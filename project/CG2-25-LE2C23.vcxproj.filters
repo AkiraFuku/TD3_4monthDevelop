@@ -59,6 +59,8 @@
     <ClCompile Include="ThreadRenderer.cpp" />
     <ClCompile Include="ThreadPhysics.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -114,6 +116,8 @@
     <ClInclude Include="ThreadPhysics.h" />
     <ClInclude Include="PhysicsNode.h" />
     <ClInclude Include="ThreadManager.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="PathFinder.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

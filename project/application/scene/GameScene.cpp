@@ -107,6 +107,9 @@ void GameScene::Initialize() {
   thread_->AddThread({-3.0f, 0.0f, -3.0f}, {3.0f, 0.0f, 3.0f});
   thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
 
+  // 敵の初期化
+  enemy_ = std::make_unique<Enemy>();
+  enemy_->Initialize(enemyPos_);
 }
 void GameScene::Finalize() {
 
@@ -368,6 +371,10 @@ void GameScene::Update()
     // ゴールの更新処理
     goal_->Update();
 
+  // 敵の更新処理
+  enemy_->Update();
+
+    
     collisionMask_->Update();
 
 
@@ -390,6 +397,9 @@ void GameScene::Draw() {
 
   // ゴールの描画処理
   goal_->Draw();
+
+  // 敵の描画処理
+  enemy_->Draw();
 
   // ParticleManager::GetInstance()->Draw();
   ///////スプライトの描画
