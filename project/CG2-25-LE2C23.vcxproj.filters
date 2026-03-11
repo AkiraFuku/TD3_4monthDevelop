@@ -67,6 +67,9 @@
     <Filter Include="scene">
       <UniqueIdentifier>{af45ce30-5cdb-4203-af12-7c7f3994d932}</UniqueIdentifier>
     </Filter>
+    <Filter Include="シェーダー ファイル\Line">
+      <UniqueIdentifier>{ab3a3afc-29ec-4cd3-b404-a778f8a8f7a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -212,6 +215,12 @@
     </ClCompile>
     <ClCompile Include="application\object\Terrain.cpp">
       <Filter>ヘッダー ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Line.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Line3dCommon.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -368,6 +377,12 @@
     <ClInclude Include="engine\math\Transform.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Line.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Line3dCommon.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -383,6 +398,9 @@
     </None>
     <None Include="resources\shaders\Sprite\Sprite.hlsli">
       <Filter>シェーダー ファイル\sprite</Filter>
+    </None>
+    <None Include="resources\shaders\Line\Line.hlsli">
+      <Filter>シェーダー ファイル\Line</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -403,6 +421,12 @@
     </FxCompile>
     <FxCompile Include="resources\shaders\Sprite\Sprite.VS.hlsl">
       <Filter>シェーダー ファイル\sprite</Filter>
+    </FxCompile>
+    <FxCompile Include="resources\shaders\Line\Line.PS.hlsl">
+      <Filter>シェーダー ファイル\Line</Filter>
+    </FxCompile>
+    <FxCompile Include="resources\shaders\Line\Line.VS.hlsl">
+      <Filter>シェーダー ファイル\Line</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
