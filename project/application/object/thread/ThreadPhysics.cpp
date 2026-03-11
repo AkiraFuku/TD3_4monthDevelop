@@ -2,7 +2,7 @@
 
 #include "MathFunction.h"
 
- /// <summary>
+/// <summary>
 /// 糸の初期化
 /// </summary>
 /// <param name="startPos">糸の始点</param>
@@ -73,16 +73,18 @@ void ThreadPhysics::Update() {
       PhysicsNode &n2 = nodes_[j + 1];
 
       // 両方とも固定ノードなら計算をスキップ
-      if (n1.mass == 0.0f && n2.mass == 0.0f)
+      if (n1.mass == 0.0f && n2.mass == 0.0f) {
         continue;
+      }
 
       // 2点間のベクトル
       Vector3 diff = n1.currentPos - n2.currentPos;
 
       // 2点間の現在の距離
       float currentDist = Length(diff);
-      if (currentDist == 0.0f)
+      if (currentDist == 0.0f) {
         continue; // ゼロ除算回避
+      }
 
       // 理想の長さとのズレの割合を計算
       float difference = (segmentLength_ - currentDist) / currentDist;
@@ -91,10 +93,19 @@ void ThreadPhysics::Update() {
       Vector3 move = diff * (difference * 0.5f);
 
       // 位置を修正（片方が固定なら、もう片方だけが移動するようにする）
-      if (n1.mass > 0.0f)
+      if (n1.mass > 0.0f) {
         n1.currentPos += move;
-      if (n2.mass > 0.0f)
+      }
+      if (n2.mass > 0.0f) {
         n2.currentPos -= move;
+      }
     }
+  }
+}
+
+void ThreadPhysics::ApplyForce(size_t nodeIndex, const Vector3 &force) {
+  // 範囲外アクセス防止と、固定ノード（mass == 0）には力を加えない処理
+  if (nodeIndex < nodes_.size() && nodes_[nodeIndex].mass > 0.0f) {
+    nodes_[nodeIndex].currentPos += force;
   }
 }

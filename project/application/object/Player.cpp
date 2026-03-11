@@ -2,6 +2,7 @@
 
 #include "Input.h"
 #include "ModelManager.h"
+#include "ThreadManager.h"
 #include "imgui.h"
 
 /// <summary>
@@ -100,6 +101,20 @@ void Player::UpdateMove() {
     // 正規化した方向に指定速度を掛けて加算
     translate_.x += moveDirection.x * velocity_.x;
     translate_.z += moveDirection.z * velocity_.z;
+  }
+
+  if (threadManager_) {
+    float threadY = 0.0f;
+    // プレイヤーのXZ座標をもとに判定
+    if (threadManager_->InteractWithPlayer(translate_, weight_, footRadius_,
+                                           threadY)) {
+      // 糸に乗っている場合、Y座標を糸の高さ（＋キャラクターの足元オフセット）に合わせる
+      // ※足元の原点がモデルの底面にあると仮定
+      translate_.y = threadY;
+    } else {
+      // 糸に乗っていない場合の処理（落下させるなど）
+      // translate_.y -= 0.1f; // 簡易的な重力
+    }
   }
 
   object_->SetTranslate(translate_);

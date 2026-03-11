@@ -21,6 +21,8 @@ public:
 
   // Getter
   const std::vector<PhysicsNode> &GetNodes() const { return nodes_; }
+  // 特定のノードに力を（位置の変位として）加える
+  void ApplyForce(size_t nodeIndex, const Vector3 &force);
 
   // パラメータ調整用セッター（ImGuiなどで調整すると便利です）
   void SetGravity(const Vector3 &gravity) { gravity_ = gravity; }

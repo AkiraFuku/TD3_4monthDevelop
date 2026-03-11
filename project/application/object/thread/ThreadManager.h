@@ -30,6 +30,10 @@ public:
   // プレイヤーから呼ばれる「糸を発射する」処理
   void AddThread(const Vector3 &startPos, const Vector3 &endPos);
 
+  // プレイヤーの座標を渡し、乗っている糸のY座標を返す（乗っていなければ false）
+  bool InteractWithPlayer(const Vector3 &playerPos, float playerWeight,
+                          float radius, float &outY);
+
   // 全ての糸を消去する
   void ClearThreads();
 
