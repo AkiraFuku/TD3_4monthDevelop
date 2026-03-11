@@ -144,3 +144,20 @@ void Player::ResultMove()
     translate_ += moveVel_;
     object_->SetTranslate(translate_);
 }
+
+void Player::SetPosition(const Vector3& pos)
+{
+    translate_ = pos;
+    object_->SetTranslate(translate_);
+}
+
+AABB Player::GetAABB() const
+{
+    Vector3 worldPos = GetPosition();
+    AABB aabb;
+
+    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
+    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+
+    return aabb;
+}

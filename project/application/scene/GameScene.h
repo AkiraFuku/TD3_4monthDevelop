@@ -16,12 +16,19 @@
 #include <memory>
 #include "CollisionMask.h"
 
+#include "ThreadManager.h"
+
 class GameScene : public Scene {
 public:
+
     void Initialize() override;
     void Finalize() override;
     void Update() override;
     void Draw() override;
+  
+  void CheckAllCollisions(); // 全ての当たり判定を確認
+  bool isCollision(const AABB& aabb1, const AABB& aabb2); // 当たり判定
+  void ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB); // プレイヤーを押し戻す関数
 
 private:
     std::unique_ptr<Camera> camera;
@@ -41,11 +48,15 @@ private:
     /*Player* player_;
     Terrain* terrain_;*/
 
-    // ----- Player -----
-    std::unique_ptr<Player> player_;
-
-    //プレイヤーの位置
-    Vector3 playerPos_ = { -10.0f,0.0f, 0.0f };
-
     CollisionMask* collisionMask_;
+
+  // ----- Player -----
+  std::unique_ptr<Player> player_;
+
+  // プレイヤーの位置
+  Vector3 playerPos_ = {-10.0f, 0.0f, 0.0f};
+
+  // ----- Thread -----
+  std::unique_ptr<ThreadManager> thread_;
+
 };

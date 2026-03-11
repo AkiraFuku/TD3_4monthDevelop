@@ -2,6 +2,7 @@
 #include "ModelManager.h"
 #include "imgui.h"
 #include "Input.h"
+#include "Player.h"
 
 void Egg::Initialize()
 {
@@ -44,16 +45,51 @@ void Egg::Update()
 
     Vector3 translates = object_->GetTranslate();
 
-    // ゴール判定確認用の移動処理
-    if (Input::GetInstance()->PushedKeyDown(DIK_UP))
+    // プレイヤーに持ち上げられていたら
+    if (onPlayer_)
     {
-        // 奥に進む
-        translates.z += 0.1f;
+
+        // スペースキーで卵を置く
+        if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+        {
+            translates.y -= 2.0f;
+            onPlayer_ = false;
+            object_->SetTranslate(translates);
+            return;
+        }
+
+        // 座標をプレイヤーと同期する
+        translates = player_->GetPosition();
+        translates.y += 2.0f;
+
     }
-    else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
+    else
     {
-        // 手前に進む
-        translates.z -= 0.1f;
+        // プレイヤーと接触していたら
+        if (isHit_)
+        {
+            // スペースキーで卵を持ち上げる
+            if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+            {
+                onPlayer_ = true;
+                translates = player_->GetPosition();
+                translates.y += 2.0f;
+            }
+        }
+        else
+        {
+            // ゴール判定確認用の移動処理
+            if (Input::GetInstance()->PushedKeyDown(DIK_UP))
+            {
+                // 奥に進む
+                translates.z += 0.1f;
+            }
+            else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
+            {
+                // 手前に進む
+                translates.z -= 0.1f;
+            }
+        }
     }
 
     object_->SetTranslate(translates);
@@ -66,11 +102,28 @@ void Egg::Draw()
     object_->Draw();
 }
 
-Vector3 Egg::GetWorldPosition()
+Vector3 Egg::GetWorldPosition() const
 {
     // ワールド座標を入れる変数
     Vector3 worldPos;
     // ワールド行列の平行移動成分を取得
     worldPos = object_->GetTranslate();
     return worldPos;
+}
+
+AABB Egg::GetAABB() const
+{
+    Vector3 worldPos = GetWorldPosition();
+    AABB aabb;
+
+    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
+    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+
+    return aabb;
+}
+
+void Egg::OnCollision(const Player* player_)
+{
+    (void)player_;
+    isHit_ = true;
 }
