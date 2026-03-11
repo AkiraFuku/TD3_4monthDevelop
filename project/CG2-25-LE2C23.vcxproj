@@ -21,6 +21,7 @@
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg.cpp" />
+    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
     <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
@@ -65,6 +66,7 @@
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="ThreadPhysics.cpp" />
     <ClCompile Include="ThreadRenderer.cpp" />
@@ -76,6 +78,7 @@
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg.h" />
+    <ClInclude Include="Enemy.h" />
     <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />
@@ -119,6 +122,7 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
+    <ClInclude Include="PathFinder.h" />
     <ClInclude Include="PhysicsNode.h" />
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="ThreadPhysics.h" />
