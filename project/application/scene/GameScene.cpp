@@ -126,86 +126,89 @@ void GameScene::Finalize() {
   goal_->Finalize();
   delete goal_;*/
 }
-void GameScene::Update() {
-  emitter->Update();
 
-  XINPUT_STATE state;
+void GameScene::Update()
+{
+    emitter->Update();
 
-  // 現在のジョイスティックを取得
+    XINPUT_STATE state;
 
-  Input::GetInstance()->GetJoyStick(0, state);
+    // 現在のジョイスティックを取得
 
-  // Aボタンを押していたら
+    Input::GetInstance()->GetJoyStick(0, state);
 
-  if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+    // Aボタンを押していたら
 
-    // Aボタンを押したときの処理
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
 
-    if (Audio::GetInstance()->IsPlaying(handle_)) {
+        // Aボタンを押したときの処理
 
-      Audio::GetInstance()->StopAudio(handle_);
+        if (Audio::GetInstance()->IsPlaying(handle_)) {
+
+            Audio::GetInstance()->StopAudio(handle_);
+        }
+
+        GetSceneManager()->ChangeScene("TitleScene");
+    }
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
     }
 
-    GetSceneManager()->ChangeScene("TitleScene");
-  }
-  if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
-  }
+    // マウスホイールの入力取得
 
-  // マウスホイールの入力取得
-
-  if (Input::GetInstance()->GetMouseMove().z) {
-    Vector3 cameraTranslate = camera->GetTranslate();
-    cameraTranslate =
-        Add(cameraTranslate,
-            Vector3{0.0f, 0.0f,
-                    static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
-                        0.1f});
-    camera->SetTranslate(cameraTranslate);
-  }
-  /*if (Input::GetInstance()->TriggerMouseDown(0))
-  {
-      if (!Audio::GetInstance()->IsPlaying(handle_))
-      {
-          Audio::GetInstance()->PlayAudio(handle_);
-      }
-
-  }*/
-  if (Input::GetInstance()->TriggerMouseDown(0)) {
-    if (Audio::GetInstance()->IsPlaying(handle_)) {
-      Audio::GetInstance()->PauseAudio(handle_);
-    } else {
-      Audio::GetInstance()->ResumeAudio(handle_);
+    if (Input::GetInstance()->GetMouseMove().z) {
+        Vector3 cameraTranslate = camera->GetTranslate();
+        cameraTranslate =
+            Add(cameraTranslate,
+                Vector3{ 0.0f, 0.0f,
+                        static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
+                            0.1f });
+        camera->SetTranslate(cameraTranslate);
     }
-  }
-  if (Input::GetInstance()->GetJoyStick(0, state)) {
+    /*if (Input::GetInstance()->TriggerMouseDown(0))
     {
-      // 左スティックの値を取得
-      float x = (float)state.Gamepad.sThumbLX;
-      float y = (float)state.Gamepad.sThumbLY;
+        if (!Audio::GetInstance()->IsPlaying(handle_))
+        {
+            Audio::GetInstance()->PlayAudio(handle_);
+        }
 
-      // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-      float normalizedX = x / 32767.0f;
-      float normalizedY = y / 32767.0f;
-      Vector3 cameraTranslate = camera->GetTranslate();
-      cameraTranslate =
-          Add(cameraTranslate,
-              Vector3{normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-      camera->SetTranslate(cameraTranslate);
+    }*/
+    if (Input::GetInstance()->TriggerMouseDown(0)) {
+        if (Audio::GetInstance()->IsPlaying(handle_)) {
+            Audio::GetInstance()->PauseAudio(handle_);
+        } else {
+            Audio::GetInstance()->ResumeAudio(handle_);
+        }
     }
-    {
-      //// 左スティックの値を取得
-      float x = (float)state.Gamepad.sThumbRX;
-      float y = (float)state.Gamepad.sThumbRY;
-      //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-      float normalizedX = x / 32767.0f;
-      float normalizedY = y / 32767.0f;
+    if (Input::GetInstance()->GetJoyStick(0, state)) {
+        {
+            // 左スティックの値を取得
+            float x = (float)state.Gamepad.sThumbLX;
+            float y = (float)state.Gamepad.sThumbLY;
 
-      Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-      point =
-          Add(point, Vector3{normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-      LightManager::GetInstance()->SetSpotLightDirection(0, point);
+            // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+            float normalizedX = x / 32767.0f;
+            float normalizedY = y / 32767.0f;
+            Vector3 cameraTranslate = camera->GetTranslate();
+            cameraTranslate =
+                Add(cameraTranslate,
+                    Vector3{ normalizedX / 60.0f, normalizedY / 60.0f, 0.0f });
+            camera->SetTranslate(cameraTranslate);
+        }
+        {
+            //// 左スティックの値を取得
+            float x = (float)state.Gamepad.sThumbRX;
+            float y = (float)state.Gamepad.sThumbRY;
+            //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+            float normalizedX = x / 32767.0f;
+            float normalizedY = y / 32767.0f;
+
+            Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
+            point =
+                Add(point, Vector3{ normalizedX / 60.0f, normalizedY / 60.0f, 0.0f });
+            LightManager::GetInstance()->SetSpotLightDirection(0, point);
+        }
     }
-    
+
     camera->Update();
     if (isDebugCamera_)
     {
@@ -221,160 +224,162 @@ void GameScene::Update() {
 
 #ifdef USE_IMGUI
 
-  ImGui::Begin("Camera Setting");
+    ImGui::Begin("Camera Setting");
 
-  // カメラの現在位置を取得
-  Vector3 camPos = camera->GetTranslate();
-  // カメラの現在の回転を取得（※CameraクラスにGetRotate関数が実装されている前提です）
-  Vector3 camRot = camera->GetRotate();
+    // カメラの現在位置を取得
+    Vector3 camPos = camera->GetTranslate();
+    // カメラの現在の回転を取得（※CameraクラスにGetRotate関数が実装されている前提です）
+    Vector3 camRot = camera->GetRotate();
 
-  // 位置の調整 (0.1f単位でドラッグして変更)
-  if (ImGui::DragFloat3("Camera Position", &camPos.x, 0.1f)) {
-    camera->SetTranslate(camPos);
-  }
+    // 位置の調整 (0.1f単位でドラッグして変更)
+    if (ImGui::DragFloat3("Camera Position", &camPos.x, 0.1f)) {
+        camera->SetTranslate(camPos);
+    }
 
-  // 回転の調整
-  // (0.01f単位でドラッグして変更、ラジアンか度数法に合わせて調整してください)
-  if (ImGui::DragFloat3("Camera Rotation", &camRot.x, 0.01f)) {
-    camera->SetRotate(camRot);
-  }
+    // 回転の調整
+    // (0.01f単位でドラッグして変更、ラジアンか度数法に合わせて調整してください)
+    if (ImGui::DragFloat3("Camera Rotation", &camRot.x, 0.01f)) {
+        camera->SetRotate(camRot);
+    }
 
-  ImGui::End();
+    ImGui::End();
 
-  // ImGui::Begin("Debug");
-  // ImGui::Text("Sphere");
-  // Vector3 pos = object3d->GetTranslate();
-  // Vector3 scale = object3d->GetScale();
-  // ImGui::SliderFloat3("Pos", &(pos.x), 0.1f, 1000.0f);
-  // ImGui::DragFloat3("scale", &(scale.x), 0.1f, 1000.0f);
-  // object3d->SetTranslate(pos);
-  // object3d->SetScale(scale);
-  // if (LightManager::GetInstance()->GetPointLightCount() > 0) {
-  //     ImGui::Begin("Light Setting");
+    // ImGui::Begin("Debug");
+    // ImGui::Text("Sphere");
+    // Vector3 pos = object3d->GetTranslate();
+    // Vector3 scale = object3d->GetScale();
+    // ImGui::SliderFloat3("Pos", &(pos.x), 0.1f, 1000.0f);
+    // ImGui::DragFloat3("scale", &(scale.x), 0.1f, 1000.0f);
+    // object3d->SetTranslate(pos);
+    // object3d->SetScale(scale);
+    // if (LightManager::GetInstance()->GetPointLightCount() > 0) {
+    //     ImGui::Begin("Light Setting");
 
-  //    // 0番目のポイントライトのデータを参照で取得
-  //    // "auto&"
-  //    にすることで、ここで書き換えた内容が直接LightManager内のデータに反映されます
-  //    auto& pointLight2 = LightManager::GetInstance()->GetPointLight(1);
+    //    // 0番目のポイントライトのデータを参照で取得
+    //    // "auto&"
+    //    にすることで、ここで書き換えた内容が直接LightManager内のデータに反映されます
+    //    auto& pointLight2 = LightManager::GetInstance()->GetPointLight(1);
 
-  //    // 位置の調整
-  //    ImGui::DragFloat3("Point Light2 Pos", &pointLight2.position.x, 0.1f);
+    //    // 位置の調整
+    //    ImGui::DragFloat3("Point Light2 Pos", &pointLight2.position.x, 0.1f);
 
-  //    // 色の調整
-  //    ImGui::ColorEdit4("Point Light2 Color", &pointLight2.color.x);
+    //    // 色の調整
+    //    ImGui::ColorEdit4("Point Light2 Color", &pointLight2.color.x);
 
-  //    // 強度の調整
-  //    ImGui::DragFloat("Point Light2 Intensity", &pointLight2.intensity, 0.1f,
-  //    0.0f, 100.0f);
+    //    // 強度の調整
+    //    ImGui::DragFloat("Point Light2 Intensity", &pointLight2.intensity, 0.1f,
+    //    0.0f, 100.0f);
 
-  //    // 減衰率の調整
-  //    ImGui::DragFloat("Point Light2 Decay", &pointLight2.decay, 0.1f,
-  //    0.0f, 10.0f); auto& pointLight1 =
-  //    LightManager::GetInstance()->GetPointLight(0);
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("Point Light2 Decay", &pointLight2.decay, 0.1f,
+    //    0.0f, 10.0f); auto& pointLight1 =
+    //    LightManager::GetInstance()->GetPointLight(0);
 
-  //    // 位置の調整
-  //    ImGui::DragFloat3("Point Light Pos", &pointLight1.position.x, 0.1f);
+    //    // 位置の調整
+    //    ImGui::DragFloat3("Point Light Pos", &pointLight1.position.x, 0.1f);
 
-  //    // 色の調整
-  //    ImGui::ColorEdit4("Point Light Color", &pointLight1.color.x);
+    //    // 色の調整
+    //    ImGui::ColorEdit4("Point Light Color", &pointLight1.color.x);
 
-  //    // 強度の調整
-  //    ImGui::DragFloat("Point Light Intensity", &pointLight1.intensity, 0.1f,
-  //    0.0f, 100.0f);
+    //    // 強度の調整
+    //    ImGui::DragFloat("Point Light Intensity", &pointLight1.intensity, 0.1f,
+    //    0.0f, 100.0f);
 
-  //    // 減衰率の調整
-  //    ImGui::DragFloat("Point Light Decay", &pointLight1.decay, 0.1f,
-  //    0.0f, 10.0f); ImGui::DragFloat("Point Light rad", &pointLight1.radius,
-  //    0.1f, 0.0f, 10.0f); auto& spotLight2 =
-  //    LightManager::GetInstance()->GetSpotLight(1);
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("Point Light Decay", &pointLight1.decay, 0.1f,
+    //    0.0f, 10.0f); ImGui::DragFloat("Point Light rad", &pointLight1.radius,
+    //    0.1f, 0.0f, 10.0f); auto& spotLight2 =
+    //    LightManager::GetInstance()->GetSpotLight(1);
 
-  //    // 位置の調整
-  //    ImGui::DragFloat3("spot Light2 Pos", &spotLight2.position.x, 0.1f);
-  //    ImGui::DragFloat3("spot Light Pos", &spotLight2.direction.x, 0.1f);
+    //    // 位置の調整
+    //    ImGui::DragFloat3("spot Light2 Pos", &spotLight2.position.x, 0.1f);
+    //    ImGui::DragFloat3("spot Light Pos", &spotLight2.direction.x, 0.1f);
 
-  //    // 色の調整
-  //    ImGui::ColorEdit4("spot Light2 Color", &spotLight2.color.x);
+    //    // 色の調整
+    //    ImGui::ColorEdit4("spot Light2 Color", &spotLight2.color.x);
 
-  //    // 強度の調整
-  //    ImGui::DragFloat("spot Light2 Intensity", &spotLight2.intensity, 0.1f,
-  //    0.0f, 100.0f);
+    //    // 強度の調整
+    //    ImGui::DragFloat("spot Light2 Intensity", &spotLight2.intensity, 0.1f,
+    //    0.0f, 100.0f);
 
-  //    // 減衰率の調整
-  //    ImGui::DragFloat("spot Light2 Decay", &spotLight2.decay, 0.1f,
-  //    0.0f, 10.0f); auto& spotLight1 =
-  //    LightManager::GetInstance()->GetSpotLight(0);
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("spot Light2 Decay", &spotLight2.decay, 0.1f,
+    //    0.0f, 10.0f); auto& spotLight1 =
+    //    LightManager::GetInstance()->GetSpotLight(0);
 
-  //    // 位置の調整
-  //    ImGui::DragFloat3("spot Light Pos", &spotLight1.position.x, 0.1f);
-  //    ImGui::DragFloat3("spot Light ", &spotLight1.direction.x, 0.1f);
+    //    // 位置の調整
+    //    ImGui::DragFloat3("spot Light Pos", &spotLight1.position.x, 0.1f);
+    //    ImGui::DragFloat3("spot Light ", &spotLight1.direction.x, 0.1f);
 
-  //    // 色の調整
-  //    ImGui::ColorEdit4("spot Light Color", &spotLight1.color.x);
+    //    // 色の調整
+    //    ImGui::ColorEdit4("spot Light Color", &spotLight1.color.x);
 
-  //    // 強度の調整
-  //    ImGui::DragFloat("spot Light Intensity", &spotLight1.intensity, 0.1f,
-  //    0.0f, 100.0f);
+    //    // 強度の調整
+    //    ImGui::DragFloat("spot Light Intensity", &spotLight1.intensity, 0.1f,
+    //    0.0f, 100.0f);
 
-  //    // 減衰率の調整
-  //    ImGui::DragFloat("spot Light Decay", &spotLight1.decay, 0.1f,
-  //    0.0f, 10.0f); ImGui::DragFloat("spot Light rad", &spotLight1.distance,
-  //    0.1f, 0.0f, 10.0f);
+    //    // 減衰率の調整
+    //    ImGui::DragFloat("spot Light Decay", &spotLight1.decay, 0.1f,
+    //    0.0f, 10.0f); ImGui::DragFloat("spot Light rad", &spotLight1.distance,
+    //    0.1f, 0.0f, 10.0f);
 
-  //    ImGui::End();
-  //}
+    //    ImGui::End();
+    //}
 
-  ///*  if (ImGui::ColorEdit4("LightColor", &lightColor.x)) {
+    ///*  if (ImGui::ColorEdit4("LightColor", &lightColor.x)) {
 
-  //      object3d->SetDirectionalLightColor(lightColor);
-  //  }
-  //  Vector3 direction= object3d->GetDirectionalLightDirection();
-  //  if(ImGui::DragFloat3("Light Direction", &direction.x)){
-  //  object3d->SetDirectionalLightDirection(direction);
-  //  }
-  //  float intensity= object3d->GetDirectionalLightIntensity();
-  //  if(ImGui::InputFloat("intensity",&intensity)){
-  //   object3d->SetDirectionalLightIntensity(intensity);
-  //  }*/
-  // ImGui::Text("Sprite");
-  // Vector2 Position =
-  //    sprite->GetPosition();
-  // ImGui::SliderFloat2("Position", &(Position.x), 0.1f, 1000.0f);
-  // sprite->SetPosition(Position);
+    //      object3d->SetDirectionalLightColor(lightColor);
+    //  }
+    //  Vector3 direction= object3d->GetDirectionalLightDirection();
+    //  if(ImGui::DragFloat3("Light Direction", &direction.x)){
+    //  object3d->SetDirectionalLightDirection(direction);
+    //  }
+    //  float intensity= object3d->GetDirectionalLightIntensity();
+    //  if(ImGui::InputFloat("intensity",&intensity)){
+    //   object3d->SetDirectionalLightIntensity(intensity);
+    //  }*/
+    // ImGui::Text("Sprite");
+    // Vector2 Position =
+    //    sprite->GetPosition();
+    // ImGui::SliderFloat2("Position", &(Position.x), 0.1f, 1000.0f);
+    // sprite->SetPosition(Position);
 
-  // ImGui::End();
+    // ImGui::End();
 
     ImGui::Begin("DebugCamera Setting");
     ImGui::Checkbox("DebugCamera", &isDebugCamera_);
     ImGui::End();
-    
+
 #endif // USE_IMGUI
 
-  // sprite->SetRotation(sprite->GetRotation() + 0.1f);
-  sprite->Update();
+    // sprite->SetRotation(sprite->GetRotation() + 0.1f);
+    sprite->Update();
 
-  terrain_->Update();*/
+    // terrain_->Update();
 
-  player_->Update();
+    player_->Update();
 
-  // 卵の更新処理
-  egg_->Update();
+    // 卵の更新処理
+    egg_->Update();
 
-  // 糸の更新処理
-  thread_->Update();
+    // 糸の更新処理
+    thread_->Update();
 
-  // ゴールの更新処理
-  goal_->Update();
-    
-  collisionMask_->Update();
+    // ゴールの更新処理
+    goal_->Update();
 
-    
+    collisionMask_->Update();
+
+
     // 当たり判定の確認
     CheckAllCollisions();
 
     // ゴールクリアの判定
     goal_->Clear();
 
+
 }
+
 void GameScene::Draw() {
 
   // player_->Draw();
