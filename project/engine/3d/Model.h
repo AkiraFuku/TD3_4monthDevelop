@@ -35,10 +35,9 @@ public:
         std::string textureFilePath;
         uint_fast16_t textureIndex = 0;
     };
-    struct Node
-    {
-     QuaternionTransform transform   ;
-        Matrix4x4 localMatrix=Makeidetity4x4();
+    struct Node {
+        QuaternionTransform transform;
+        Matrix4x4 localMatrix = Makeidetity4x4();
         std::string name;
         std::vector <Node>children;
     };
@@ -66,15 +65,17 @@ public:
     void SetAnimation(Animation* animation) {
         animation_ = animation;
     }
-     void SetAnimationTime(float time){
+    void SetAnimationTime(float time) {
 
-         if(animation_){
+        if (animation_) {
             animation_->SetCurrentTime(time);
-         }
-     
-     }
+        }
 
-    ModelData GetModelData(){return modelData_;}
+    }
+
+    ModelData GetModelData() {
+        return modelData_;
+    }
     //マテリアルの読み込み
     static MaterialData LoadMaterialTemplateFile(const std::string& directryPath, const std::string& filename);
     //OBJファイルの読み込み
@@ -82,7 +83,7 @@ public:
 
     static Model* CreateSphere(uint32_t subdivision = 16);
 
-    static Node ReadNode(aiNode*node );
+    static Node ReadNode(aiNode* node);
 
 private:
 
@@ -91,7 +92,7 @@ private:
 
     Animation* animation_ = nullptr;
 
-    std::string name_="name";
+    std::string name_ = "name";
 
     //頂点リソース
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;

@@ -10,11 +10,11 @@
 #include <imgui.h>
 
 
-void Model::Initialize(const std::string& directryPath, const std::string& filename)
+void Model::Initialize(const std::string& directoryPath, const std::string& filename)
 {
 
     name_ = filename;
-    modelData_ = LoadModelFile(directryPath, filename);
+    modelData_ = LoadModelFile(directoryPath, filename);
     if (modelData_.material.textureFilePath.empty()) {
         modelData_.material.textureFilePath = "resources/uvChecker.png"; // 確実に存在する画像を指定
         TextureManager::GetInstance()->LoadTexture(modelData_.material.textureFilePath);
@@ -319,6 +319,14 @@ Model* Model::CreateSphere(uint32_t subdivision)
     {
         result.children[childIndex] = ReadNode(node->mChildren[childIndex]);
     }
+
+    aiVector3D Scale, translate;
+    aiQuaternion rotation;
+    node->mTransformation.Decompose(Scale, rotation, translate);
+    result.transform.scale = { Scale.x,Scale.y,Scale.z };
+    result.transform.rotate = { rotation.x,-rotation.y,-rotation.z,rotation.w };
+    result.transform.translate = { -translate.x,translate.y,translate.z };
+    result.localMatrix = MakeAfineMatrix(result.transform.scale, result.transform.rotate, result.transform.translate);
     return result;
 }
 
