@@ -15,6 +15,8 @@
 #include "TextureManager.h"
 #include <memory>
 
+#include "ThreadManager.h"
+
 class GameScene : public Scene {
 public:
   void Initialize() override;
@@ -42,7 +44,10 @@ private:
 
   // ----- Player -----
   std::unique_ptr<Player> player_;
-  
-  //プレイヤーの位置
-  Vector3 playerPos_ = {-10.0f,0.0f, 0.0f};
+
+  // プレイヤーの位置
+  Vector3 playerPos_ = {-10.0f, 0.0f, 0.0f};
+
+  // ----- Thread -----
+  std::unique_ptr<ThreadManager> thread_;
 };
