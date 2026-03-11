@@ -9,7 +9,7 @@ void DebugCamera::Initialize()
 	projectionMatrix_ = MakeIdentity4x4();
 }
 
-void DebugCamera::Update(Transform originCamera)
+void DebugCamera::Update(EulerTransform originCamera)
 {
 #ifdef _DEBUG
 
@@ -17,7 +17,7 @@ void DebugCamera::Update(Transform originCamera)
 
 	Vector3 move = { 0.0f, 0.0f, 0.0f };
 
-	Transform camera = { 0.0f, 0.0f, 0.0f };
+	EulerTransform camera = { 0.0f, 0.0f, 0.0f };
 
 	/*if (input_->PushKey(DIK_RIGHT))
 	{

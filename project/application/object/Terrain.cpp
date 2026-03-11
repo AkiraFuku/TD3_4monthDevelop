@@ -7,7 +7,7 @@ void Terrain::Initialize()
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("terrain/terrain.obj");
+    ModelManager::GetInstance()->LoadModel("resources","terrain/terrain.obj");
     object_->SetModel("terrain/terrain.obj");
 }
 

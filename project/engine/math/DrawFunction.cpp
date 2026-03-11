@@ -451,9 +451,9 @@ bool isCollision(const Triangle triangle,const Segment& segment )
 
 	
 	 // 三角形の頂点
-    const Vector3& v0 = triangle.vertces[0];
-    const Vector3& v1 = triangle.vertces[1];
-    const Vector3& v2 = triangle.vertces[2];
+    const Vector3& v0 = triangle.vertices[0];
+    const Vector3& v1 = triangle.vertices[1];
+    const Vector3& v2 = triangle.vertices[2];
 	 
 //三角形の辺を求める
 	Vector3 v01 = Subtract(v1,v0);
