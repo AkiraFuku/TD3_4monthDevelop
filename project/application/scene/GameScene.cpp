@@ -361,6 +361,8 @@ void GameScene::Update()
     ImGui::Checkbox("DebugCamera", &isDebugCamera_);
     ImGui::End();
 
+   
+
 #endif // USE_IMGUI
 
     // sprite->SetRotation(sprite->GetRotation() + 0.1f);

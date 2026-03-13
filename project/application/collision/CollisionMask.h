@@ -27,6 +27,8 @@ public:
     {
         Map1,
         Map2,
+
+        Unknown,
     };
 
 public: 
@@ -65,6 +67,11 @@ public:
     // 特定座標が壁かどうかを判定
     bool IsWall(float x, float z) const;
 
+
+public:
+
+    void SetMaskMapRequest(const MaskMap& maskMapRequest){ maskMapRequest_ = maskMapRequest; }
+
 private: // シングルトンインスタンス
 
     // unique_ptr が delete するために使用する構造体
@@ -92,5 +99,8 @@ private:
     Vector3 translate_ = { 0.0f, 0.0f, 0.0f };
 
     MaskMap currentMaskMap_ = MaskMap::Map1;
+
+    MaskMap maskMapRequest_ = MaskMap::Unknown;
+
 };
 
