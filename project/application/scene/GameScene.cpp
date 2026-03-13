@@ -12,7 +12,7 @@ void GameScene::Initialize() {
   
   camera = std::make_unique<Camera>();
   camera->SetRotate({0.0f, 0.0f, 0.0f});
-  camera->SetTranslate({0.0f, 0.0f, -30.0f});
+  camera->SetTranslate({0.0f, -0.3f, -30.0f});
   Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
   ParticleManager::GetInstance()->Setcamera(camera.get());
 
@@ -104,15 +104,20 @@ void GameScene::Initialize() {
   // ----- Thread -----
   thread_ = std::make_unique<ThreadManager>();
   thread_->Initialize(50, 20, camera.get());
-  thread_->AddThread({-3.0f, 0.0f, -3.0f}, {3.0f, 0.0f, 3.0f});
+  thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
   thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
 
+  // 敵の初期化
+  enemy_ = std::make_unique<Enemy>();
+  enemy_->Initialize(enemyPos_);
 }
 void GameScene::Finalize() {
 
   LightManager::GetInstance()->ClearLights();
 
   ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
+
+  collisionMask_->Finalize();
 
   /*player_->Finalize();
   delete player_;
@@ -375,6 +380,10 @@ void GameScene::Update()
     // ゴールの更新処理
     goal_->Update();
 
+  // 敵の更新処理
+    enemy_->Update(egg_->GetWorldPosition(), thread_.get());
+
+    
     collisionMask_->Update();
 
 
@@ -397,6 +406,9 @@ void GameScene::Draw() {
 
   // ゴールの描画処理
   goal_->Draw();
+
+  // 敵の描画処理
+  enemy_->Draw();
 
   // ParticleManager::GetInstance()->Draw();
   ///////スプライトの描画

@@ -13,6 +13,7 @@
 #include "Sprite.h"
 #include "Terrain.h"
 #include "TextureManager.h"
+#include "Enemy.h"
 #include <memory>
 #include "CollisionMask.h"
 
@@ -59,4 +60,8 @@ private:
   // ----- Thread -----
   std::unique_ptr<ThreadManager> thread_;
 
+  // 敵
+  std::unique_ptr<Enemy> enemy_;
+  // 敵の位置
+  Vector3 enemyPos_ = { 10.0f,0.0f,0.0f };
 };

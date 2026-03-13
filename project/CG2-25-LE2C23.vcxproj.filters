@@ -60,6 +60,8 @@
     <ClCompile Include="ThreadPhysics.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -116,6 +118,8 @@
     <ClInclude Include="PhysicsNode.h" />
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="PathFinder.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
