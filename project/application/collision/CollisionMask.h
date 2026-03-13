@@ -2,7 +2,7 @@
 #include "Camera.h"
 #include "Model.h"
 #include "Object3D.h"
-
+#include "DrawFunction.h"
 
 class CollisionMask
 {
@@ -66,6 +66,8 @@ public:
 
     // 特定座標が壁かどうかを判定
     bool IsWall(float x, float z) const;
+
+    bool IsCollisionWall(const float& x, const float& z, const float& width);
 
 
 public:
