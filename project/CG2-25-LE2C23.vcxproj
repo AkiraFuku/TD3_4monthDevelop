@@ -66,9 +66,9 @@
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
-    <ClCompile Include="application\object\thread\ThreadManager.cpp" />
-    <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
-    <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
+    <ClCompile Include="ThreadManager.cpp" />
+    <ClCompile Include="ThreadPhysics.cpp" />
+    <ClCompile Include="ThreadRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -120,10 +120,10 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
-    <ClInclude Include="application\object\thread\PhysicsNode.h" />
-    <ClInclude Include="application\object\thread\ThreadManager.h" />
-    <ClInclude Include="application\object\thread\ThreadPhysics.h" />
-    <ClInclude Include="application\object\thread\ThreadRenderer.h" />
+    <ClInclude Include="PhysicsNode.h" />
+    <ClInclude Include="ThreadManager.h" />
+    <ClInclude Include="ThreadPhysics.h" />
+    <ClInclude Include="ThreadRenderer.h" />
     <ClInclude Include="application\object\PlayerState.h" />
   </ItemGroup>
   <ItemGroup>
@@ -246,7 +246,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -274,7 +274,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -305,7 +305,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

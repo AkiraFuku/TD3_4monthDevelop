@@ -56,9 +56,9 @@
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
-    <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
-    <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
-    <ClCompile Include="application\object\thread\ThreadManager.cpp" />
+    <ClCompile Include="ThreadRenderer.cpp" />
+    <ClCompile Include="ThreadPhysics.cpp" />
+    <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="application\object\PlayerState.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -111,10 +111,10 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
-    <ClInclude Include="application\object\thread\ThreadRenderer.h" />
-    <ClInclude Include="application\object\thread\ThreadPhysics.h" />
-    <ClInclude Include="application\object\thread\PhysicsNode.h" />
-    <ClInclude Include="application\object\thread\ThreadManager.h" />
+    <ClInclude Include="ThreadRenderer.h" />
+    <ClInclude Include="ThreadPhysics.h" />
+    <ClInclude Include="PhysicsNode.h" />
+    <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="application\object\PlayerState.h" />
   </ItemGroup>
   <ItemGroup>
