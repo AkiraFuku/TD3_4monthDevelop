@@ -114,6 +114,13 @@ Vector3 operator/=(Vector3& v, float scalar)
     v.z /= scalar;
     return v;
 }
+
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2)
+{
+  Matrix4x4 result;
+  result = Multiply(m1, m2);
+    return result;
+}
 	
 
 	Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farCrip){

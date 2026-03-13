@@ -60,6 +60,12 @@ void Model::Update() {
 
         ApplyAnimation(modelData_.rootNode, animation_->GetCurrentTime_());
     }
+
+
+
+
+
+
 }
 void Model::Draw() {
     //VBVの設定
@@ -125,34 +131,7 @@ void Model::ApplyAnimation(Node& node, float time) {
         ApplyAnimation(child, time);
     }
 }
-Model::Skeleton Model::CreateSkelton(const Node& rootNode) {
-    Skeleton skeleton;
-    skeleton.root = CreateJoint(rootNode, {}, skeleton.joints);
 
-    for (const Joint& joint : skeleton.joints)
-    {
-        skeleton.jointMap.emplace(joint.name, joint.index);
-    }
-    return skeleton;
-}
-int32_t Model::CreateJoint(const Node& node, const std::optional<int32_t>& parent, std::vector<Joint>& joints) {
-    Joint joint;
-    joint.name = node.name;
-    joint.localMatrix = node.localMatrix;
-    joint.skeletonSpaceMatrix = Makeidentity4x4();
-    joint.transform = node.transform;
-    joint.index = static_cast<int32_t>(joints.size());
-    joint.parent = parent;
-    joints.push_back(joint);
-    for (const Node& Child : node.children) {
-
-        int32_t childIndex = CreateJoint(Child, joint.index, joints);
-        joints[joint.index].children.push_back(childIndex);
-
-    }
-    return joint.index;
-
-}
 Model::MaterialData  Model::LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename) {
     //1. 変数の宣言
     MaterialData materialData{}; // 修正: 初期化

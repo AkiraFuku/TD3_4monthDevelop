@@ -51,14 +51,13 @@ public:
         Node rootNode;
     };
     struct Joint {
-        QuaternionTransform transform;
-        Matrix4x4 localMatrix;
+        QuaternionTransform transform{}; // 明示的にデフォルト初期化
+        Matrix4x4 localMatrix = Makeidentity4x4(); // 明示的に初期化
         Matrix4x4 skeletonSpaceMatrix = Makeidentity4x4(); // ジョイントのスケルトンスペース行列
         std::string name;
         std::vector<int32_t> children; // 子ジョイントのインデックス
-        int32_t index; // ジョイントのインデックス
+        int32_t index = 0; // ジョイントのインデックスを明示的に初期化
         std::optional<int32_t> parent; // 親ジョイントのインデックス（ルートジョイントの場合はnullopt）
-
     };
 
     struct Skeleton {
@@ -126,10 +125,9 @@ private:
     void CreateMaterialResource();
     void ApplyAnimation(Node& node, float time);
 
-    Skeleton skeleton_;
+    //Skeleton skeleton_;
 
-    Skeleton CreateSkelton(const Node& rootNode);
-    int32_t CreateJoint(const Node& node, const std::optional<int32_t>& parent,std::vector<Joint>& joint);
+    
 
 };
 
