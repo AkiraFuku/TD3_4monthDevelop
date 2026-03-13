@@ -15,6 +15,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
     <ClCompile Include="application\debugCamera\DebugCameraFunction.cpp" />
     <ClCompile Include="application\object\Player.cpp" />
@@ -22,7 +23,11 @@
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg.cpp" />
     <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
+    <ClCompile Include="engine\math\Mass.cpp" />
+    <ClCompile Include="engine\math\Quanternion.cpp" />
+    <ClCompile Include="engine\math\RotateFunction.cpp" />
     <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
     <ClCompile Include="engine\3d\Vector3.cpp" />
@@ -64,7 +69,6 @@
     <ClCompile Include="engine\scene\Scene.cpp" />
     <ClCompile Include="engine\scene\SceneManager.cpp" />
     <ClCompile Include="application\scene\TitleScene.cpp" />
-    <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
     <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
@@ -73,6 +77,7 @@
     <ClCompile Include="application\collision\Vector4Function.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />
     <ClInclude Include="application\object\Player.h" />
@@ -80,6 +85,11 @@
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg.h" />
     <ClInclude Include="Enemy.h" />
+    <ClInclude Include="engine\base\PSOManager.h" />
+    <ClInclude Include="engine\math\Mass.h" />
+    <ClInclude Include="engine\math\Quanternion.h" />
+    <ClInclude Include="engine\math\RotateFunction.h" />
+    <ClInclude Include="engine\math\Transform.h" />
     <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />
@@ -119,7 +129,6 @@
     <ClInclude Include="engine\scene\Scene.h" />
     <ClInclude Include="engine\scene\SceneManager.h" />
     <ClInclude Include="application\scene\TitleScene.h" />
-    <ClInclude Include="engine\base\PSOMnager.h" />
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />

@@ -9,7 +9,7 @@ void Egg::Initialize()
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("axis.obj");
+    ModelManager::GetInstance()->LoadModel("resources","axis.obj");
     object_->SetModel("axis.obj");
 }
 

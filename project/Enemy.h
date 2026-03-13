@@ -16,7 +16,11 @@ public:
 
     void Draw();
 
+    // 経路探索
     void RecalculatePath(const Vector3& eggPos, ThreadManager* tm);
+
+    // 経路をクリア
+    bool IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm);
 
 private:
     Point WorldToGrid(const Vector3& pos);

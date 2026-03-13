@@ -54,7 +54,6 @@
     <ClCompile Include="engine\scene\Scene.cpp" />
     <ClCompile Include="engine\scene\SceneManager.cpp" />
     <ClCompile Include="application\scene\TitleScene.cpp" />
-    <ClCompile Include="engine\base\PSOMnager.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
     <ClCompile Include="ThreadRenderer.cpp" />
     <ClCompile Include="ThreadPhysics.cpp" />
@@ -62,6 +61,11 @@
     <ClCompile Include="application\collision\Vector4Function.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="PathFinder.cpp" />
+    <ClCompile Include="engine\base\PSOManager.cpp" />
+    <ClCompile Include="engine\math\Mass.cpp" />
+    <ClCompile Include="engine\math\Quanternion.cpp" />
+    <ClCompile Include="engine\math\RotateFunction.cpp" />
+    <ClCompile Include="Animation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -109,7 +113,6 @@
     <ClInclude Include="engine\scene\Scene.h" />
     <ClInclude Include="engine\scene\SceneManager.h" />
     <ClInclude Include="application\scene\TitleScene.h" />
-    <ClInclude Include="engine\base\PSOMnager.h" />
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
@@ -120,6 +123,12 @@
     <ClInclude Include="application\collision\Vector4Function.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="PathFinder.h" />
+    <ClInclude Include="engine\base\PSOManager.h" />
+    <ClInclude Include="engine\math\Mass.h" />
+    <ClInclude Include="engine\math\Quanternion.h" />
+    <ClInclude Include="engine\math\RotateFunction.h" />
+    <ClInclude Include="engine\math\Transform.h" />
+    <ClInclude Include="Animation.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

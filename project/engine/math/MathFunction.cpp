@@ -1,4 +1,5 @@
 #include "MathFunction.h"
+#include "RotateFunction.h"
 //
 // 
 // 
@@ -166,6 +167,18 @@ Vector3 operator/=(Vector3& v, float scalar)
 	    Matrix4x4 result=Multiply(Multiply(scaleMatrix,rotateMatrix),traslateMatrix);
 		return result ;
 	}
+
+    Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate)
+    {
+       Matrix4x4 scaleMatrix=MakeScaleMatrix(scale);
+       Matrix4x4 rotateMatrix = MakeRotateMatrix(rotate);
+		Matrix4x4 traslateMatrix=MakeTranslateMatrix(traslate);
+
+	    Matrix4x4 result=Multiply(Multiply(scaleMatrix,rotateMatrix),traslateMatrix);
+		return result ;
+    }
+
+  
 
 
 	/// <summary>

@@ -9,7 +9,7 @@ void Goal::Initialize()
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("player/player.obj");
+    ModelManager::GetInstance()->LoadModel("resources","player/player.obj");
     object_->SetModel("player/player.obj");
 
     Vector3 translate = object_->GetTranslate();

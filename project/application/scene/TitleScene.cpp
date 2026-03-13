@@ -5,7 +5,8 @@
 #include "GameScene.h"
 #include "SceneManager.h"
 #include "ParticleManager.h"//フレームワークに移植
-#include "PSOMnager.h"
+#include "PSOManager.h"
+#include "LightManager.h"
 
 void TitleScene::Initialize() {
 
@@ -20,8 +21,9 @@ void TitleScene::Initialize() {
     Audio::GetInstance()->PlayAudio(handle_,true);
 
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
-
+    
     ParticleManager::GetInstance()->CreateParticleGroup("Test", "resources/uvChecker.png");
+    LightManager::GetInstance()->AddDirectionalLight({ 0.0f,-1.0f,0.0f }, { 1.0f,1.0f,1.0f },1.0f);
     /*   std::vector<Sprite*> sprites;
        for (uint32_t i = 0; i < 5; i++)
        {*/
@@ -39,10 +41,24 @@ void TitleScene::Initialize() {
 
 
 
+    animation = std::make_unique<Animation>();
+
+    animation->Initialize("resources/AnimatedCube","AnimatedCube.gltf");
+    animation->SetCurrentTime(0.0f);
 
 
 
-    ModelManager::GetInstance()->LoadModel("plane.obj");
+
+    ModelManager::GetInstance()->LoadModel("resources/AnimatedCube","AnimatedCube.gltf");
+        object3d = std::make_unique<Object3d>();
+        object3d->Initialize();
+        object3d->SetModel("AnimatedCube.gltf");
+        object3d->SetCamera(camera.get());
+
+       object3d->SetAnimations(animation.get());
+        
+      
+
 
 
 }
@@ -126,7 +142,7 @@ void TitleScene::Update() {
         camera->UpdateView();
     }
     camera->UpdateViewProjection();
-
+    object3d->Update();
 
 #ifdef USE_IMGUI
     ImGui::Begin("Debug");
@@ -147,5 +163,6 @@ void TitleScene::Draw() {
 
     ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画
-    sprite->Draw();
+    //sprite->Draw();
+    object3d->Draw();
 }

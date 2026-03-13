@@ -10,7 +10,7 @@ public:
     static ModelManager* GetInstance();
     void Finalize();
     //Modelロード
-    void LoadModel(const std::string& filePath);
+    void LoadModel(const std::string& directoryPath,const std::string& filePath);
     //Model検索
     std::shared_ptr<Model> findModel(const std::string& filePath);
     static std::unique_ptr<ModelManager> instance;
@@ -20,7 +20,7 @@ public:
     void CreatePlaneFromTex(const std::string& modelName, const std::string& textureFilePath);
 
 private:
-   // std::unique_ptr<ModelCommon> modelCommon_;
+  
 
     ModelManager() = default;
     ~ModelManager() = default;
