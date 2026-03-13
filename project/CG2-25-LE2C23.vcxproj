@@ -71,6 +71,7 @@
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
     <ClCompile Include="PathFinder.cpp" />
+    <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="ThreadPhysics.cpp" />
     <ClCompile Include="ThreadRenderer.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="application\object\Goal.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="PhysicsNode.h" />
+    <ClInclude Include="PlayerState.h" />
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="ThreadPhysics.h" />
     <ClInclude Include="ThreadRenderer.h" />
