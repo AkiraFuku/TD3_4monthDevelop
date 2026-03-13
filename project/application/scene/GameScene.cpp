@@ -2,12 +2,12 @@
 #include "Input.h"
 #include "LightManager.h"
 #include "ModelManager.h"
-#include "PSOMnager.h"
+#include "PSOManager.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
 #include "imgui.h"
 #include <numbers>
-
+#include "Transform.h"
 void GameScene::Initialize() {
   
   camera = std::make_unique<Camera>();
@@ -24,11 +24,11 @@ void GameScene::Initialize() {
   // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
   LightManager::GetInstance()->AddSpotLight(
       {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
-      Normalize({-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
+      Normalize(Vector3{-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
       std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
   LightManager::GetInstance()->AddSpotLight(
       {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
-      Normalize({-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
+      Normalize(Vector3{-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
       std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
 
   Vector3 point1 = {0, 0, 0};
@@ -72,7 +72,7 @@ void GameScene::Initialize() {
 
   /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
   camera->SetFarCrip(1000.0f);
-  Transform M = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+  EulerTransform M = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
   emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
 
   /*player_ = new Player();
