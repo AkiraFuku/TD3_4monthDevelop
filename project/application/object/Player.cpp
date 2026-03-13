@@ -5,34 +5,30 @@
 #include "CollisionMask.h"
 
 /// <summary>
-/// 初期化
+/// ������
 /// </summary>
-/// <param name="pos">初期位置</param>
+/// <param name="pos">�����ʒu</param>
 void Player::Initialize(const Vector3& pos) {
-    // モデルの初期化
+    // ���f���̏�����
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-
-    // 初期位置設定
-    translate_ = pos;
+     translate_ = pos;
     object_->SetTranslate(translate_);
-
-    // モデルを指定
-    ModelManager::GetInstance()->LoadModel("player/player.obj");
+    ModelManager::GetInstance()->LoadModel("resources","player/player.obj");
     object_->SetModel("player/player.obj");
 }
 /// <summary>
-/// 終了
+/// �I��
 /// </summary>
 void Player::Finalize() {}
 /// <summary>
-/// 更新
+/// �X�V
 /// </summary>
 void Player::Update() {
 
     moveVel_ = { 0.0f, 0.0f, 0.0f };
 
-    // 移動処理
+    // �ړ�����
     UpdateMove();
 
     
@@ -60,31 +56,31 @@ void Player::Update() {
 
 #endif
 
-    // 衝突判定
+    // �Փ˔���
     IsCollision();
 
-    // 移動距離確定
+    // �ړ������m��
     ResultMove();
 
-    // モデルの更新
+    // ���f���̍X�V
     object_->Update();
 }
 /// <summary>
-/// 描画
+/// �`��
 /// </summary>
 void Player::Draw() {
-    // モデルの描画
+    // ���f���̕`��
     object_->Draw();
 }
 
 /// <summary>
-/// 移動処理
+/// �ړ�����
 /// </summary>
 void Player::UpdateMove() {
-    // 移動方向を蓄積する変数
+    // �ړ�������~�ς���ϐ�
     Vector3 moveDirection = { 0.0f, 0.0f, 0.0f };
 
-    // キー入力に応じて方向ベクトルを決定
+    // �L�[���͂ɉ����ĕ����x�N�g�������
     if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
         moveDirection.x += 1.0f;
     } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
@@ -106,16 +102,16 @@ void Player::UpdateMove() {
     }
 
     if (moveDirection.x != 0.0f || moveDirection.z != 0.0f) {
-        // ベクトルの長さを計算
+        // �x�N�g���̒�����v�Z
         float length = std::sqrtf(moveDirection.x * moveDirection.x +
                                   moveDirection.z * moveDirection.z);
-        // 正規化
+        // ���K��
         if (length != 0.0f) {
             moveDirection.x /= length;
             moveDirection.z /= length;
         }
 
-        // 正規化した方向に指定速度を掛けて加算
+        // ���K�����������Ɏw�葬�x��|���ĉ��Z
         moveVel_.x += moveDirection.x * velocity_.x;
         moveVel_.z += moveDirection.z * velocity_.z;
     }

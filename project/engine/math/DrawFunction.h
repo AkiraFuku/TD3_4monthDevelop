@@ -27,7 +27,7 @@ struct Plane
 };
 struct Triangle
 {
-	Vector3 vertces[3];//頂点1
+	Vector3 vertices[3];//頂点1
 
 };
 struct AABB{

@@ -5,7 +5,7 @@
 #include <d3d12.h>
 #include<string>
 
-#include "PSOMnager.h"
+#include "PSOManager.h"
 class Sprite
 {
 public:

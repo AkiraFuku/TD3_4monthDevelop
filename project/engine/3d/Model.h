@@ -2,12 +2,17 @@
 #include <vector>
 #include "Vector2.h"
 #include "Vector4.h"
+#include "Vector3.h"
 #include <wrl.h>
 #include <d3d12.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "MathFunction.h"
+
+#include "Animation.h"
+
+#include "Transform.h"
 
 class Model
 {
@@ -32,6 +37,7 @@ public:
     };
     struct Node
     {
+     QuaternionTransform transform   ;
         Matrix4x4 localMatrix=Makeidetity4x4();
         std::string name;
         std::vector <Node>children;
@@ -57,7 +63,16 @@ public:
     void Update();
 
     void Draw();
+    void SetAnimation(Animation* animation) {
+        animation_ = animation;
+    }
+     void SetAnimationTime(float time){
 
+         if(animation_){
+            animation_->SetCurrentTime(time);
+         }
+     
+     }
 
     ModelData GetModelData(){return modelData_;}
     //マテリアルの読み込み
@@ -80,6 +95,8 @@ private:
 
     ModelData modelData_;
 
+    Animation* animation_ = nullptr;
+
     std::string name_="name";
 
     //頂点リソース
@@ -91,5 +108,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
     Material* materialData_ = nullptr;
     void CreateMaterialResource();
+    void ApplyAnimation(Node& node, float time);
 };
 

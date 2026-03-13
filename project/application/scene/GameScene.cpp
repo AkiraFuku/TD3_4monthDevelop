@@ -62,13 +62,13 @@ void GameScene::Initialize() {
   object3d = std::make_unique<Object3d>();
   object3d->Initialize();
 
-  ModelManager::GetInstance()->LoadModel("plane.obj");
-  ModelManager::GetInstance()->LoadModel("axis.obj");
-  ModelManager::GetInstance()->LoadModel("terrain.obj");
-  ModelManager::GetInstance()->CreateSphereModel("MySphere", 16);
-  // object3d2->SetTranslate(Vector3{ 0.0f,10.0f,0.0f });
-  object3d2->SetModel("terrain.obj");
-  object3d->SetModel("MySphere");
+    ModelManager::GetInstance()->LoadModel("resources","plane.obj");
+    ModelManager::GetInstance()->LoadModel("resources","axis.obj");
+    ModelManager::GetInstance()->LoadModel("resources","terrain.obj");
+    ModelManager::GetInstance()->CreateSphereModel("MySphere", 16);
+    // object3d2->SetTranslate(Vector3{ 0.0f,10.0f,0.0f });
+    object3d2->SetModel("terrain.obj");
+    object3d->SetModel("MySphere");
 
   /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
   camera->SetFarCrip(1000.0f);

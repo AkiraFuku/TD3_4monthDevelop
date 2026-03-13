@@ -4,7 +4,7 @@
 #include "numbers"
 #include <algorithm>
 #include "DebugCameraFunction.h"
-
+#include "Transform.h"
 
 class Input;
 
@@ -27,7 +27,7 @@ public:
 	/// <summary>
 	///  更新
 	/// </summary>
-	void Update(Transform camera);
+	void Update(EulerTransform camera);
 
 	Matrix4x4 GetViewMatrix() { return viewMatrix_; }
 
@@ -35,7 +35,7 @@ public:
 private:
 
 	// カメラ
-	Transform debugCamera_;
+	EulerTransform debugCamera_;
 
 	// ビュー行列
 	Matrix4x4 viewMatrix_ = MakeIdentity4x4();

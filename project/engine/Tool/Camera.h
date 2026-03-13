@@ -1,6 +1,7 @@
 #pragma once
 #include "Vector4.h"
 #include "WinApp.h"
+#include "Transform.h"
 class Camera
 {
 public:
@@ -20,7 +21,7 @@ public:
     void SetTranslate(const Vector3& translate) {
         transform_.translate = translate;
     }
-    void SetTransform(const Transform& transForm) {
+    void SetTransform(const EulerTransform& transForm) {
         transform_ = transForm;
     }
     void SetFovY(const float fovY) {
@@ -42,7 +43,7 @@ public:
 
     const Vector3& GetRotate()const{return transform_.rotate;}
     const Vector3& GetTranslate()const{return transform_.translate;}
-    const Transform& GetTransform()const{ return transform_; };
+    const EulerTransform& GetTransform()const{ return transform_; };
 
     const Matrix4x4& GetWorldMatrix()const{return worldMatrix;};
     const Matrix4x4& GetViewMatrix()const{return viewMatrix;};
@@ -52,7 +53,7 @@ public:
 
 
 private:
-    Transform transform_;
+    EulerTransform transform_;
     Matrix4x4 worldMatrix;
     Matrix4x4 viewMatrix;
     Matrix4x4 projectionMatrix;
