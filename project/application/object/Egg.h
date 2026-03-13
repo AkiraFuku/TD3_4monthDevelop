@@ -34,6 +34,9 @@ public:
     // プレイヤーのポインタ
     void SetPlayer(Player* player) { player_ = player; }
 
+    // 卵の状況を取得
+    bool IsOnPlayer() const { return onPlayer_; }
+
 public: // 外部入出力
 
 

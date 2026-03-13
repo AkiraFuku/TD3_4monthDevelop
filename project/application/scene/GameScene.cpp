@@ -11,8 +11,8 @@
 void GameScene::Initialize() {
   
   camera = std::make_unique<Camera>();
-  camera->SetRotate({0.0f, 0.0f, 0.0f});
-  camera->SetTranslate({0.0f, -0.3f, -30.0f});
+  camera->SetRotate({0.1f, 0.0f, 0.0f});
+  camera->SetTranslate({0.0f, 4.0f, -30.0f});
   Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
   ParticleManager::GetInstance()->Setcamera(camera.get());
 
@@ -373,8 +373,19 @@ void GameScene::Update()
     // ゴールの更新処理
     goal_->Update();
 
-  // 敵の更新処理
-    enemy_->Update(egg_->GetWorldPosition(), thread_.get());
+    // 敵の目的地を決定する
+    Vector3 targetPos;
+    if (egg_->IsOnPlayer()) {
+        // 持ち上げ中ならプレイヤーの足元の座標を使う
+        targetPos = player_->GetPosition();
+    }
+    else {
+        // 置いてあるなら卵自身の座標を使う
+        targetPos = egg_->GetWorldPosition();
+    }
+
+    // 決定した目的地を敵に渡す
+    enemy_->Update(targetPos, thread_.get());
 
     
     collisionMask_->Update();

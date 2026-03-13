@@ -12,7 +12,13 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
 
     openList.push_back(new Node(start, 0, CalcH(start, goal), nullptr));
 
+    int nodeCount = 0;
+
     while (!openList.empty()) {
+        nodeCount++;
+        if (nodeCount > 5000) { // 5000ノード以上調べてもダメなら中断
+            break;
+        }
         auto it = std::min_element(openList.begin(), openList.end(), [](Node* a, Node* b) {
             return a->f < b->f;
             });

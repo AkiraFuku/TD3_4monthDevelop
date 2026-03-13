@@ -63,5 +63,5 @@ private:
   // 敵
   std::unique_ptr<Enemy> enemy_;
   // 敵の位置
-  Vector3 enemyPos_ = { 10.0f,0.0f,0.0f };
+  Vector3 enemyPos_ = { 10.0f,0.0f,4.0f };
 };
