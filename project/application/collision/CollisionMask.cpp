@@ -3,6 +3,7 @@
 #include "TextureManager.h"
 #include "StringUtility.h"
 #include "Vector4.h"
+#include "ImGuiManager.h"
 
 std::unique_ptr<CollisionMask, CollisionMask::Deleter> CollisionMask::instance_ = nullptr;
 
@@ -60,10 +61,29 @@ void CollisionMask::Initialize()
     }
     
     currentMaskMap_ = CollisionMask::MaskMap::Map1;
+
+    maskMapRequest_ = CollisionMask::MaskMap::Unknown;
 }
 
 void CollisionMask::Update() 
 {
+    if(maskMapRequest_ != MaskMap::Unknown)
+    {
+        currentMaskMap_ = maskMapRequest_;
+        maskMapRequest_ = MaskMap::Unknown;
+    }
+
+    ImGui::Begin("MaskMap Setting");
+
+    int maskMapIndex = static_cast<int>(currentMaskMap_);
+    const char* items[] = {"Map1", "Map2"};
+    if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
+    {
+        SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
+    }
+
+    ImGui::End();
+
     maskDatas_[static_cast<int>(currentMaskMap_)]->object->Update();
 }
 
