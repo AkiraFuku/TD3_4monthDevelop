@@ -293,10 +293,10 @@ Model* Model::CreatePlaneFromTex(const std::string& textureFilePath)
 
     // 2. 頂点データの生成
    // 4つの頂点を作成
-    Model::VertexData a = { {-w,  h, 0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }; // 左上
-    Model::VertexData b = { { w,  h, 0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }; // 右上
-    Model::VertexData c = { {-w, -h, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }; // 左下
-    Model::VertexData d = { { w, -h, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }; // 右下
+    Model::VertexData a = { {-w, -h, 0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }; // 左上
+    Model::VertexData b = { { w, -h, 0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }; // 右上
+    Model::VertexData c = { {-w,  h, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }; // 左下
+    Model::VertexData d = { { w,  h, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }; // 右下
 
     // 頂点をpush_backして三角形2つ（計6頂点）を構築
     // 三角形1: A -> B -> C
