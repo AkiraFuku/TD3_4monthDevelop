@@ -15,6 +15,10 @@ struct ShaderSet {
     Microsoft::WRL::ComPtr<IDxcBlob> ps;
 };
 
+enum class BlendMode { None, Normal, Add, Subtract, Multiply, Screen };
+enum class FillMode { kSolid, kWireFrame };
+enum class TopologyType{kTriangle,kLine,kPoint};
+
 struct PsoConfig {
     std::wstring vsPath;
     std::wstring psPath;
@@ -29,10 +33,10 @@ struct PsoConfig {
     D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_BACK;
     bool depthEnable = true;
     D3D12_DEPTH_WRITE_MASK depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
+    TopologyType topologyType = TopologyType::kTriangle;
 };
 
-enum class BlendMode { None, Normal, Add, Subtract, Multiply, Screen };
-enum class FillMode { kSolid, kWireFrame };
 
 struct PsoSet {
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
@@ -58,6 +62,8 @@ private:
     void CreatePso(const std::string& name, BlendMode blend, FillMode fill);
     D3D12_BLEND_DESC CreateBlendDesc(BlendMode mode);
     void EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<IDxcBlob>& outVS, Microsoft::WRL::ComPtr<IDxcBlob>& outPS);
+
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType(TopologyType type);
 
     struct CacheKey {
         std::string name;
