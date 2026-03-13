@@ -83,10 +83,6 @@ public:
         }
     }
 
-    void SetPSOName(const std::string& name) {
-        PSOName_ = name;
-    }
-
     //void SetRadius(float radius) { radius_ = radius; }
 private:
 
@@ -107,8 +103,5 @@ private:
 
     FillMode fillMode_ = FillMode::kSolid;
     BlendMode blendMode_ = BlendMode::None;
-
-    std::string PSOName_ = "Object3d";
-
 };
 

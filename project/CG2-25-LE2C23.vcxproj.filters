@@ -7,8 +7,6 @@
     <FxCompile Include="resources\shaders\Particle\Particle.VS.hlsl" />
     <FxCompile Include="resources\shaders\Sprite\Sprite.PS.hlsl" />
     <FxCompile Include="resources\shaders\Sprite\Sprite.VS.hlsl" />
-    <FxCompile Include="resources\shaders\Player\Player.PS.hlsl" />
-    <FxCompile Include="resources\shaders\Player\Player.VS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
@@ -18,9 +16,12 @@
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
+    <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
     <ClCompile Include="engine\3d\Vector3.cpp" />
+    <ClCompile Include="engine\base\D3DResourceLeakChecker.cpp" />
     <ClCompile Include="engine\base\DXCommon.cpp" />
+    <ClCompile Include="engine\audio\Audio.cpp" />
     <ClCompile Include="engine\Tool\ImGuiManager.cpp" />
     <ClCompile Include="externals\imgui\imgui.cpp" />
     <ClCompile Include="externals\imgui\imgui_demo.cpp" />
@@ -65,15 +66,6 @@
     <ClCompile Include="engine\math\Quanternion.cpp" />
     <ClCompile Include="engine\math\RotateFunction.cpp" />
     <ClCompile Include="Animation.cpp" />
-    <ClCompile Include="engine\audio\Audio.cpp">
-      <Filter>NewFilter4\NewFilter3</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\Tool\Camera.cpp">
-      <Filter>NewFilter4\NewFilter2</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\base\D3DResourceLeakChecker.cpp">
-      <Filter>NewFilter4\NewFilter4</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -82,10 +74,14 @@
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg.h" />
+    <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
+    <ClInclude Include="engine\Tool\Camera.h" />
     <ClInclude Include="engine\2d\Vector2.h" />
     <ClInclude Include="engine\3d\Vector3.h" />
+    <ClInclude Include="engine\base\D3DResourceLeakChecker.h" />
     <ClInclude Include="engine\base\DXCommon.h" />
+    <ClInclude Include="engine\audio\Audio.h" />
     <ClInclude Include="engine\Tool\ImGuiManager.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />
     <ClInclude Include="externals\imgui\imgui.h" />
@@ -132,47 +128,14 @@
     <ClInclude Include="engine\math\Quanternion.h" />
     <ClInclude Include="engine\math\RotateFunction.h" />
     <ClInclude Include="engine\math\Transform.h" />
-    <ClInclude Include="engine\scene\AbstractSceneFactory.h">
-      <Filter>NewFilter4\NewFilter1</Filter>
-    </ClInclude>
     <ClInclude Include="Animation.h" />
-    <ClInclude Include="engine\audio\Audio.h">
-      <Filter>NewFilter4\NewFilter3</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\Tool\Camera.h">
-      <Filter>NewFilter4\NewFilter2</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\base\D3DResourceLeakChecker.h">
-      <Filter>NewFilter4\NewFilter4</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
     <None Include="resources\shaders\Particle\Particle.hlsli" />
     <None Include="resources\shaders\Sprite\Sprite.hlsli" />
-    <None Include="resources\shaders\Player\Player.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="NewFilter2">
-      <UniqueIdentifier>{bdbbf9c3-6208-47ab-82e0-9bc3f405b53c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NewFilter4">
-      <UniqueIdentifier>{5cdbc51d-23da-4104-882d-1338b97d3642}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NewFilter4\NewFilter1">
-      <UniqueIdentifier>{1a085950-2b3b-4067-815c-0b21d721825e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NewFilter4\NewFilter3">
-      <UniqueIdentifier>{dcfddd3f-c464-40f0-adc3-cd1e51e9072c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NewFilter4\NewFilter2">
-      <UniqueIdentifier>{62b38b35-b75e-492e-bd43-a10baeb3c621}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NewFilter4\NewFilter4">
-      <UniqueIdentifier>{2b265be3-aa3f-4457-83b6-a8902851db90}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
 </Project>
