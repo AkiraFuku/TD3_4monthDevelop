@@ -10,8 +10,7 @@
 #include <imgui.h>
 
 
-void Model::Initialize(const std::string& directoryPath, const std::string& filename)
-{
+void Model::Initialize(const std::string& directoryPath, const std::string& filename) {
 
     name_ = filename;
     modelData_ = LoadModelFile(directoryPath, filename);
@@ -34,8 +33,7 @@ void Model::Initialize(const std::string& directoryPath, const std::string& file
 
 }
 
-void Model::Update()
-{
+void Model::Update() {
 #ifdef USE_IMGUI
     ImGui::Begin((std::string("Settings: ") + name_).c_str());
     int* pEnableLighting = reinterpret_cast<int*>(&materialData_->enableLighting);
@@ -59,7 +57,7 @@ void Model::Update()
     if (animation_)
     {
         animation_->Update();
-        
+
         ApplyAnimation(modelData_.rootNode, animation_->GetCurrentTime_());
     }
 }
@@ -104,14 +102,13 @@ void Model::CreateMaterialResource() {
 
     materialData_->color = Vector4{ 1.0f,1.0f,1.0f,1.0f };
     materialData_->enableLighting = true;
-    materialData_->uvTransform = Makeidetity4x4();
-    materialData_->shininess=50.0f;
-    materialData_->specularType=BlinnPhong;
-    materialData_->diffuseType=HarfLambert;
+    materialData_->uvTransform = Makeidentity4x4();
+    materialData_->shininess = 50.0f;
+    materialData_->specularType = BlinnPhong;
+    materialData_->diffuseType = HarfLambert;
 
 }
-void Model::ApplyAnimation(Node& node, float time)
-{
+void Model::ApplyAnimation(Node& node, float time) {
     const auto& nodeAnimations = animation_->GetAnimationData().nodeAnimations;
 
     // このノードにアニメーションがあれば計算
@@ -127,6 +124,34 @@ void Model::ApplyAnimation(Node& node, float time)
     for (auto& child : node.children) {
         ApplyAnimation(child, time);
     }
+}
+Model::Skeleton Model::CreateSkelton(const Node& rootNode) {
+    Skeleton skeleton;
+    skeleton.root = CreateJoint(rootNode, {}, skeleton.joints);
+
+    for (const Joint& joint : skeleton.joints)
+    {
+        skeleton.jointMap.emplace(joint.name, joint.index);
+    }
+    return skeleton;
+}
+int32_t Model::CreateJoint(const Node& node, const std::optional<int32_t>& parent, std::vector<Joint>& joints) {
+    Joint joint;
+    joint.name = node.name;
+    joint.localMatrix = node.localMatrix;
+    joint.skeletonSpaceMatrix = Makeidentity4x4();
+    joint.transform = node.transform;
+    joint.index = static_cast<int32_t>(joints.size());
+    joint.parent = parent;
+    joints.push_back(joint);
+    for (const Node& Child : node.children) {
+
+        int32_t childIndex = CreateJoint(Child, joint.index, joints);
+        joints[joint.index].children.push_back(childIndex);
+
+    }
+    return joint.index;
+
 }
 Model::MaterialData  Model::LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename) {
     //1. 変数の宣言
@@ -153,9 +178,8 @@ Model::MaterialData  Model::LoadMaterialTemplateFile(const std::string& director
     return materialData;
 }
 
-Model::ModelData Model::LoadModelFile(const std::string& directoryPath, const std::string& filename)
-{
-       //1. 変数の宣言
+Model::ModelData Model::LoadModelFile(const std::string& directoryPath, const std::string& filename) {
+    //1. 変数の宣言
     ModelData modelData;
     std::string filePath = directoryPath + "/" + filename;
 
@@ -164,8 +188,8 @@ Model::ModelData Model::LoadModelFile(const std::string& directoryPath, const st
 
     const aiScene* scene = importer.ReadFile(filePath.c_str(),
         aiProcess_FlipWindingOrder |              // 三角形化されていないポリゴンを三角形にする
-        aiProcess_FlipUVs        |        // 法線がない場合、自動計算する
-aiProcess_PreTransformVertices    
+        aiProcess_FlipUVs |        // 法線がない場合、自動計算する
+        aiProcess_PreTransformVertices
     );
     assert(scene->HasMeshes());
     for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex)
@@ -204,26 +228,25 @@ aiProcess_PreTransformVertices
         }
     }
     modelData.rootNode = ReadNode(scene->mRootNode);
-   // 4. モデルデータを返す
+    // 4. モデルデータを返す
     return modelData;
 
 }
 
-Model* Model::CreateSphere(uint32_t subdivision)
-{
+Model* Model::CreateSphere(uint32_t subdivision) {
     Model* model = new Model();
 
     // 1. メモリ確保（頂点リソース作成など既存のInitializeの一部が必要だが、
     // ここではvertex生成に集中し、後でリソース生成関数を呼ぶ流れにします）
     // ※TextureManagerへの依存があるため、適当な白画像などをデフォルトにする必要があります
-     
+
     model->modelData_.material.textureFilePath = "resources/uvChecker.png"; // 確実に存在する画像を指定
-   // TextureManagerを使ってテクスチャを読み込む
-    TextureManager::GetInstance()->LoadTexture( model->modelData_.material.textureFilePath);
+    // TextureManagerを使ってテクスチャを読み込む
+    TextureManager::GetInstance()->LoadTexture(model->modelData_.material.textureFilePath);
 
     // 読み込んだテクスチャのSRVインデックスを取得して設定する
-    model->modelData_.material.textureIndex = 
-        TextureManager::GetInstance()->GetTextureIndexByFilePath( model->modelData_.material.textureFilePath);
+    model->modelData_.material.textureIndex =
+        TextureManager::GetInstance()->GetTextureIndexByFilePath(model->modelData_.material.textureFilePath);
 
     // 分割数に応じた角度の刻み幅
     const float kLonEvery = 2.0f * std::numbers::pi_v<float> / float(subdivision);
@@ -298,14 +321,13 @@ Model* Model::CreateSphere(uint32_t subdivision)
     return model;
 }
 
- Model::Node Model::ReadNode(aiNode* node)
-{
-   Node result;
-  
+Model::Node Model::ReadNode(aiNode* node) {
+    Node result;
+
     aiMatrix4x4 aiLocalMatrix = node->mTransformation;
     aiLocalMatrix.Transpose();
 
- 
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             // Assimpの行列は [row][col] でアクセス可能

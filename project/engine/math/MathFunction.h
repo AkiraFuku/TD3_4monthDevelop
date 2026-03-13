@@ -88,7 +88,7 @@ Matrix4x4 Transpose(const Matrix4x4& m);
 /// 単位行列の作成
 /// </summary>
 /// <returns></returns>
-Matrix4x4 Makeidetity4x4();
+Matrix4x4 Makeidentity4x4();
 //}
 
     /// <summary>

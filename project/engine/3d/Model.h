@@ -14,6 +14,9 @@
 
 #include "Transform.h"
 
+
+#include <optional>
+
 class Model
 {
 public:
@@ -37,7 +40,7 @@ public:
     };
     struct Node {
         QuaternionTransform transform;
-        Matrix4x4 localMatrix = Makeidetity4x4();
+        Matrix4x4 localMatrix = Makeidentity4x4();
         std::string name;
         std::vector <Node>children;
     };
@@ -47,6 +50,24 @@ public:
         MaterialData material; // マテリアルデータ
         Node rootNode;
     };
+    struct Joint {
+        QuaternionTransform transform;
+        Matrix4x4 localMatrix;
+        Matrix4x4 skeletonSpaceMatrix = Makeidentity4x4(); // ジョイントのスケルトンスペース行列
+        std::string name;
+        std::vector<int32_t> children; // 子ジョイントのインデックス
+        int32_t index; // ジョイントのインデックス
+        std::optional<int32_t> parent; // 親ジョイントのインデックス（ルートジョイントの場合はnullopt）
+
+    };
+
+    struct Skeleton {
+        int32_t root; // ルートジョイントのインデックス
+        std::map<std::string, int32_t> jointMap; // ジョイント名からインデックスへのマップ
+        std::vector<Joint> joints; // ジョイントの配列
+
+    };
+
     enum  DiffuseType
     {
         Lambert,
@@ -104,5 +125,11 @@ private:
     Material* materialData_ = nullptr;
     void CreateMaterialResource();
     void ApplyAnimation(Node& node, float time);
+
+    Skeleton skeleton_;
+
+    Skeleton CreateSkelton(const Node& rootNode);
+    int32_t CreateJoint(const Node& node, const std::optional<int32_t>& parent,std::vector<Joint>& joint);
+
 };
 

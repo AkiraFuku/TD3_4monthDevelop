@@ -470,7 +470,7 @@ Matrix4x4 MakeRotateZMatrix(float radian)
 		}
 		);
 	}
-	Matrix4x4 Makeidetity4x4(){
+	Matrix4x4 Makeidentity4x4(){
 		return Matrix4x4(
 			{
 				{1,0,0,0},

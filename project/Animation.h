@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 #include <string>
+#include "Transform.h"
+#include "Vector4.h"
 
 
 class Animation

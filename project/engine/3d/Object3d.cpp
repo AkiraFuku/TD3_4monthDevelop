@@ -92,8 +92,8 @@ void Object3d::CreateWVPResource()
         CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResource_.Get()->
         Map(0, nullptr, reinterpret_cast<void**>(&wvpResource_));
-    wvpResource_->WVP = Makeidetity4x4();
-    wvpResource_->World = Makeidetity4x4();
+    wvpResource_->WVP = Makeidentity4x4();
+    wvpResource_->World = Makeidentity4x4();
     wvpResource_->WorldInverseTranspose = Inverse(wvpResource_->World);
 
 
