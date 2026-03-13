@@ -6,6 +6,29 @@
 
 class CollisionMask
 {
+public:
+
+    struct TextureData
+    {
+        std::vector<uint8_t> data;
+        int widthX, widthZ;
+    };
+
+    struct MaskData
+    {
+        // 名前
+        std::string name;
+        std::unique_ptr<Object3d> object;
+        TextureData textureData;
+        Vector4 min_, max_;
+    };
+
+    enum class MaskMap
+    {
+        Map1,
+        Map2,
+    };
+
 public: 
 
     // シングルトンインスタンスの取得
@@ -37,7 +60,7 @@ public:
 public:
 
     // マスクデータを読み込む
-    bool LoadFromFile(const std::string& filePath);
+    bool LoadFromFile(const std::string& filePath, TextureData& textureData);
 
     // 特定座標が壁かどうかを判定
     bool IsWall(float x, float z) const;
@@ -64,12 +87,10 @@ private: // シングルトンインスタンス
 
 private: 
 
-    std::unique_ptr<Object3d> object_;
+    std::vector<std::unique_ptr<MaskData>> maskDatas_;
 
-    std::vector<uint8_t> data;
-    int widthX, widthZ;
-    Vector4 min_, max_;
+    Vector3 translate_ = { 0.0f, 0.0f, 0.0f };
 
-
+    MaskMap currentMaskMap_ = MaskMap::Map1;
 };
 
