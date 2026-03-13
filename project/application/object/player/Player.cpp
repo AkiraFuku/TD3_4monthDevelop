@@ -156,18 +156,34 @@ void Player::UpdateMove(Vector3& moveDirection) {
 
 void Player::IsCollision()
 {
+ 
     float nextX = translate_.x + moveVel_.x;
-    if(CollisionMask::GetInstance()->IsWall(nextX, translate_.z))
+    float nextZ = translate_.z + moveVel_.z;
+
+    // 移動先が壁かどうかチェック
+    if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth)) 
+    {
+        // 壁なら移動をキャンセル（または押し戻し）
+        moveVel_.x = 0.0f;
+    }
+
+    if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
+    {
+        // 壁なら移動をキャンセル（または押し戻し）
+        moveVel_.z = 0.0f;
+    }
+
+    /*float nextX = translate_.x + moveVel_.x;
+    if (CollisionMask::GetInstance()->IsWall(nextX, translate_.z))
     {
         moveVel_.x = 0.0f;
     }
 
     float nextZ = translate_.z + moveVel_.z;
-    if(CollisionMask::GetInstance()->IsWall(translate_.x, nextZ))
+    if (CollisionMask::GetInstance()->IsWall(translate_.x, nextZ))
     {
         moveVel_.z = 0.0f;
-    }
-
+    }*/
 }
 
 void Player::ResultMove()

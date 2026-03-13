@@ -105,7 +105,7 @@ void DebugCamera::Update(EulerTransform originCamera)
 
 	LONG wheel = input_->GetMouseMove().z; // 前フレームとの差分
 	radius -= wheel * 0.005f;              // 感度は 0.1f などで調整
-	radius = max(1.0f, min(radius, 40.0f)); // クランプして近づきすぎ防止
+	radius = max(1.0f, min(radius, 100.0f)); // クランプして近づきすぎ防止
 
 	camera.rotate.x = phi;
 	camera.rotate.y = theta;

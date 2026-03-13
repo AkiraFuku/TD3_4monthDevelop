@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "CollisionMask.h"
 #include "ModelManager.h"
 #include "TextureManager.h"
@@ -154,3 +155,45 @@ bool CollisionMask::IsWall(float x, float z) const
     // インデックス計算（1ピクセル1バイトの場合）
     return maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.data[iz * widthX + ix] < 128; // 閾値で判定
 }
+
+bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float& width)
+{
+    Vector4 min_ = maskDatas_[static_cast<int>(currentMaskMap_)]->min_;
+    Vector4 max_ = maskDatas_[static_cast<int>(currentMaskMap_)]->max_;
+    int widthX = maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.widthX;
+    int widthZ = maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.widthZ;
+
+    float left  = x - (width / 2.0f);
+    float right = x + (width / 2.0f);
+    float front = z - (width / 2.0f);
+    float back = z + (width / 2.0f);
+  
+    float v1 = (front - min_.y) / (max_.y - min_.y) * widthZ;
+    float v2 = (back - min_.y) / (max_.y - min_.y) * widthZ;
+    int minIZ = std::clamp(static_cast<int>(std::min(v1, v2)), 0, widthZ - 1);
+    int maxIZ = std::clamp(static_cast<int>(std::max(v1, v2)), 0, widthZ - 1);
+
+    float u1 = (left - min_.x) / (max_.x - min_.x) * widthX;
+    float u2 = (right - min_.x) / (max_.x - min_.x) * widthX;
+    int minIX = std::clamp(static_cast<int>(std::min(u1, u2)), 0, widthX - 1);
+    int maxIX = std::clamp(static_cast<int>(std::max(u1, u2)), 0, widthX - 1);
+
+    // 範囲内のピクセルを走査
+    for (int iz = minIZ; iz <= maxIZ; ++iz) {
+        for (int ix = minIX; ix <= maxIX; ++ix) 
+        {
+            // 黒ピクセルがあれば衝突
+            if (maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.data[iz * widthX + ix] < 128)
+            {
+                ImGui::Begin("Debug");
+                ImGui::Text("Hit at Pixel: X=%d, Z=%d", ix, iz);
+                ImGui::End();
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
