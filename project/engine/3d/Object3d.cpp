@@ -60,14 +60,13 @@ void Object3d::Draw()
 
 
     Object3dCommon::GetInstance()->Object3dCommonDraw();
-    auto psoSet = PSOManager::GetInstance()->GetPso("Object3d", blendMode_, fillMode_);
+    auto psoSet = PSOManager::GetInstance()->GetPso(PSOName_, blendMode_, fillMode_);
 
     auto commandList = DXCommon::GetInstance()->GetCommandList();
     commandList->SetGraphicsRootSignature(psoSet.rootSignature.Get());
     commandList->SetPipelineState(psoSet.pipelineState.Get());
 
-    // PSOをセット
-   // DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
+   
     //WVP行列リソースの設定
     DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_.Get()->GetGPUVirtualAddress());
     //light
