@@ -125,6 +125,13 @@ void GameScene::Finalize() {
 
   goal_->Finalize();
   delete goal_;*/
+    
+#ifdef _DEBUG
+
+
+
+#endif
+
 }
 
 void GameScene::Update()

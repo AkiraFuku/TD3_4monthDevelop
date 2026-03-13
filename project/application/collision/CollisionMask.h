@@ -68,6 +68,7 @@ private:
 
     std::vector<uint8_t> data;
     int widthX, widthZ;
+    Vector4 min_, max_;
 
 
 };

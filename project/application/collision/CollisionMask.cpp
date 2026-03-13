@@ -2,6 +2,7 @@
 #include "ModelManager.h"
 #include "TextureManager.h"
 #include "StringUtility.h"
+#include "Vector4.h"
 
 std::unique_ptr<CollisionMask, CollisionMask::Deleter> CollisionMask::instance_ = nullptr;
 
@@ -28,6 +29,11 @@ void CollisionMask::Initialize()
     object_->Initialize();
     object_->SetModel("mapMaskData");
     
+
+    auto model = ModelManager::GetInstance()->findModel("mapMaskData");
+
+    max_ = model->GetModelData().vertices[1].position;
+    min_ = model->GetModelData().vertices[2].position;
 }
 
 
@@ -86,15 +92,9 @@ bool CollisionMask::LoadFromFile(const std::string& filePath)
 
 bool CollisionMask::IsWall(float x, float z) const
 {
-    //// 1. 原点を左上から中心にずらす（-width/2 ～ +width/2）
-    //float u = (worldX / sizeX) * widthX + (widthX / 2.0f);
-    //float v = (worldZ / sizeZ) * widthZ + (widthZ / 2.0f);
 
-    Vector4 max = ModelManager::GetInstance()->findModel("mapMaskData")->GetModelData().vertices[1].position;
-    Vector4 min = ModelManager::GetInstance()->findModel("mapMaskData")->GetModelData().vertices[2].position;
-
-    float u = ((x - min.x) / (max.x - min.x)) * widthX;
-    float v = ((z - min.y) / (max.y - min.y)) * widthZ;
+    float u = ((x - min_.x) / (max_.x - min_.x)) * widthX;
+    float v = ((z - min_.y) / (max_.y - min_.y)) * widthZ;
 
     int ix = static_cast<int>(u);
     int iz = static_cast<int>(v);

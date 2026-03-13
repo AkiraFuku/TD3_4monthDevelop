@@ -59,6 +59,7 @@
     <ClCompile Include="ThreadRenderer.cpp" />
     <ClCompile Include="ThreadPhysics.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
+    <ClCompile Include="application\collision\Vector4Function.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -114,6 +115,7 @@
     <ClInclude Include="ThreadPhysics.h" />
     <ClInclude Include="PhysicsNode.h" />
     <ClInclude Include="ThreadManager.h" />
+    <ClInclude Include="application\collision\Vector4Function.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

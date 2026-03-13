@@ -105,14 +105,14 @@ void DebugCamera::Update(Transform originCamera)
 
 	LONG wheel = input_->GetMouseMove().z; // 前フレームとの差分
 	radius -= wheel * 0.005f;              // 感度は 0.1f などで調整
-	radius = max(1.0f, min(radius, 20.0f)); // クランプして近づきすぎ防止
+	radius = max(1.0f, min(radius, 40.0f)); // クランプして近づきすぎ防止
 
 	camera.rotate.x = phi;
 	camera.rotate.y = theta;
 
-	camera.translate.x = radius * std::cos(theta) * std::sin(phi);
+	camera.translate.x = -radius * std::cos(theta) * std::sin(phi);
 	camera.translate.y = radius * std::sin(theta);
-	camera.translate.z = radius * std::cos(theta) * std::cos(phi);
+	camera.translate.z = -radius * std::cos(theta) * std::cos(phi);
 
 	/*Matrix4x4 rotMat = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camera.rotate, { 0.0f, 0.0f, 0.0f });
 
@@ -136,6 +136,12 @@ void DebugCamera::Update(Transform originCamera)
 	viewMatrix_ = MakeLookAtMatrix(camera.translate, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
 
 	ImGui::End();
+
+    ImGui::Begin("DebugCamera Info");
+
+    ImGui::InputFloat3("translate", &camera.translate.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+    ImGui::End();
 
 #endif
 }
