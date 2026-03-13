@@ -66,6 +66,7 @@
     <ClCompile Include="engine\math\Quanternion.cpp" />
     <ClCompile Include="engine\math\RotateFunction.cpp" />
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="PlayerState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -129,6 +130,7 @@
     <ClInclude Include="engine\math\RotateFunction.h" />
     <ClInclude Include="engine\math\Transform.h" />
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="PlayerState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
