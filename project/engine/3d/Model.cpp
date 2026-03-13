@@ -103,7 +103,7 @@ void Model::CreateMaterialResource() {
         Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 
     materialData_->color = Vector4{ 1.0f,1.0f,1.0f,1.0f };
-    materialData_->enableLighting = true;
+    materialData_->enableLighting = false;
     materialData_->uvTransform = Makeidetity4x4();
     materialData_->shininess=50.0f;
     materialData_->specularType=BlinnPhong;

@@ -70,6 +70,7 @@
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="ThreadPhysics.cpp" />
     <ClCompile Include="ThreadRenderer.cpp" />
+    <ClCompile Include="application\collision\Vector4Function.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -127,6 +128,7 @@
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="ThreadPhysics.h" />
     <ClInclude Include="ThreadRenderer.h" />
+    <ClInclude Include="application\collision\Vector4Function.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
