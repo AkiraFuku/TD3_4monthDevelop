@@ -43,6 +43,7 @@
     <ClCompile Include="application\scene\GameScene.cpp" />
     <ClCompile Include="engine\Tool\LightManager.cpp" />
     <ClCompile Include="application\object\Goal.cpp" />
+    <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -123,6 +124,7 @@
     <ClInclude Include="application\object\thread\ThreadManager.h" />
     <ClInclude Include="application\object\thread\ThreadPhysics.h" />
     <ClInclude Include="application\object\thread\ThreadRenderer.h" />
+    <ClInclude Include="PlayerState.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />

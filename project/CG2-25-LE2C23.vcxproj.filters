@@ -59,6 +59,7 @@
     <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
     <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
     <ClCompile Include="application\object\thread\ThreadManager.cpp" />
+    <ClCompile Include="PlayerState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -114,6 +115,7 @@
     <ClInclude Include="application\object\thread\ThreadPhysics.h" />
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\thread\ThreadManager.h" />
+    <ClInclude Include="PlayerState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

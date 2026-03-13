@@ -81,9 +81,15 @@ void GameScene::Initialize() {
     terrain_ = new Terrain();
     terrain_->Initialize();*/
 
-    // プレイヤーの初期化
+    // ----- Thread -----
+    thread_ = std::make_unique<ThreadManager>();
+    thread_->Initialize(50, 20, camera.get());
+    thread_->AddThread({-3.0f, 0.0f, -3.0f}, {3.0f, 0.0f, 3.0f});
+    thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
+
+    // ----- Player -----
     player_ = std::make_unique<Player>();
-    player_->Initialize(playerPos_);
+    player_->Initialize(playerPos_,thread_.get());
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
@@ -96,12 +102,6 @@ void GameScene::Initialize() {
 
     goal_->SetEgg(egg_.get());
 
-
-    // ----- Thread -----
-    thread_ = std::make_unique<ThreadManager>();
-    thread_->Initialize(50, 20, camera.get());
-    thread_->AddThread({ -3.0f, 0.0f, -3.0f }, { 3.0f, 0.0f, 3.0f });
-    thread_->AddThread({ -5.0f, 0.0f, -5.0f }, { -5.0f, 0.0f, 5.0f });
 }
 void GameScene::Finalize() {
 
