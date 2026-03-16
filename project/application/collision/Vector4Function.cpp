@@ -37,3 +37,15 @@ Vector4 operator-=(Vector4& v1, const Vector4& v2)
     return v1;
 }
 
+float Length(const Vector2& v)
+{
+    return sqrtf(v.x * v.x + v.y * v.y);
+}
+
+Vector2 Normalize(const Vector2& v)
+{
+    float length = Length(v);
+
+    return { v.x / length, v.y / length };
+}
+

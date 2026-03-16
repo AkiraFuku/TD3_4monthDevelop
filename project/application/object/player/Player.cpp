@@ -45,6 +45,8 @@ void Player::Update() {
         state_->Update(this);
     }
 
+   
+
 #ifdef USE_IMGUI
 
     ImGui::Begin("Player Window");
@@ -59,20 +61,24 @@ void Player::Update() {
         object_->SetRotate(rotate);
     }
 
-    Vector3 translate = object_->GetTranslate();
+    Vector3 translate = translate_;
     if (ImGui::DragFloat3("Translate", &translate.x, 0.1f, -100.0f, 100.0f)) {
-        object_->SetTranslate(translate);
+        translate_ = translate;
     }
 
     ImGui::End();
 
 #endif
 
-    // �Փ˔���
-    IsCollision();
+    //// �Փ˔���
+    //IsCollision();
+
+    IsCollisionSDF();
 
     // �ړ������m��
     ResultMove();
+
+   
 
     // ���f���̍X�V
     object_->Update();
@@ -190,6 +196,108 @@ void Player::ResultMove()
 {
     translate_ += moveVel_;
     object_->SetTranslate(translate_);
+}
+
+void Player::IsCollisionSDF()
+{
+    Vector3 nextPos = {};
+    nextPos.x = translate_.x + moveVel_.x;
+    nextPos.z = translate_.z + moveVel_.z;
+
+    // 2. 矩形の四隅のオフセット（中心からの距離）
+    float hW = kWidth * 0.5f;
+    float hH = kHeight * 0.5f;
+
+    for (int i = 0; i < 3; i++)
+    {
+        // 四隅の座標リスト
+        Vector2 corners[4] = {
+            { nextPos.x - hW, nextPos.z - hH }, // 左下
+            { nextPos.x + hW, nextPos.z - hH }, // 右下
+            { nextPos.x - hW, nextPos.z + hH }, // 左上
+            { nextPos.x + hW, nextPos.z + hH }  // 右上
+        };
+
+        // 3. 四隅の中で「最も壁に近い点」を探す
+        float minDist = 10000.0f;
+        Vector2 targetCorner = { nextPos.x, nextPos.z };
+
+        for (const auto& corner : corners) {
+            float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
+            if (d < minDist) {
+                minDist = d;
+                targetCorner = corner;
+            }
+        }
+
+        // 4. 衝突判定（最も近い点が「中」に入っていたら）
+        // 矩形判定の場合、理想的な距離（閾値）は 0 です。
+        if (minDist < 0.1f) {
+            // 最もめり込んでいる点の法線を取得
+            Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
+
+            if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
+            {
+                // 押し戻し量
+                float pushBack = 0.1f - minDist;
+
+                // 座標を補正
+                moveVel_.x += normal.x * pushBack;
+                moveVel_.z += normal.y * pushBack;
+
+                // 速度の射影（滑り処理）
+                float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+                if (dot < 0) {
+                    moveVel_.x -= dot * normal.x;
+                    moveVel_.z -= dot * normal.y;
+                }
+            }
+        }
+    }
+
+    
+
+//    // 1. 移動後の座標でのSDF値（距離）を取得
+//    float dist = CollisionMask::GetInstance()->GetSDFValue(nextPos.x, nextPos.z);
+//
+//    // 2. もし半径（プレイヤーの大きさ）より距離が小さければ衝突
+//    float playerRadius = kWidth * 0.5f;
+//    if (dist < playerRadius) {
+//        // 3. 「法線（勾配）」を求める
+//        // 周囲のSDF値の差から、どっちに動けば距離が増えるか（壁から離れるか）がわかる
+//        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(nextPos.x, nextPos.z);
+//
+//        // 4. 距離が足りない分だけ、法線方向に一気に押し戻す！
+//        float pushBack = playerRadius - dist;
+//
+//        // 座標を直接補正する
+//        nextPos.x += normal.x * pushBack;
+//        nextPos.z += normal.y * pushBack;
+//
+//        // 【重要】速度ベクトルを壁に沿わせる（法線方向の速度を消す）
+//        // これをしないと、壁に向かって進み続けようとしてガタつきます
+//        float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+//        if (dot < 0) { // 壁に向かう成分がある場合のみ
+//            moveVel_.x -= dot * normal.x;
+//            moveVel_.z -= dot * normal.y;
+//        }
+//    }
+//
+//#ifdef USE_IMGUI
+//    ImGui::Begin("Collision Debug");
+//    float worldX = translate_.x;
+//    float worldZ = translate_.z;
+//
+//    auto mask = CollisionMask::GetInstance()->GetMaskData(static_cast<int>(CollisionMask::GetInstance()->GetCurrentMaskMap()));
+//    float u = (worldX - mask->min_.x) / (mask->max_.x - mask->min_.x);
+//    float v = (worldZ - mask->min_.y) / (mask->max_.y - mask->min_.y);
+//
+//    ImGui::Text("World Pos: %.2f, %.2f", worldX, worldZ);
+//    ImGui::Text("UV Pos: %.3f, %.3f", u, v); // これが 0.0~1.0 になっているか
+//    ImGui::Text("Pixel: %d, %d", (int)(u * mask->textureData.widthX), (int)(v * mask->textureData.widthZ));
+//    ImGui::Text("SDF Dist: %.2f", CollisionMask::GetInstance()->GetSDFValue(worldX, worldZ));
+//    ImGui::End();
+//#endif
 }
 
 /// <summary>

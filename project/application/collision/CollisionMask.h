@@ -21,12 +21,14 @@ public:
         std::unique_ptr<Object3d> object;
         TextureData textureData;
         Vector4 min_, max_;
+        std::vector<float> sdfData;
     };
 
     enum class MaskMap
     {
         Map1,
         Map2,
+        Map3,
 
         Unknown,
     };
@@ -64,10 +66,23 @@ public:
     // マスクデータを読み込む
     bool LoadFromFile(const std::string& filePath, TextureData& textureData);
 
+    // マスクデータから簡易的な距離場を生成
+    void GenerateSDF(MaskData* mask);
+
+    float FindNearestWallDist(int startX, int startZ, MaskData* mask);
+
+    MaskData* GetMaskData(int num){ return maskDatas_[num].get(); }
+
+    float GetSDFValue(float worldX, float worldZ);
+
+    Vector2 GetSDFNormal(float worldX, float worldZ);
+
     // 特定座標が壁かどうかを判定
     bool IsWall(float x, float z) const;
 
     bool IsCollisionWall(const float& x, const float& z, const float& width);
+
+    int GetCurrentMaskMap() const { return static_cast<int>(currentMaskMap_); }
 
 
 public:
