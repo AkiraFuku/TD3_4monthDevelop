@@ -31,6 +31,8 @@ void Model::Initialize(const std::string& directoryPath, const std::string& file
         TextureManager::GetInstance()->GetTextureIndexByFilePath(
             modelData_.material.textureFilePath);
 
+    skeleton_ = CreateSkelton(modelData_.rootNode);
+
 }
 
 void Model::Update() {
