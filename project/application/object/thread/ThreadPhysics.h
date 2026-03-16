@@ -3,7 +3,8 @@
 #include <vector>
 
 #include "PhysicsNode.h"
-#include "Vector4.h" // ※ Vector4.h から修正（環境に合わせて変更してください）
+// ※ Vector3.h などをインクルードする（元コードのVector4.hから実態に合わせて修正）
+#include "Vector3.h"
 
 class ThreadPhysics {
 public:
@@ -23,51 +24,54 @@ public:
     /// <summary>
     /// 指定範囲内のノードに力を加える（Verlet積分における位置へのインパルス付与）
     /// </summary>
-    /// <param name="pos">力を加える中心（プレイヤーや敵の座標）</param>
-    /// <param name="radius">影響範囲の半径</param>
-    /// <param name="force">加える力のベクトル（重み）</param>
     void ApplyForce(const Vector3& pos, float radius, const Vector3& force);
 
+    /// <summary>
+    /// 指定した座標に一番近いノードを固定（ピン留め）してたるみを無くす
+    /// </summary>
+    void PinNodeNearPosition(const Vector3& targetPos);
+
 public:
     // ======================================
-    // Getter
+    // Getter / Setter
     // ======================================
-
-    // ノード
     const std::vector<PhysicsNode>& GetNodes() const { return nodes_; }
+    Vector3 GetStartPos() const { return nodes_.front().currentPos; }
+    Vector3 GetEndPos() const { return nodes_.back().currentPos; }
 
-public:
-    // ======================================
-    // Setter
-    // ======================================
-
-    // 重力
     void SetGravity(const Vector3& gravity) { gravity_ = gravity; }
-    // 空気抵抗
     void SetDamping(float damping) { damping_ = damping; }
-    // 制約を解く回数
     void SetIterations(int iterations) { iterations_ = iterations; }
 
 private:
     // ======================================
     // ヘルパーメソッド
     // ======================================
-
-    /// <summary>
-    /// Verlet積分による各ノードの位置更新
-    /// </summary>
     void Integrate();
-    /// <summary>
-    /// ノード間の距離制約の解決（長さの維持）
-    /// </summary>
     void SolveConstraints();
 
+    // ピン留めアニメーションの目標値を計算してセットアップする
+    void SetupPinAnimationTarget(const Vector3& startPos, const Vector3& endPos, const Vector3& targetPos, int pinIndex, float len1, float len2);
+
+    // イージング関数（EaseOutCubic）
+    static float EaseOutCubic(float t);
+
 private:
-    std::vector<PhysicsNode> nodes_; // 糸を構成する節の配列
-    float segmentLength_ = 0.0f;     // 節と節の間の理想的な距離
+    std::vector<PhysicsNode> nodes_;           // 糸を構成する節の配列
 
     // シミュレーションの調整パラメーター
-    int iterations_ = 100;           // 制約を解く回数（多いほど硬く伸びない糸になる）
-    float damping_ = 0.99f;          // 空気抵抗（1.0で抵抗なし）
+    int iterations_ = 100;                     // 制約を解く回数（多いほど硬く伸びない糸になる）
+    float damping_ = 0.99f;                    // 空気抵抗（1.0で抵抗なし）
     Vector3 gravity_ = {0.0f, -0.0005f, 0.0f}; // 重力
+
+    // アニメーション用
+    bool isPinAnimating_ = false;              // ピン留めアニメーション中か
+    float pinProgress_ = 0.0f;                 // アニメーションの進行度 (0.0 ～ 1.0)
+    float pinAnimSpeed_ = 0.05f;               // 張るスピード
+    int pinIndex_ = -1;                        // 固定する交差点のインデックス
+
+    std::vector<Vector3> startPositions_;      // アニメーション開始時の各ノード座標
+    std::vector<Vector3> targetPositions_;     // アニメーション完了時の目標ノード座標
+    std::vector<float> segmentLengths_;        // 各節と節の間の現在の理想的な距離
+    std::vector<float> targetSegmentLengths_;  // アニメーション完了後の個別の自然長
 };

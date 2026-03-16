@@ -10,6 +10,11 @@ class Camera;
 
 class ThreadManager {
 public:
+    struct ThreadIntersection {
+        Vector3 position;
+        float radius; // 壁としての判定サイズ
+    };
+public:
     /// <summary>
     /// 初期化
     /// </summary>
@@ -58,6 +63,12 @@ public:
     /// <returns>糸の上にいるならtrue</returns>
     bool GetThreadHeight(const Vector3& pos, float radius, float& outY) const;
 
+    /// <summary>
+    /// 指定した座標が「糸の交差点（壁）」に当たっているか判定する
+    /// ※ プレイヤーはこの関数を呼ばないことで壁を無視できます
+    /// </summary>
+    bool IsCollisionWithIntersection(const Vector3& pos, float radius) const;
+
     // 既存の physicsList_ を外部から読み取れるようにする
     const std::vector<std::unique_ptr<ThreadPhysics>>& GetPhysicsList() const { return physicsList_; }
 
@@ -73,4 +84,11 @@ private:
 
     int maxThreads_ = 0;
     int nodesPerThread_ = 0;
+
+    // 交差点のリスト
+    std::vector<ThreadIntersection> intersections_;
+
+private:
+    // 線分(a1-a2)と線分(b1-b2)がXZ平面上で交差しているか判定するヘルパー
+    bool CheckIntersectXZ(const Vector3& a1, const Vector3& a2, const Vector3& b1, const Vector3& b2, Vector3& outIntersectPos, float& outT1, float& outT2) const;
 };

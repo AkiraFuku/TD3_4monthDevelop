@@ -53,7 +53,6 @@ void ThreadManager::Update() {
 void ThreadManager::Draw() { renderer_->Draw(); }
 
 void ThreadManager::AddThread(const Vector3& startPos, const Vector3& endPos) {
-    // 最大数を超えていたら追加しない（または一番古いものを消す等）
     if (physicsList_.size() >= maxThreads_) {
         return;
     }
@@ -61,10 +60,38 @@ void ThreadManager::AddThread(const Vector3& startPos, const Vector3& endPos) {
     auto physics = std::make_unique<ThreadPhysics>();
     physics->Initialize(startPos, endPos, nodesPerThread_);
 
+    // ★追加：既存の糸と交差しているかチェック
+    for (auto& existingPhysics : physicsList_) {
+        Vector3 eStart = existingPhysics->GetStartPos();
+        Vector3 eEnd = existingPhysics->GetEndPos();
+
+        Vector3 intersectXZ;
+        float tNew, tExist;
+        if (CheckIntersectXZ(startPos, endPos, eStart, eEnd, intersectXZ, tNew, tExist)) {
+            // 交差した！ Y軸の高さはそれぞれの糸の補間値の「平均」をとる
+            float newY = startPos.y + (endPos.y - startPos.y) * tNew;
+            float existY = eStart.y + (eEnd.y - eStart.y) * tExist;
+            float averageY = (newY + existY) * 0.5f;
+
+            // 3D空間上の交差点
+            Vector3 intersect3D = {intersectXZ.x, averageY, intersectXZ.z};
+
+            // ① 交差点を「壁」としてリストに登録（半径1.5fなど、必要に応じて調整）
+            intersections_.push_back({intersect3D, 1.5f});
+
+            // ② 両方の糸の交差点付近のノードをピン留めしてたるみを無くす
+            physics->PinNodeNearPosition(intersect3D);
+            existingPhysics->PinNodeNearPosition(intersect3D);
+        }
+    }
+
     physicsList_.push_back(std::move(physics));
 }
 
-void ThreadManager::ClearThreads() { physicsList_.clear(); }
+void ThreadManager::ClearThreads() {
+    physicsList_.clear();
+    intersections_.clear(); // 交差点（壁）もリセット
+}
 
 // ThreadManager.cpp
 
@@ -168,6 +195,48 @@ bool ThreadManager::GetThreadHeight(const Vector3& pos, float radius, float& out
     if (found) {
         outY = bestY;
         return true;
+    }
+    return false;
+}
+
+// ヘルパー：XZ平面での2D線分交差判定
+bool ThreadManager::CheckIntersectXZ(const Vector3& a1, const Vector3& a2, const Vector3& b1, const Vector3& b2, Vector3& outIntersectPos, float& outT1, float& outT2) const {
+    float ax = a2.x - a1.x;
+    float az = a2.z - a1.z;
+    float bx = b2.x - b1.x;
+    float bz = b2.z - b1.z;
+
+    float denominator = ax * bz - az * bx;
+    if (std::abs(denominator) < 1e-5f) return false; // 平行の場合は交差しない
+
+    float cx = b1.x - a1.x;
+    float cz = b1.z - a1.z;
+
+    outT1 = (cx * bz - cz * bx) / denominator;
+    outT2 = (cx * az - cz * ax) / denominator;
+
+    // 両方の線分上で交差しているか（0.0〜1.0の範囲内か）
+    if (outT1 >= 0.0f && outT1 <= 1.0f && outT2 >= 0.0f && outT2 <= 1.0f) {
+        outIntersectPos.x = a1.x + ax * outT1;
+        outIntersectPos.z = a1.z + az * outT1;
+        return true;
+    }
+    return false;
+}
+
+bool ThreadManager::IsCollisionWithIntersection(const Vector3& pos, float radius) const {
+    float radiusSq = radius * radius;
+    for (const auto& intersection : intersections_) {
+        // XZ平面での円同士の当たり判定
+        float dx = pos.x - intersection.position.x;
+        float dz = pos.z - intersection.position.z;
+        float distSq = dx * dx + dz * dz;
+
+        // 壁の半径と判定対象の半径の合計
+        float colDist = intersection.radius + radius;
+        if (distSq <= colDist * colDist) {
+            return true; // 壁に衝突している
+        }
     }
     return false;
 }

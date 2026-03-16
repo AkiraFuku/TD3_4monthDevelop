@@ -188,7 +188,7 @@ void Player::IsCollision()
         moveVel_.z = 0.0f;
     }*/
 
-    float threadWalkRadius_ = 0.5f;
+    float threadWalkRadius_ = 0.35f;
 
     // --- X軸方向の判定 ---
     // 移動先が壁かどうかチェック
@@ -289,7 +289,7 @@ void Player::UpdateThreadInteraction()
     if (thread_) {
         
         float influenceRadius = 1.5f; // どれくらい広い範囲の糸を巻き込んでたわませるか
-        float playerWeight = 0.05f;   // どれくらい下に沈ませるか
+        float playerWeight = 0.1f;   // どれくらい下に沈ませるか
 
         // 毎フレーム、現在位置の周りの糸を下へ押し下げる
         thread_->ApplyPlayerWeight(translate_, influenceRadius, playerWeight);
