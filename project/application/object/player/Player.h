@@ -69,6 +69,9 @@ public: // 外部入出力
     // 向いている方向
     Vector3 GetForward()const;
 
+    // 糸の上を歩いているか？
+    bool OnThread()const { return onThread_; }
+
     // AABBを取得
     AABB GetAABB() const;
 
@@ -102,4 +105,18 @@ private:
 
     // ThreadManager
     ThreadManager* thread_ = nullptr;
+
+    // 調整用パラメータ
+    float threadInfluenceRadius_ = 1.5f; // 糸を巻き込む広さ
+    float threadPlayerWeight_ = 0.05f;   // 糸を沈ませる重さ
+    float threadWalkRadius_ = 1.0f;      // 糸に乗れる判定半径
+
+    // 糸の上を歩いているかのフラグ
+    bool onThread_ = false;
+
+private:
+    /// <summary>
+    /// 糸の相互作用
+    /// </summary>
+    void UpdateThreadInteraction();
 };

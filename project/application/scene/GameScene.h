@@ -50,6 +50,7 @@ private:
     Terrain* terrain_;*/
 
     CollisionMask* collisionMask_;
+    bool isVisibleCollisionMask_ = true;
 
   // ----- Player -----
   std::unique_ptr<Player> player_;

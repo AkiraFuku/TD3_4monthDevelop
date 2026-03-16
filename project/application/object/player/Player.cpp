@@ -22,28 +22,31 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     // モデルの初期化
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-     translate_ = pos;
+    translate_ = pos;
     object_->SetTranslate(translate_);
-    ModelManager::GetInstance()->LoadModel("resources","player/player.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
     object_->SetModel("player/player.obj");
 
     // 待機状態で初期化
     ChangeState(std::make_unique<PlayerStateIdle>());
 }
 /// <summary>
-/// �I��
+/// 終了
 /// </summary>
 void Player::Finalize() {}
 /// <summary>
-/// �X�V
+/// 更新
 /// </summary>
 void Player::Update() {
 
-    moveVel_ = { 0.0f, 0.0f, 0.0f };    
+    moveVel_ = {0.0f, 0.0f, 0.0f};
 
     if (state_) {
         state_->Update(this);
     }
+
+    // 糸の相互作用
+    UpdateThreadInteraction();
 
 #ifdef USE_IMGUI
 
@@ -68,20 +71,20 @@ void Player::Update() {
 
 #endif
 
-    // �Փ˔���
+    // 当たり判定
     IsCollision();
 
-    // �ړ������m��
+    // 移動距離確定処理
     ResultMove();
 
-    // ���f���̍X�V
+    // モデルの更新
     object_->Update();
 }
 /// <summary>
-/// �`��
+/// 描画
 /// </summary>
 void Player::Draw() {
-    // ���f���̕`��
+    // モデルの描画
     object_->Draw();
 }
 
@@ -156,22 +159,22 @@ void Player::UpdateMove(Vector3& moveDirection) {
 
 void Player::IsCollision()
 {
- 
+
     float nextX = translate_.x + moveVel_.x;
     float nextZ = translate_.z + moveVel_.z;
 
-    // 移動先が壁かどうかチェック
-    if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth)) 
-    {
-        // 壁なら移動をキャンセル（または押し戻し）
-        moveVel_.x = 0.0f;
-    }
+    //// 移動先が壁かどうかチェック
+    //if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth)) 
+    //{
+    //    // 壁なら移動をキャンセル（または押し戻し）
+    //    moveVel_.x = 0.0f;
+    //}
 
-    if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
-    {
-        // 壁なら移動をキャンセル（または押し戻し）
-        moveVel_.z = 0.0f;
-    }
+    //if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
+    //{
+    //    // 壁なら移動をキャンセル（または押し戻し）
+    //    moveVel_.z = 0.0f;
+    //}
 
     /*float nextX = translate_.x + moveVel_.x;
     if (CollisionMask::GetInstance()->IsWall(nextX, translate_.z))
@@ -184,6 +187,31 @@ void Player::IsCollision()
     {
         moveVel_.z = 0.0f;
     }*/
+
+    float threadWalkRadius_ = 0.5f;
+
+    // --- X軸方向の判定 ---
+    // 移動先が壁かどうかチェック
+    if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth))
+    {
+        // 壁にぶつかった！でも糸の上ならセーフにする
+        Vector3 nextPos = {nextX, translate_.y, translate_.z};
+        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
+            // 糸の上でもないので移動をキャンセル
+            moveVel_.x = 0.0f;
+        }
+    }
+
+    // --- Z軸方向の判定 ---
+    if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
+    {
+        // 壁にぶつかった！でも糸の上ならセーフにする
+        Vector3 nextPos = {translate_.x, translate_.y, nextZ};
+        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
+            // 糸の上でもないので移動をキャンセル
+            moveVel_.z = 0.0f;
+        }
+    }
 }
 
 void Player::ResultMove()
@@ -247,8 +275,37 @@ AABB Player::GetAABB() const
     Vector3 worldPos = GetPosition();
     AABB aabb;
 
-    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
-    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+    aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+    aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
 
     return aabb;
+}
+
+/// <summary>
+/// 糸の相互作用
+/// </summary>
+void Player::UpdateThreadInteraction()
+{
+    if (thread_) {
+        
+        float influenceRadius = 1.5f; // どれくらい広い範囲の糸を巻き込んでたわませるか
+        float playerWeight = 0.05f;   // どれくらい下に沈ませるか
+
+        // 毎フレーム、現在位置の周りの糸を下へ押し下げる
+        thread_->ApplyPlayerWeight(translate_, influenceRadius, playerWeight);
+
+        float threadY = 0.0f;
+        float walkRadius = 1.0f; // 糸の上に乗れる半径（IsOnThreadで使っている値と同じくらい）
+
+        onThread_ = thread_->GetThreadHeight(translate_, walkRadius, threadY);
+
+        // 糸の上にいるなら、Y座標を上書きする
+        if (thread_->GetThreadHeight(translate_, walkRadius, threadY)) {
+
+            // プレイヤーの原点が中心にあるか足元にあるかで調整が必要
+            float playerOffsetY = 0.0f; // もし体が糸に半分めり込むなら 1.0f など足して調整
+
+            translate_.y = threadY + playerOffsetY;
+        }
+    }
 }

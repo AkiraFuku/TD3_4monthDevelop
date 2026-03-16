@@ -9,83 +9,83 @@
 #include <numbers>
 #include "Transform.h"
 void GameScene::Initialize() {
-  
-  camera = std::make_unique<Camera>();
-  camera->SetRotate({0.1f, 0.0f, 0.0f});
-  camera->SetTranslate({0.0f, 4.0f, -30.0f});
-  Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
-  ParticleManager::GetInstance()->Setcamera(camera.get());
 
-  handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+    camera = std::make_unique<Camera>();
+    camera->SetRotate({0.1f, 0.0f, 0.0f});
+    camera->SetTranslate({0.0f, 4.0f, -30.0f});
+    Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
+    ParticleManager::GetInstance()->Setcamera(camera.get());
 
-  Audio::GetInstance()->PlayAudio(handle_, true);
-  // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
-  // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
-  // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
-  LightManager::GetInstance()->AddSpotLight(
-      {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
-      Normalize(Vector3{-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
-      std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
-  LightManager::GetInstance()->AddSpotLight(
-      {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
-      Normalize(Vector3{-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
-      std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
+    handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-  Vector3 point1 = {0, 0, 0};
-  LightManager::GetInstance()->AddPointLight({1.0f, 1.0f, 1.0f, 1.0f}, point1,
-                                             4.0f, 2.0f, 0.1f);
-  LightManager::GetInstance()->AddPointLight({1.0f, 1.0f, 1.0f, 1.0f},
-                                             {0, 0, 0}, 4.0f, 2.0f, 0.1f);
-  TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
+    Audio::GetInstance()->PlayAudio(handle_, true);
+    // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
+    // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
+    // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
+    LightManager::GetInstance()->AddSpotLight(
+        {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
+        Normalize(Vector3 {-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
+        std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
+    LightManager::GetInstance()->AddSpotLight(
+        {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
+        Normalize(Vector3 {-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
+        std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
 
-  ParticleManager::GetInstance()->CreateParticleGroup(
-      "Test", "resources/uvChecker.png");
-  /*   std::vector<Sprite*> sprites;
-     for (uint32_t i = 0; i < 5; i++)
-     {*/
-  sprite = std::make_unique<Sprite>();
-  // sprite->Initialize("resources/monsterBall.png");
-  sprite->Initialize("resources/uvChecker.png");
+    Vector3 point1 = {0, 0, 0};
+    LightManager::GetInstance()->AddPointLight({1.0f, 1.0f, 1.0f, 1.0f}, point1,
+        4.0f, 2.0f, 0.1f);
+    LightManager::GetInstance()->AddPointLight({1.0f, 1.0f, 1.0f, 1.0f},
+        {0, 0, 0}, 4.0f, 2.0f, 0.1f);
+    TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 
-  sprite->SetPosition(Vector2{25.0f + 100.0f, 100.0f});
-  // sprite->SetSize(Vector2{ 100.0f,100.0f });
-  // sprites.push_back(sprite);
+    ParticleManager::GetInstance()->CreateParticleGroup(
+        "Test", "resources/uvChecker.png");
+    /*   std::vector<Sprite*> sprites;
+       for (uint32_t i = 0; i < 5; i++)
+       {*/
+    sprite = std::make_unique<Sprite>();
+    // sprite->Initialize("resources/monsterBall.png");
+    sprite->Initialize("resources/uvChecker.png");
 
-  sprite->SetAnchorPoint(Vector2{0.5f, 0.5f});
+    sprite->SetPosition(Vector2 {25.0f + 100.0f, 100.0f});
+    // sprite->SetSize(Vector2{ 100.0f,100.0f });
+    // sprites.push_back(sprite);
 
-  //}
+    sprite->SetAnchorPoint(Vector2 {0.5f, 0.5f});
 
-  // object3d の初期化
-  object3d2 = std::make_unique<Object3d>();
-  object3d2->Initialize();
+    //}
 
-  object3d = std::make_unique<Object3d>();
-  object3d->Initialize();
+    // object3d の初期化
+    object3d2 = std::make_unique<Object3d>();
+    object3d2->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("resources","plane.obj");
-    ModelManager::GetInstance()->LoadModel("resources","axis.obj");
-    ModelManager::GetInstance()->LoadModel("resources","terrain.obj");
+    object3d = std::make_unique<Object3d>();
+    object3d->Initialize();
+
+    ModelManager::GetInstance()->LoadModel("resources", "plane.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "axis.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "terrain.obj");
     ModelManager::GetInstance()->CreateSphereModel("MySphere", 16);
     // object3d2->SetTranslate(Vector3{ 0.0f,10.0f,0.0f });
     object3d2->SetModel("terrain.obj");
     object3d->SetModel("MySphere");
 
-  /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
-  camera->SetFarCrip(1000.0f);
-  EulerTransform M = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
-  emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
+    /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
+    camera->SetFarCrip(1000.0f);
+    EulerTransform M = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+    emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
 
-  /*player_ = new Player();
-  player_->Initialize();
+    /*player_ = new Player();
+    player_->Initialize();
 
-  terrain_ = new Terrain();
-  terrain_->Initialize();*/
+    terrain_ = new Terrain();
+    terrain_->Initialize();*/
 
-  // ----- Thread -----
-  thread_ = std::make_unique<ThreadManager>();
-  thread_->Initialize(50, 20, camera.get());
-  thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
-  thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
+    // ----- Thread -----
+    thread_ = std::make_unique<ThreadManager>();
+    thread_->Initialize(50, 20, camera.get());
+    //thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
+    //thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
 
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
@@ -96,40 +96,40 @@ void GameScene::Initialize() {
     egg_->Initialize();
     egg_->SetPlayer(player_.get());
 
-  // ゴールの初期化
-  goal_ = std::make_unique<Goal>();
-  goal_->Initialize();
+    // ゴールの初期化
+    goal_ = std::make_unique<Goal>();
+    goal_->Initialize();
 
-  goal_->SetEgg(egg_.get());
+    goal_->SetEgg(egg_.get());
 
-  
+
     collisionMask_ = CollisionMask::GetInstance();
     collisionMask_->Initialize();
 
-  // 敵の初期化
-  enemy_ = std::make_unique<Enemy>();
-  enemy_->Initialize(enemyPos_);
+    // 敵の初期化
+    enemy_ = std::make_unique<Enemy>();
+    enemy_->Initialize(enemyPos_);
 }
 void GameScene::Finalize() {
 
-  LightManager::GetInstance()->ClearLights();
+    LightManager::GetInstance()->ClearLights();
 
-  ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
+    ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
-  collisionMask_->Finalize();
+    collisionMask_->Finalize();
 
-  /*player_->Finalize();
-  delete player_;
+    /*player_->Finalize();
+    delete player_;
 
-  terrain_->Finalize();
-  delete terrain_;
+    terrain_->Finalize();
+    delete terrain_;
 
-  egg_->Finalize();
-  delete egg_;
+    egg_->Finalize();
+    delete egg_;
 
-  goal_->Finalize();
-  delete goal_;*/
-    
+    goal_->Finalize();
+    delete goal_;*/
+
 #ifdef _DEBUG
 
 
@@ -170,9 +170,9 @@ void GameScene::Update()
         Vector3 cameraTranslate = camera->GetTranslate();
         cameraTranslate =
             Add(cameraTranslate,
-                Vector3{ 0.0f, 0.0f,
-                        static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
-                            0.1f });
+                Vector3 {0.0f, 0.0f,
+                static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
+                0.1f});
         camera->SetTranslate(cameraTranslate);
     }
     /*if (Input::GetInstance()->TriggerMouseDown(0))
@@ -186,15 +186,16 @@ void GameScene::Update()
     if (Input::GetInstance()->TriggerMouseDown(0)) {
         if (Audio::GetInstance()->IsPlaying(handle_)) {
             Audio::GetInstance()->PauseAudio(handle_);
-        } else {
+        }
+        else {
             Audio::GetInstance()->ResumeAudio(handle_);
         }
     }
     if (Input::GetInstance()->GetJoyStick(0, state)) {
         {
             // 左スティックの値を取得
-            float x = (float)state.Gamepad.sThumbLX;
-            float y = (float)state.Gamepad.sThumbLY;
+            float x = (float) state.Gamepad.sThumbLX;
+            float y = (float) state.Gamepad.sThumbLY;
 
             // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
             float normalizedX = x / 32767.0f;
@@ -202,20 +203,20 @@ void GameScene::Update()
             Vector3 cameraTranslate = camera->GetTranslate();
             cameraTranslate =
                 Add(cameraTranslate,
-                    Vector3{ normalizedX / 60.0f, normalizedY / 60.0f, 0.0f });
+                    Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
             camera->SetTranslate(cameraTranslate);
         }
         {
             //// 左スティックの値を取得
-            float x = (float)state.Gamepad.sThumbRX;
-            float y = (float)state.Gamepad.sThumbRY;
+            float x = (float) state.Gamepad.sThumbRX;
+            float y = (float) state.Gamepad.sThumbRY;
             //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
             float normalizedX = x / 32767.0f;
             float normalizedY = y / 32767.0f;
 
             Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
             point =
-                Add(point, Vector3{ normalizedX / 60.0f, normalizedY / 60.0f, 0.0f });
+                Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
             LightManager::GetInstance()->SetSpotLightDirection(0, point);
         }
     }
@@ -225,7 +226,8 @@ void GameScene::Update()
     {
         debugCamera_.Update(camera->GetTransform());
         camera->SetViewMatrix(debugCamera_.GetViewMatrix());
-    } else
+    }
+    else
     {
         camera->UpdateView();
     }
@@ -361,7 +363,17 @@ void GameScene::Update()
     ImGui::Checkbox("DebugCamera", &isDebugCamera_);
     ImGui::End();
 
-   
+    ImGui::Begin("CollisionMask");
+    ImGui::Checkbox("isVisibleCollisionMask", &isVisibleCollisionMask_);
+    if (player_->OnThread()) {
+        // 糸の上なら 緑色 で表示
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON THREAD: YES");
+    }
+    else {
+        // 地面なら 赤色 で表示
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
+    }
+    ImGui::End();
 
 #endif // USE_IMGUI
 
@@ -395,7 +407,7 @@ void GameScene::Update()
     // 決定した目的地を敵に渡す
     enemy_->Update(targetPos, thread_.get());
 
-    
+
     collisionMask_->Update();
 
 
@@ -410,27 +422,30 @@ void GameScene::Update()
 
 void GameScene::Draw() {
 
-  // player_->Draw();
-  // terrain_->Draw();
+    // player_->Draw();
+    // terrain_->Draw();
 
-  // 卵の描画処理
-  egg_->Draw();
+    // 卵の描画処理
+    egg_->Draw();
 
-  // ゴールの描画処理
-  goal_->Draw();
+    // ゴールの描画処理
+    goal_->Draw();
 
-  // 敵の描画処理
-  enemy_->Draw();
+    // 敵の描画処理
+    enemy_->Draw();
 
-  // ParticleManager::GetInstance()->Draw();
-  ///////スプライトの描画
-  // sprite->Draw();
+    // ParticleManager::GetInstance()->Draw();
+    ///////スプライトの描画
+    // sprite->Draw();
 
     player_->Draw();
 
     thread_->Draw();
-  
-    collisionMask_->Draw();
+
+    if(isVisibleCollisionMask_)
+    {
+        collisionMask_->Draw();
+    }
 }
 
 void GameScene::CheckAllCollisions()
