@@ -3,7 +3,7 @@
 #include "ModelManager.h"
 #include "TextureManager.h"
 #include "StringUtility.h"
-#include "Vector4.h"
+#include "Vector4Function.h"
 #include "ImGuiManager.h"
 
 std::unique_ptr<CollisionMask, CollisionMask::Deleter> CollisionMask::instance_ = nullptr;
@@ -25,9 +25,9 @@ void CollisionMask::Finalize()
 void CollisionMask::Initialize() 
 {
    
-    maskDatas_.resize(2);
+    maskDatas_.resize(3);
 
-    for (size_t i = 0; i < 2; i++)
+    for (size_t i = 0; i < 3; i++)
     {
 
         std::unique_ptr<MaskData> maskData{};
@@ -46,13 +46,17 @@ void CollisionMask::Initialize()
     LoadFromFile("resources/Mask/Mask.png", maskDatas_[0]->textureData);
     maskDatas_[0]->name = "mapMaskData";
     ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[0]->name, "resources/Mask/Mask.png");
+    LoadFromFile("resources/Mask/Mask(1).png", maskDatas_[1]->textureData);
+    maskDatas_[1]->name = "mapMaskData1";
+    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[1]->name, "resources/Mask/Mask(1).png");
+    LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[2]->textureData);
+    maskDatas_[2]->name = "mapMaskData2";
+    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[2]->name, "resources/Mask/Mask(2).png");
 
-    LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[1]->textureData);
-    maskDatas_[1]->name = "mapMaskData2";
-    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[1]->name, "resources/Mask/Mask(2).png");
-
-    for (size_t i = 0; i < 2; i++)
+    for (size_t i = 0; i < 3; i++)
     {
+        GenerateSDF(maskDatas_[i].get());
+
         maskDatas_[i]->object->SetModel(maskDatas_[i]->name);
 
         auto model = ModelManager::GetInstance()->findModel(maskDatas_[i]->name);
@@ -61,7 +65,7 @@ void CollisionMask::Initialize()
         maskDatas_[i]->min_ = model->GetModelData().vertices[2].position;
     }
     
-    currentMaskMap_ = CollisionMask::MaskMap::Map1;
+    currentMaskMap_ = CollisionMask::MaskMap::Map2;
 
     maskMapRequest_ = CollisionMask::MaskMap::Unknown;
 }
@@ -77,7 +81,7 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentMaskMap_);
-    const char* items[] = {"Map1", "Map2"};
+    const char* items[] = {"Map1", "Map2", "Map3"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
@@ -133,6 +137,113 @@ bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textu
 
     return false;
 }
+
+void CollisionMask::GenerateSDF(MaskData* mask)
+{
+    int w = mask->textureData.widthX;
+    int h = mask->textureData.widthZ;
+    mask->sdfData.resize(w * h); // float型の配列を用意
+
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            // 全ピクセルを走査して最短距離を計算
+            // (本来は 8-point SSEDT 等の高速アルゴリズムを使いますが、まずは二重ループで)
+            float minDist = FindNearestWallDist(x, y, mask);
+            mask->sdfData[y * w + x] = minDist;
+        }
+    }
+}
+
+float CollisionMask::FindNearestWallDist(int startX, int startZ, MaskData* mask)
+{
+    int w = mask->textureData.widthX;
+    int h = mask->textureData.widthZ;
+
+    // 探索する最大半径（これより遠い壁は無視していいことにする）
+    // マップ全体のサイズに合わせて調整。例：32ピクセル分など
+    const int maxSearchRange = 64;
+    float minSqDist = static_cast<float>(maxSearchRange * maxSearchRange);
+    bool found = false;
+
+    // 現在のピクセルがすでに壁（黒）なら、距離は 0 (または負の深さ)
+    if (mask->textureData.data[startZ * w + startX] < 128) {
+        return 0.0f; // 簡易版なので壁の中は0
+    }
+
+    // 周囲を矩形状に探索
+    for (int dz = -maxSearchRange; dz <= maxSearchRange; ++dz) {
+        for (int dx = -maxSearchRange; dx <= maxSearchRange; ++dx) {
+            int targetX = startX + dx;
+            int targetZ = startZ + dz;
+
+            // 範囲外チェック
+            if (targetX < 0 || targetX >= w || targetZ < 0 || targetZ >= h) continue;
+
+            // そのピクセルが壁（黒）かどうか
+            if (mask->textureData.data[targetZ * w + targetX] < 128) {
+                float sqDist = static_cast<float>(dx * dx + dz * dz);
+                if (sqDist < minSqDist) {
+                    minSqDist = sqDist;
+                    found = true;
+                }
+            }
+        }
+    }
+
+    return found ? std::sqrt(minSqDist) : static_cast<float>(maxSearchRange);
+}
+
+float CollisionMask::GetSDFValue(float worldX, float worldZ)
+{
+    auto& maskData = maskDatas_[static_cast<int>(currentMaskMap_)];
+
+    // 1. ワールド座標を画像上の浮動小数点の座標 (u, v) に変換
+    float u = (worldX - maskData->min_.x) / (maskData->max_.x - maskData->min_.x) 
+        * (maskData->textureData.widthX - 1);
+    float v = (worldZ - maskData->min_.y) / (maskData->max_.y - maskData->min_.y) 
+        * (maskData->textureData.widthZ - 1); // 反転が必要なら 1.0f-
+
+    // 2. 周辺4ピクセルの座標を特定
+    int x0 = static_cast<int>(u);
+    int y0 = static_cast<int>(v);
+    int x1 = std::min(x0 + 1, maskData->textureData.widthX - 1);
+    int y1 = std::min(y0 + 1, maskData->textureData.widthZ - 1);
+
+    // 3. ピクセル内の余り（0.0〜1.0）
+    float fx = u - x0;
+    float fy = v - y0;
+
+    // 4. 4点のSDF値を線形補間（これによってギザギザが消える）
+    float d00 = maskData->sdfData[y0 * maskData->textureData.widthX + x0];
+    float d10 = maskData->sdfData[y0 * maskData->textureData.widthX + x1];
+    float d01 = maskData->sdfData[y1 * maskData->textureData.widthX + x0];
+    float d11 = maskData->sdfData[y1 * maskData->textureData.widthX + x1];
+
+    float d0 = d00 * (1 - fx) + d10 * fx;
+    float d1 = d01 * (1 - fx) + d11 * fx;
+
+    return d0 * (1 - fy) + d1 * fy;
+}
+
+Vector2 CollisionMask::GetSDFNormal(float worldX, float worldZ)
+{
+    // 微小な差分を使って「傾き（勾配）」を求める
+    const float delta = 0.1f;
+
+    // X方向とZ方向でそれぞれ「ちょっと動いた時の距離の変化」を見る
+    float dx = GetSDFValue(worldX + delta, worldZ) - GetSDFValue(worldX - delta, worldZ);
+    float dz = GetSDFValue(worldX, worldZ + delta) - GetSDFValue(worldX, worldZ - delta);
+
+    float length = std::sqrtf(dx * dx + dz * dz);
+    if(length < 1e-5f) {
+        // 勾配がほとんどない（距離場が平坦）場合は、適当な法線を返す
+        return Vector2(0.0f, 0.0f);
+    }
+
+    return Vector2{ dx / length, dz / length };
+}
+
+
 
 bool CollisionMask::IsWall(float x, float z) const
 {

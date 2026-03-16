@@ -49,6 +49,11 @@ public:
     void ResultMove();
 
     /// <summary>
+    ///
+    /// </summary>
+    void IsCollisionSDF();
+
+    /// <summary>
     /// 状態遷移
     /// </summary>
     /// <param name="newState">次の状態</param>
