@@ -309,7 +309,6 @@ void Player::UpdateThreadInteraction()
         }
     }
 }
-}
 
 Matrix4x4 Player::GetWorldMatrix() const
 {
