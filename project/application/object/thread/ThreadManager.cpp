@@ -93,8 +93,6 @@ void ThreadManager::ClearThreads() {
     intersections_.clear(); // 交差点（壁）もリセット
 }
 
-// ThreadManager.cpp
-
 bool ThreadManager::IsOnThread(const Vector3& pos, float radius) const {
     float radiusSq = radius * radius;
 

@@ -33,14 +33,25 @@ public:
 
 public:
     // ======================================
-    // Getter / Setter
+    // Getter
     // ======================================
+
+    // ノード
     const std::vector<PhysicsNode>& GetNodes() const { return nodes_; }
+    // 始点
     Vector3 GetStartPos() const { return nodes_.front().currentPos; }
+    // 終点
     Vector3 GetEndPos() const { return nodes_.back().currentPos; }
 
+    // ======================================
+    // Setter
+    // ======================================
+
+    // 重力
     void SetGravity(const Vector3& gravity) { gravity_ = gravity; }
+    // 空気抵抗
     void SetDamping(float damping) { damping_ = damping; }
+    // 制約を解く回数
     void SetIterations(int iterations) { iterations_ = iterations; }
 
 private:
