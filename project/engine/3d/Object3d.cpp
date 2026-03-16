@@ -60,7 +60,7 @@ void Object3d::Draw()
 
 
     Object3dCommon::GetInstance()->Object3dCommonDraw();
-    auto psoSet = PSOManager::GetInstance()->GetPso("Object3d", blendMode_, fillMode_);
+    auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
 
     auto commandList = DXCommon::GetInstance()->GetCommandList();
     commandList->SetGraphicsRootSignature(psoSet.rootSignature.Get());
