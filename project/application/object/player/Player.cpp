@@ -71,8 +71,10 @@ void Player::Update() {
 
 #endif
 
-    // 当たり判定
-    IsCollision();
+    //// 当たり判定
+    //IsCollision();
+
+   
 
     IsCollisionSDF();
 
