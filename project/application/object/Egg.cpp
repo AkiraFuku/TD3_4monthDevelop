@@ -3,11 +3,14 @@
 #include "imgui.h"
 #include "Input.h"
 #include "Player.h"
+#include "CollisionMask.h"
+#include "SceneManager.h"
 
 void Egg::Initialize()
 {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
+    
 
     ModelManager::GetInstance()->LoadModel("resources","axis.obj");
     object_->SetModel("axis.obj");
@@ -40,27 +43,38 @@ void Egg::Update()
         object_->SetTranslate(translate);
     }
 
+    ImGui::DragFloat("HP", &HP_, 0.1f, 0.1f, 10.0f);
+
 
     ImGui::End();
-
-    Vector3 translates = object_->GetTranslate();
 
     // プレイヤーに持ち上げられていたら
     if (onPlayer_)
     {
-
         // スペースキーで卵を置く
         if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
         {
-            translates.y -= 2.0f;
+            // プレイヤーのワールド行列を取得
+            Matrix4x4 worldMatrix = player_->GetWorldMatrix();
+            Vector3 velocity_ = { 0.0f,-2.0f,1.0f };
+            velocity_ = TransformNormal(velocity_, worldMatrix);
+            translate += velocity_;
+
+            // 置いた先が壁だったら
+            if (CollisionMask::GetInstance()->IsWall(translate.x, translate.z))
+            {
+                // プレイヤーと同じ場所に置く
+                translate = player_->GetPosition();
+            }
+
             onPlayer_ = false;
-            object_->SetTranslate(translates);
+            object_->SetTranslate(translate);
             return;
         }
 
         // 座標をプレイヤーと同期する
-        translates = player_->GetPosition();
-        translates.y += 2.0f;
+        translate = player_->GetPosition();
+        translate.y += 2.0f;
 
     }
     else
@@ -72,8 +86,8 @@ void Egg::Update()
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
             {
                 onPlayer_ = true;
-                translates = player_->GetPosition();
-                translates.y += 2.0f;
+                translate = player_->GetPosition();
+                translate.y += 2.0f;
             }
         }
         else
@@ -82,19 +96,20 @@ void Egg::Update()
             if (Input::GetInstance()->PushedKeyDown(DIK_UP))
             {
                 // 奥に進む
-                translates.z += 0.1f;
+                translate.z += 0.1f;
             }
             else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
             {
                 // 手前に進む
-                translates.z -= 0.1f;
+                translate.z -= 0.1f;
             }
         }
     }
 
-    object_->SetTranslate(translates);
+    object_->SetTranslate(translate);
 
     object_->Update();
+
 }
 
 void Egg::Draw()
@@ -126,4 +141,13 @@ void Egg::OnCollision(const Player* player_)
 {
     (void)player_;
     isHit_ = true;
+}
+
+void Egg::Death()
+{
+    // HPがなくなったら
+    if (HP_ <= 0.0f)
+    {
+        SceneManager::GetInstance()->ChangeScene("TitleScene");
+    }
 }

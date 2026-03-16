@@ -72,6 +72,9 @@ public: // 外部入出力
     // AABBを取得
     AABB GetAABB() const;
 
+    // アフィン行列
+    Matrix4x4 GetWorldMatrix() const;
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;

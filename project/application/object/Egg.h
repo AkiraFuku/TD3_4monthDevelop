@@ -37,11 +37,16 @@ public:
     // 卵の状況を取得
     bool IsOnPlayer() const { return onPlayer_; }
 
+    // HPをセット
+    void SetHP(float hp) { HP_ -= hp; }
+
+    // 死亡判定
+    void Death();
+
+    
 public: // 外部入出力
 
-
-
-
+    
 
 private:
 
@@ -61,5 +66,8 @@ private:
     bool onPlayer_ = false;
     // プレイヤーのポインタ
     Player* player_ = nullptr;
+
+    // HP
+    float HP_ = 10.0f;
 };
 

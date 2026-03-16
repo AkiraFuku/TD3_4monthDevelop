@@ -30,6 +30,7 @@ public:
   void CheckAllCollisions(); // 全ての当たり判定を確認
   bool isCollision(const AABB& aabb1, const AABB& aabb2); // 当たり判定
   void ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB); // プレイヤーを押し戻す関数
+  void ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB); // 敵を押し戻す関数
 
 private:
     std::unique_ptr<Camera> camera;

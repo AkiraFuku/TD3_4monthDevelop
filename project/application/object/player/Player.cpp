@@ -252,3 +252,9 @@ AABB Player::GetAABB() const
 
     return aabb;
 }
+
+Matrix4x4 Player::GetWorldMatrix() const
+{
+    Matrix4x4 worldMatrix = MakeAfineMatrix(scale_, rotate_, translate_);
+    return worldMatrix;
+}

@@ -2,7 +2,7 @@
 #include "ModelManager.h"
 #include "CollisionMask.h"
 #include "ThreadManager.h"
-
+#include "Egg.h"
 
 void Enemy::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
@@ -73,6 +73,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm) {
 
 bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm)
 {
+    
     Vector3 diff = { end.x - start.x, 0.0f, end.z - start.z };
     float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
     if (distance < 0.5f) return true;
@@ -111,6 +112,14 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
 }
 
 void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
+
+    if (isHit_)
+    {
+        // 卵に接触していたら何もしない
+        return;
+    }
+
+
     Vector3 currentPos = object_->GetTranslate();
 
     // 卵までの直線上に壁があるかチェック（簡易版）
@@ -169,4 +178,46 @@ Vector3 Enemy::GridToWorld(const Point& grid) {
         0.0f,
         (float)grid.y + 0.5f
     };
+}
+
+Vector3 Enemy::GetWorldPosition() const
+{
+    // ワールド座標を入れる変数
+    Vector3 worldPos;
+    // ワールド行列の平行移動成分を取得
+    worldPos = object_->GetTranslate();
+    return worldPos;
+}
+
+AABB Enemy::GetAABB() const
+{
+    Vector3 worldPos = GetWorldPosition();
+    AABB aabb;
+
+    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
+    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+
+    return aabb;
+}
+
+void Enemy::SetPosition(const Vector3& pos)
+{
+    object_->SetTranslate(pos);
+}
+
+
+void Enemy::OnCollision(Egg* egg)
+{
+    if (attackTimer_ <= 0)
+    {
+        // 一定間隔で卵のHPを減らす
+        egg->SetHP(1.0f);
+        attackTimer_ = 60;
+    }
+    else
+    {
+        attackTimer_--;
+    }
+
+    
 }

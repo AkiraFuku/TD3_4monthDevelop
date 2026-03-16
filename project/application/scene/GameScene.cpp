@@ -84,7 +84,7 @@ void GameScene::Initialize() {
   // ----- Thread -----
   thread_ = std::make_unique<ThreadManager>();
   thread_->Initialize(50, 20, camera.get());
-  thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
+  thread_->AddThread({-8.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
   thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
 
     // プレイヤーの初期化
@@ -404,7 +404,7 @@ void GameScene::Update()
 
     // ゴールクリアの判定
     goal_->Clear();
-
+    egg_->Death();
 
 }
 
@@ -451,6 +451,23 @@ void GameScene::CheckAllCollisions()
         // 衝突していない場合はヒットフラグをリセット
         egg_->SetHitFlag(false);
     }
+
+    // 敵の座標
+    AABB enemyAABB = enemy_->GetAABB();
+
+    if (isCollision(enemyAABB, eggAABB))
+    {
+        // 敵と卵が衝突している場合の処理
+        enemy_->OnCollision(egg_.get());
+
+        // めり込み防止
+        ResolveCollision(enemy_.get(), enemyAABB, eggAABB);
+    }
+    else
+    {
+        // 衝突していない場合はヒットフラグをリセット
+        enemy_->SetHitFlag(false);
+    }
 }
 
 bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
@@ -466,13 +483,12 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
     // 各軸ごとのめり込み量を計算
     // min(右側のめり込み, 左側のめり込み) をとる
     float overlapX = std::min(playerAABB.max.x - otherAABB.min.x, otherAABB.max.x - playerAABB.min.x);
-    float overlapY = std::min(playerAABB.max.y - otherAABB.min.y, otherAABB.max.y - playerAABB.min.y);
     float overlapZ = std::min(playerAABB.max.z - otherAABB.min.z, otherAABB.max.z - playerAABB.min.z);
 
     Vector3 currentPos = player->GetPosition();
 
     // 最もめり込みが小さい軸（最短分離軸）を特定して押し戻す
-    if (overlapX < overlapY && overlapX < overlapZ) {
+    if (overlapX < overlapZ) {
         // X軸方向の押し戻し
         if (playerAABB.min.x < otherAABB.min.x)
         {
@@ -483,7 +499,8 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             currentPos.x += overlapX; // 右へ
         }
     }
-    else if (overlapZ < overlapX && overlapZ < overlapY) {
+    else
+    {
         // Z軸方向の押し戻し
         if (playerAABB.min.z < otherAABB.min.z)
         {
@@ -494,9 +511,47 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             currentPos.z += overlapZ; // 奥へ
         }
     }
+   
+    // 修正した座標を反映
+    player->SetPosition(currentPos);
+}
+
+void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB)
+{
+    // 各軸ごとのめり込み量を計算
+    // min(右側のめり込み, 左側のめり込み) をとる
+    float overlapX = std::min(enemyAABB.max.x - otherAABB.min.x, otherAABB.max.x - enemyAABB.min.x);
+    float overlapY = std::min(enemyAABB.max.y - otherAABB.min.y, otherAABB.max.y - enemyAABB.min.y);
+    float overlapZ = std::min(enemyAABB.max.z - otherAABB.min.z, otherAABB.max.z - enemyAABB.min.z);
+
+    Vector3 currentPos = enemy->GetWorldPosition();
+
+    // 最もめり込みが小さい軸（最短分離軸）を特定して押し戻す
+    if (overlapX < overlapY && overlapX < overlapZ) {
+        // X軸方向の押し戻し
+        if (enemyAABB.min.x < otherAABB.min.x)
+        {
+            currentPos.x -= overlapX;
+        }// 左へ
+        else
+        {
+            currentPos.x += overlapX; // 右へ
+        }
+    }
+    else if (overlapZ < overlapX && overlapZ < overlapY) {
+        // Z軸方向の押し戻し
+        if (enemyAABB.min.z < otherAABB.min.z)
+        {
+            currentPos.z -= overlapZ; // 手前へ
+        }
+        else
+        {
+            currentPos.z += overlapZ; // 奥へ
+        }
+    }
     else {
         // Y軸方向の押し戻し（床や天井）
-        if (playerAABB.min.y < otherAABB.min.y)
+        if (enemyAABB.min.y < otherAABB.min.y)
         {
             currentPos.y -= overlapY; // 下へ
         }
@@ -506,5 +561,5 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
         }
     }
     // 修正した座標を反映
-    player->SetPosition(currentPos);
+    enemy->SetPosition(currentPos);
 }
