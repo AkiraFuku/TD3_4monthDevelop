@@ -123,6 +123,7 @@ private:
     bool onThread_ = false;
 
 private:
+
     /// <summary>
     /// 糸の相互作用
     /// </summary>

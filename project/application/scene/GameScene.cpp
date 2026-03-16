@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include <numbers>
 #include "Transform.h"
+
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
