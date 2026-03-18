@@ -82,6 +82,9 @@ public:
             model_->SetAnimationTime(time);
         }
     }
+    void SetPsoName(const std::string& psoName) {
+        psoName_ = psoName;
+    }
 
     //void SetRadius(float radius) { radius_ = radius; }
 private:
@@ -103,5 +106,8 @@ private:
 
     FillMode fillMode_ = FillMode::kSolid;
     BlendMode blendMode_ = BlendMode::None;
+
+    std::string psoName_ = "Object3d";
+
 };
 

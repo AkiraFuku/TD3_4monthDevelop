@@ -49,6 +49,11 @@ public:
     void ResultMove();
 
     /// <summary>
+    ///
+    /// </summary>
+    void IsCollisionSDF();
+
+    /// <summary>
     /// 状態遷移
     /// </summary>
     /// <param name="newState">次の状態</param>
@@ -109,8 +114,10 @@ private:
     static inline const float kWidth = 1.6f;
     static inline const float kHeight = 1.6f;
 
+    // 速さ
+    float speed_ = 0.2f;
     // 速度
-    Vector3 velocity_ = {0.1f, 0.0f, 0.1f};
+    Vector3 velocity_ = {0.05f, 0.0f, 0.05f};
     // 実際に動く時の速度
     Vector3 moveVel_;
 
@@ -129,6 +136,7 @@ private:
     bool hasEgg_ = false;
 
 private:
+
     /// <summary>
     /// 糸の相互作用
     /// </summary>

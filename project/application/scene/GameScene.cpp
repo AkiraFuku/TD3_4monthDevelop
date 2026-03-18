@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include <numbers>
 #include "Transform.h"
+
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
@@ -414,7 +415,7 @@ void GameScene::Update()
 
     // ゴールクリアの判定
     goal_->Clear();
-    egg_->Death();
+    // egg_->Death();
 
 }
 

@@ -89,7 +89,7 @@ void TitleScene::Update() {
 
     // Aボタンを押していたら
 
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
 
 
 

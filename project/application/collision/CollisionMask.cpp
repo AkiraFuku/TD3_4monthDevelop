@@ -3,8 +3,9 @@
 #include "ModelManager.h"
 #include "TextureManager.h"
 #include "StringUtility.h"
-#include "Vector4.h"
+#include "Vector4Function.h"
 #include "ImGuiManager.h"
+#include "Logger.h"
 
 std::unique_ptr<CollisionMask, CollisionMask::Deleter> CollisionMask::instance_ = nullptr;
 
@@ -25,9 +26,9 @@ void CollisionMask::Finalize()
 void CollisionMask::Initialize() 
 {
    
-    maskDatas_.resize(2);
+    maskDatas_.resize(3);
 
-    for (size_t i = 0; i < 2; i++)
+    for (size_t i = 0; i < 3; i++)
     {
 
         std::unique_ptr<MaskData> maskData{};
@@ -46,13 +47,17 @@ void CollisionMask::Initialize()
     LoadFromFile("resources/Mask/Mask.png", maskDatas_[0]->textureData);
     maskDatas_[0]->name = "mapMaskData";
     ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[0]->name, "resources/Mask/Mask.png");
+    LoadFromFile("resources/Mask/Mask(1).png", maskDatas_[1]->textureData);
+    maskDatas_[1]->name = "mapMaskData1";
+    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[1]->name, "resources/Mask/Mask(1).png");
+    LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[2]->textureData);
+    maskDatas_[2]->name = "mapMaskData2";
+    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[2]->name, "resources/Mask/Mask(2).png");
 
-    LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[1]->textureData);
-    maskDatas_[1]->name = "mapMaskData2";
-    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[1]->name, "resources/Mask/Mask(2).png");
-
-    for (size_t i = 0; i < 2; i++)
+    for (size_t i = 0; i < 3; i++)
     {
+        GenerateSDF(maskDatas_[i].get());
+
         maskDatas_[i]->object->SetModel(maskDatas_[i]->name);
 
         auto model = ModelManager::GetInstance()->findModel(maskDatas_[i]->name);
@@ -61,9 +66,124 @@ void CollisionMask::Initialize()
         maskDatas_[i]->min_ = model->GetModelData().vertices[2].position;
     }
     
-    currentMaskMap_ = CollisionMask::MaskMap::Map1;
+    currentMaskMap_ = CollisionMask::MaskMap::Map2;
 
     maskMapRequest_ = CollisionMask::MaskMap::Unknown;
+
+    PsoConfig config{};
+    config.vsPath = L"resources/shaders/MaskMap/Mask.VS.hlsl";
+    config.psPath = L"resources/shaders/MaskMap/Mask.PS.hlsl";
+
+
+    config.rootSignatureGenerator = []() {
+        std::vector<D3D12_ROOT_PARAMETER> rootParameters;
+        std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
+        D3D12_STATIC_SAMPLER_DESC sampler{};
+        sampler = PSOManager::GetInstance()->StaticSamplers();
+
+        staticSamplers.push_back(sampler);
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
+        descRangeTexture[0].BaseShaderRegister = 0; // t0
+        descRangeTexture[0].NumDescriptors = 1;
+        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+
+
+        rootParameters.resize(8);
+
+
+
+        // Enum定義 (可読性のため)
+        enum {
+            kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
+        };
+
+        // 0. Material (CBV b0, Pixel)
+        rootParameters[kMaterial].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[kMaterial].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[kMaterial].Descriptor.ShaderRegister = 0;
+
+        // 1. Transform (CBV b0, Vertex)
+        rootParameters[kTransform].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[kTransform].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        rootParameters[kTransform].Descriptor.ShaderRegister = 0;
+
+        // 2. Texture (Table t0, Pixel)
+        rootParameters[kTexture].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParameters[kTexture].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[kTexture].DescriptorTable.pDescriptorRanges = descRangeTexture;
+        rootParameters[kTexture].DescriptorTable.NumDescriptorRanges = 1;
+
+        // ★変更: 3. DirectionalLight (SRV t1)
+        rootParameters[DirLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        rootParameters[DirLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[DirLight].Descriptor.ShaderRegister = 1; // t1
+
+        // ★追加: 4. PointLight (SRV t2)
+        rootParameters[PointLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        rootParameters[PointLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[PointLight].Descriptor.ShaderRegister = 2; // t2
+
+        // ★追加: 5. SpotLight (SRV t3)
+        rootParameters[SpotLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        rootParameters[SpotLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[SpotLight].Descriptor.ShaderRegister = 3; // t3
+
+        // ★追加: 6. LightCounts (CBV b3)
+        rootParameters[Count].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[Count].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[Count].Descriptor.ShaderRegister = 3; // b3 (b0,b1,b2は使用済みと仮定、あるいは空いている番号)
+        //カメラ
+        rootParameters[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 定数バッファビュー
+        rootParameters[kCamera].Descriptor.ShaderRegister = 2; // レジスタ番号 2 (b2)
+        rootParameters[kCamera].Descriptor.RegisterSpace = 0;
+        rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
+
+        // シリアライズ
+        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
+        descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        descriptionRootSignature.pParameters = rootParameters.data();
+        descriptionRootSignature.NumParameters = (UINT)rootParameters.size();
+        descriptionRootSignature.pStaticSamplers = staticSamplers.data();
+        descriptionRootSignature.NumStaticSamplers = (UINT)staticSamplers.size();
+
+
+        Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
+        Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+
+        HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+        if (FAILED(hr)) {
+            Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+            assert(false);
+        }
+
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
+        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        assert(SUCCEEDED(hr));
+
+
+
+        return rootSignature;
+        };
+    config.inputLayoutGenerator = []() {
+        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };
+        };
+    // 深度設定
+    config.depthEnable = true;
+    config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
+    // PSOManagerに名前を付けて登録
+    PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        maskDatas_[i].get()->object->SetPsoName("MaskMap");
+    }
 }
 
 void CollisionMask::Update() 
@@ -77,7 +197,7 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentMaskMap_);
-    const char* items[] = {"Map1", "Map2"};
+    const char* items[] = {"Map1", "Map2", "Map3"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
@@ -133,6 +253,112 @@ bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textu
 
     return false;
 }
+
+void CollisionMask::GenerateSDF(MaskData* mask)
+{
+    int w = mask->textureData.widthX;
+    int h = mask->textureData.widthZ;
+    mask->sdfData.resize(w * h); // float型の配列を用意
+
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            // 全ピクセルを走査して最短距離を計算
+            // (本来は 8-point SSEDT 等の高速アルゴリズムを使いますが、まずは二重ループで)
+            float minDist = FindNearestWallDist(x, y, mask);
+            mask->sdfData[y * w + x] = minDist;
+        }
+    }
+}
+
+float CollisionMask::FindNearestWallDist(int startX, int startZ, MaskData* mask)
+{
+    int w = mask->textureData.widthX;
+    int h = mask->textureData.widthZ;
+
+    // 探索する最大半径（これより遠い壁は無視していいことにする）
+    // マップ全体のサイズに合わせて調整。例：32ピクセル分など
+    const int maxSearchRange = 64;
+    float minSqDist = static_cast<float>(maxSearchRange * maxSearchRange);
+    bool found = false;
+
+    // 現在のピクセルがすでに壁（黒）なら、距離は 0 (または負の深さ)
+    if (mask->textureData.data[startZ * w + startX] < 128) {
+        return 0.0f; // 簡易版なので壁の中は0
+    }
+
+    // 周囲を矩形状に探索
+    for (int dz = -maxSearchRange; dz <= maxSearchRange; ++dz) {
+        for (int dx = -maxSearchRange; dx <= maxSearchRange; ++dx) {
+            int targetX = startX + dx;
+            int targetZ = startZ + dz;
+
+            // 範囲外チェック
+            if (targetX < 0 || targetX >= w || targetZ < 0 || targetZ >= h) continue;
+
+            // そのピクセルが壁（黒）かどうか
+            if (mask->textureData.data[targetZ * w + targetX] < 128) {
+                float sqDist = static_cast<float>(dx * dx + dz * dz);
+                if (sqDist < minSqDist) {
+                    minSqDist = sqDist;
+                    found = true;
+                }
+            }
+        }
+    }
+
+    return found ? std::sqrt(minSqDist) : static_cast<float>(maxSearchRange);
+}
+
+float CollisionMask::GetSDFValue(float worldX, float worldZ)
+{
+    auto& maskData = maskDatas_[static_cast<int>(currentMaskMap_)];
+
+    // 1. ワールド座標を画像上の浮動小数点の座標 (u, v) に変換
+    float u = (worldX - maskData->min_.x) / (maskData->max_.x - maskData->min_.x) 
+        * (maskData->textureData.widthX - 1);
+    float v = (worldZ - maskData->min_.y) / (maskData->max_.y - maskData->min_.y) 
+        * (maskData->textureData.widthZ - 1); 
+
+    // 2. 周辺4ピクセルの座標を特定（確実に範囲内に収める）
+    int x0 = std::clamp(static_cast<int>(u), 0, maskData->textureData.widthX - 1);
+    int y0 = std::clamp(static_cast<int>(v), 0, maskData->textureData.widthZ - 1);
+    int x1 = std::clamp(x0 + 1, 0, maskData->textureData.widthX - 1);
+    int y1 = std::clamp(y0 + 1, 0, maskData->textureData.widthZ - 1);
+
+    // 3. ピクセル内の余り（0.0〜1.0）
+    float fx = u - x0;
+    float fy = v - y0;
+
+    // 4. 4点のSDF値を線形補間
+    float d00 = maskData->sdfData[y0 * maskData->textureData.widthX + x0];
+    float d10 = maskData->sdfData[y0 * maskData->textureData.widthX + x1];
+    float d01 = maskData->sdfData[y1 * maskData->textureData.widthX + x0];
+    float d11 = maskData->sdfData[y1 * maskData->textureData.widthX + x1];
+
+    float d0 = d00 * (1 - fx) + d10 * fx;
+    float d1 = d01 * (1 - fx) + d11 * fx;
+
+    return d0 * (1 - fy) + d1 * fy;
+}
+
+Vector2 CollisionMask::GetSDFNormal(float worldX, float worldZ)
+{
+    const float delta = 1.0f;
+
+    // 動いた時の距離の変化を見る
+    float dx = GetSDFValue(worldX + delta, worldZ) - GetSDFValue(worldX - delta, worldZ);
+    float dz = GetSDFValue(worldX, worldZ + delta) - GetSDFValue(worldX, worldZ - delta);
+
+    float length = std::sqrtf(dx * dx + dz * dz);
+    if(length < 1e-5f) {
+        // 勾配がほとんどない（距離場が平坦）場合は、適当な法線を返す
+        return Vector2(0.0f, 0.0f);
+    }
+
+    return Vector2{ dx / length, dz / length };
+}
+
+
 
 bool CollisionMask::IsWall(float x, float z) const
 {
