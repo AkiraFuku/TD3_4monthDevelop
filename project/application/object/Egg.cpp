@@ -23,6 +23,7 @@ void Egg::Finalize()
 
 void Egg::Update()
 {
+#ifdef USE_IMGUI
     ImGui::Begin("Egg Window");
 
     Vector3 scale = object_->GetScale();
@@ -47,6 +48,14 @@ void Egg::Update()
 
 
     ImGui::End();
+
+#endif
+
+    // 現在の卵の状況を毎フレームPlayerに伝える
+    if (player_) {
+        player_->SetHasEgg(onPlayer_);
+        player_->SetNearEgg(isHit_);
+    }
 
     // プレイヤーに持ち上げられていたら
     if (onPlayer_)

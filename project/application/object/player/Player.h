@@ -59,8 +59,8 @@ public:
     /// </summary>
     void FireThread();
 
-public: // 外部入出力
-    // ----- Getter -----
+public: 
+    // ----- Getter / Setter -----
 
     // 位置
     Vector3 GetPosition() const { return object_->GetTranslate(); }
@@ -77,6 +77,14 @@ public: // 外部入出力
 
     // アフィン行列
     Matrix4x4 GetWorldMatrix() const;
+
+    // 卵に触れているか
+    bool IsNearEgg() const { return isNearEgg_; }
+    void SetNearEgg(bool isNear) { isNearEgg_ = isNear; }
+
+    // 卵を持っているか
+    bool HasEgg() const { return hasEgg_; }
+    void SetHasEgg(bool hasEgg) { hasEgg_ = hasEgg; }
 
 private:
     // 現在の状態
@@ -116,6 +124,9 @@ private:
 
     // 糸の上を歩いているかのフラグ
     bool onThread_ = false;
+
+    bool isNearEgg_ = false;
+    bool hasEgg_ = false;
 
 private:
     /// <summary>

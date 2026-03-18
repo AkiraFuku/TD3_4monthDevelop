@@ -15,20 +15,20 @@ void PlayerStateIdle::Initialize(Player* player)
 }
 
 // 更新
-void PlayerStateIdle::Update(Player* player)
-{
+void PlayerStateIdle::Update(Player* player) {
     // WASDで移動
     if (Input::GetInstance()->PushedKeyDown(DIK_W) || Input::GetInstance()->PushedKeyDown(DIK_S) ||
         Input::GetInstance()->PushedKeyDown(DIK_A) || Input::GetInstance()->PushedKeyDown(DIK_D)) {
         player->ChangeState(std::make_unique<PlayerStateMove>());
-
         return;
     }
 
     // SPACEで糸を発射
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
-        player->ChangeState(std::make_unique<PlayerStateShoot>());
-
+        // 卵の近くにいない、かつ卵を持っていない時だけ糸を発射する
+        if (!player->IsNearEgg() && !player->HasEgg()) {
+            player->ChangeState(std::make_unique<PlayerStateShoot>());
+        }
         return;
     }
 }
@@ -43,8 +43,7 @@ void PlayerStateMove::Initialize(Player* player)
 }
 
 // 更新
-void PlayerStateMove::Update(Player* player)
-{
+void PlayerStateMove::Update(Player* player) {
     Vector3 moveDirection = {};
 
     // 移動処理
@@ -53,17 +52,17 @@ void PlayerStateMove::Update(Player* player)
     // 入力がなくなったら待機状態に遷移
     if (moveDirection.x == 0.0f && moveDirection.z == 0.0f) {
         player->ChangeState(std::make_unique<PlayerStateIdle>());
-
         return;
     }
 
-    // 移動中にSPACEを押して発射状態に遷移
+    // 移動中にSPACEを押して発射状態に遷移 
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
-        player->ChangeState(std::make_unique<PlayerStateShoot>());
-
+        // 卵の近くにいない、かつ卵を持っていない時だけ糸を発射する
+        if (!player->IsNearEgg() && !player->HasEgg()) {
+            player->ChangeState(std::make_unique<PlayerStateShoot>());
+        }
         return;
     }
-
 }
 
 // ======================================
