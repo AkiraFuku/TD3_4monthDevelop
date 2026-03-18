@@ -125,14 +125,14 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
 
         return rootSignature;
-        };
+    };
     config.inputLayoutGenerator = []() {
         return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
-        };
+    };
     // 深度設定
     config.depthEnable = true;
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -181,16 +181,29 @@ void Player::Update() {
         translate_ = translate;
     }
 
+    Vector3 moveVel = moveVel_;
+    if (ImGui::DragFloat3("Move Velocity", &moveVel.x, 0.01f, -1.0f, 1.0f)) {
+        moveVel_ = moveVel;
+    }
+
     ImGui::End();
 
 #endif
-
-    //// 当たり判定
-    //IsCollision();
+    // 当たり判定
+    if (onThread_)
+    {
+        IsCollision();
+    }
+    else
+    {
+        IsCollisionSDF();
+    }
+    
+    //
 
    
 
-    IsCollisionSDF();
+    
 
     // 移動距離確定処理
     ResultMove();
@@ -213,28 +226,49 @@ void Player::UpdateMove(Vector3& moveDirection) {
     // 移動方向を蓄積する変数
     moveDirection = {0.0f, 0.0f, 0.0f};
 
-    // キー入力に応じて方向ベクトルを決定
-    if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
-        moveDirection.x += 1.0f;
+    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) 
+    {
+        moveDirection.x += 0.7f;
+        moveDirection.z += 0.7f;
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) 
+    {
+        moveDirection.x += 0.7f;
+        moveDirection.z -= 0.7f;
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S))
+    {
+        moveDirection.x -= 0.7f;
+        moveDirection.z -= 0.7f;
     }
-    else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W))
+    {
+        moveDirection.x -= 0.7f;
+        moveDirection.z += 0.7f;
+    }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_D))
+    {
+        moveDirection.x += 1.0f;
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A))
+    {
         moveDirection.x -= 1.0f;
     }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_W)) 
+    {
+        moveDirection.z += 1.0f;
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_S)) 
+    {
+        moveDirection.z -= 1.0f;
+    } 
     else
     {
         moveDirection.x = 0.0f;
-    }
-
-    if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.z += 1.0f;
-    }
-    else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.z -= 1.0f;
-    }
-    else
-    {
         moveDirection.z = 0.0f;
     }
+
+
 
     if (moveDirection.x != 0.0f || moveDirection.z != 0.0f) {
         // ベクトルの長さを計算
@@ -348,52 +382,61 @@ void Player::IsCollisionSDF()
     float hW = kWidth * 0.5f;
     float hH = kHeight * 0.5f;
 
-    for (int i = 0; i < 3; i++)
-    {
-        // 四隅の座標リスト
-        Vector2 corners[4] = {
-            { nextPos.x - hW, nextPos.z - hH }, // 左下
-            { nextPos.x + hW, nextPos.z - hH }, // 右下
-            { nextPos.x - hW, nextPos.z + hH }, // 左上
-            { nextPos.x + hW, nextPos.z + hH }  // 右上
-        };
+    // 四隅の座標リスト
+    Vector2 corners[4] = {
+        { nextPos.x - hW, nextPos.z - hH }, // 左下
+        { nextPos.x + hW, nextPos.z - hH }, // 右下
+        { nextPos.x - hW, nextPos.z + hH }, // 左上
+        { nextPos.x + hW, nextPos.z + hH }  // 右上
+    };
 
-        // 3. 四隅の中で「最も壁に近い点」を探す
-        float minDist = 10000.0f;
-        Vector2 targetCorner = { nextPos.x, nextPos.z };
+    // 3. 四隅の中で「最も壁に近い点」を探す
+    float minDist = 10000.0f;
+    Vector2 targetCorner = { nextPos.x, nextPos.z };
+    
 
-        for (const auto& corner : corners) {
-            float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
-            if (d < minDist) {
-                minDist = d;
-                targetCorner = corner;
-            }
-        }
-
-        // 4. 衝突判定（最も近い点が「中」に入っていたら）
-        // 矩形判定の場合、理想的な距離（閾値）は 0 です。
-        if (minDist < 0.1f) {
-            // 最もめり込んでいる点の法線を取得
-            Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
-
-            if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
-            {
-                // 押し戻し量
-                float pushBack = 0.1f - minDist;
-
-                // 座標を補正
-                moveVel_.x += normal.x * pushBack;
-                moveVel_.z += normal.y * pushBack;
-
-                // 速度の射影（滑り処理）
-                float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
-                if (dot < 0) {
-                    moveVel_.x -= dot * normal.x;
-                    moveVel_.z -= dot * normal.y;
-                }
-            }
+    for (const auto& corner : corners) {
+        float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
+        if (d < minDist) {
+            minDist = d;
+            targetCorner = corner;
         }
     }
+
+    // 4. 衝突判定（最も近い点が「中」に入っていたら）
+    // 矩形判定の場合、理想的な距離（閾値）は 0 です。
+    if (minDist < 0.075f) {
+        // 最もめり込んでいる点の法線を取得
+        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
+
+        if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
+        {
+            // 押し戻し量
+            float pushBack = 0.075f - minDist;
+
+            // 座標を補正
+            moveVel_.x += normal.x * pushBack;
+            moveVel_.z += normal.y * pushBack;
+
+            // 速度の射影（滑り処理）
+            float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+            if (dot < 0) {
+                moveVel_.x -= dot * normal.x;
+                moveVel_.z -= dot * normal.y;
+            }
+           
+        }
+    }
+
+    //for (int i = 0; i < 3; i++)
+    //{
+    //    bool collided = false;
+
+    //    collided = true;
+
+    //    // どこにも衝突しなくなったらループ終了
+    //    if (!collided) break;
+    //}
 
     
 
