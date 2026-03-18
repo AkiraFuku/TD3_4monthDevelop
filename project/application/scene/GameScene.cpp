@@ -84,8 +84,6 @@ void GameScene::Initialize() {
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
-    //thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
-    //thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
 
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
