@@ -27,6 +27,8 @@ private:
     std::unique_ptr<Sprite> sprite;
     std::unique_ptr<Object3d> object3d;
     std::unique_ptr<Animation> animation;
+  /*  std::unique_ptr<Object3d::ModelInstance> a;
+    std::unique_ptr<Object3d::ModelInstance> b;*/
 
     DebugCamera debugCamera_;
     bool isDebugCamera_ = false;

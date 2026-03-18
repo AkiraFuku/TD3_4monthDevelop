@@ -8,6 +8,7 @@
 #include "PSOManager.h"
 #include "LightManager.h"
 
+
 void TitleScene::Initialize() {
 
     camera = std::make_unique<Camera>();
@@ -16,14 +17,14 @@ void TitleScene::Initialize() {
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-     handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+    handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-    Audio::GetInstance()->PlayAudio(handle_,true);
+    Audio::GetInstance()->PlayAudio(handle_, true);
 
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
-    
+
     ParticleManager::GetInstance()->CreateParticleGroup("Test", "resources/uvChecker.png");
-    LightManager::GetInstance()->AddDirectionalLight({ 0.0f,-1.0f,0.0f }, { 1.0f,1.0f,1.0f },1.0f);
+    LightManager::GetInstance()->AddDirectionalLight({ 0.0f,-1.0f,0.0f }, { 1.0f,1.0f,1.0f }, 1.0f);
     /*   std::vector<Sprite*> sprites;
        for (uint32_t i = 0; i < 5; i++)
        {*/
@@ -41,23 +42,31 @@ void TitleScene::Initialize() {
 
 
 
-    animation = std::make_unique<Animation>();
+   /* animation = std::make_unique<Animation>();
 
     animation->Initialize("resources/AnimatedCube","AnimatedCube.gltf");
-    animation->SetCurrentTime(0.0f);
+    animation->SetCurrentTime(0.0f);*/
 
 
 
 
-    ModelManager::GetInstance()->LoadModel("resources/AnimatedCube","AnimatedCube.gltf");
-        object3d = std::make_unique<Object3d>();
-        object3d->Initialize();
-        object3d->SetModel("AnimatedCube.gltf");
-        object3d->SetCamera(camera.get());
+    ModelManager::GetInstance()->LoadModel("resources/AnimatedCube", "AnimatedCube.gltf");
+    ModelManager::GetInstance()->LoadModel("resources", "axis.obj");
+    ModelManager::GetInstance()->CreateSphereModel("Sphere", 16);
+    object3d = std::make_unique<Object3d>();
+    object3d->Initialize();
+    //    object3d->SetModel("AnimatedCube.gltf");
 
-       object3d->SetAnimations(animation.get());
-        
-      
+    object3d->AddModel("Sphere", "Sphere1");
+    object3d->AddModel("axis.obj", "axis");
+    object3d->SetCamera(camera.get());
+
+    // object3d->SetAnimations(animation.get());
+    Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
+    Object3d::ModelInstance* b = object3d->FindInstance("axis");
+
+    a->transform.scale={0.5f,0.5f,0.5f};
+    b->transform.scale={0.5f,0.5f,0.5f};
 
 
 
@@ -68,20 +77,24 @@ void TitleScene::Finalize() {
 }
 void TitleScene::Update() {
 
+    Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
+    Object3d::ModelInstance* b = object3d->FindInstance("axis");
 
+    //a->transform.translate.x += 1.0f / 60.0f;
+    b->transform.translate.x -= 1.0f / 60.0f;
     XINPUT_STATE state;
 
     // 現在のジョイスティックを取得
     if (Input::GetInstance()->TriggerMouseDown(0))
     {
-      if (Audio::GetInstance()->IsPlaying(handle_))
+        if (Audio::GetInstance()->IsPlaying(handle_))
         {
             Audio::GetInstance()->PauseAudio(handle_);
-      } else
-      {
-          Audio::GetInstance()->ResumeAudio(handle_);
-       
-      }
+        } else
+        {
+            Audio::GetInstance()->ResumeAudio(handle_);
+
+        }
     }
 
 
@@ -97,7 +110,7 @@ void TitleScene::Update() {
 
         if (Audio::GetInstance()->IsPlaying(handle_))
         {
-            
+
             Audio::GetInstance()->StopAudio(handle_);
         }
 

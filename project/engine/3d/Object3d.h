@@ -16,6 +16,8 @@ class Object3d
 
 public:
 
+    
+
     struct TransformationMatrix {
         Matrix4x4 WVP;
         Matrix4x4 World;
@@ -35,6 +37,20 @@ public:
         Vector3 cameraForward; // ★追加: カメラの前方ベクトル
         float padding;
     };
+
+    struct ModelInstance {
+        std::string name; // 識別用
+        std::shared_ptr<Model> model;
+        EulerTransform transform = { {1.0f,1.0f,1.0f}, {0.0f,0.0f,0.0f}, {0.0f,0.0f,0.0f} }; // そのパーツ独自のローカル座標
+        Matrix4x4 localMatrix;     // 計算後のローカル行列
+        Matrix4x4 worldMatrix;     // 親を含めた最終的なワールド行列
+
+        ModelInstance* parent = nullptr; // 親へのポインタ（親子関係用）
+        Microsoft::WRL::ComPtr<ID3D12Resource> resource;
+        TransformationMatrix* mappedData = nullptr;
+
+    };
+
     void Initialize();
     void Update();
     void Draw();
@@ -85,11 +101,15 @@ public:
     void SetPsoName(const std::string& psoName) {
         psoName_ = psoName;
     }
+    // モデルを追加する関数
+    void AddModel(const std::string& modelPath, const std::string& name, ModelInstance* parent = nullptr);
 
-    //void SetRadius(float radius) { radius_ = radius; }
+    // 特定のモデルの座標を操作するゲッターなど
+    ModelInstance* FindInstance(const std::string& name);
 private:
 
     //float radius_ = 1.0f;
+    std::vector<std::unique_ptr<ModelInstance>> models_; // 複数のモデル実体
     std::shared_ptr<Model> model_ = nullptr;
     //WVP行列リソース
     Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource_;
@@ -108,6 +128,10 @@ private:
     BlendMode blendMode_ = BlendMode::None;
 
     std::string psoName_ = "Object3d";
+
+
+
+
 
 };
 
