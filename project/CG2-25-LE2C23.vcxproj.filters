@@ -9,6 +9,8 @@
     <FxCompile Include="resources\shaders\Sprite\Sprite.VS.hlsl" />
     <FxCompile Include="resources\shaders\Player\Player.PS.hlsl" />
     <FxCompile Include="resources\shaders\Player\Player.VS.hlsl" />
+    <FxCompile Include="resources\shaders\MaskMap\Mask.PS.hlsl" />
+    <FxCompile Include="resources\shaders\MaskMap\Mask.VS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
@@ -139,6 +141,7 @@
     <None Include="resources\shaders\Particle\Particle.hlsli" />
     <None Include="resources\shaders\Sprite\Sprite.hlsli" />
     <None Include="resources\shaders\Player\Player.hlsli" />
+    <None Include="resources\shaders\MaskMap\Mask.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />

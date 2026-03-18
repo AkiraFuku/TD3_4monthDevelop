@@ -417,7 +417,7 @@ void GameScene::Update()
 
     // ゴールクリアの判定
     goal_->Clear();
-    egg_->Death();
+    // egg_->Death();
 
 }
 
