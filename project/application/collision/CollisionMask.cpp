@@ -319,11 +319,11 @@ float CollisionMask::GetSDFValue(float worldX, float worldZ)
     float v = (worldZ - maskData->min_.y) / (maskData->max_.y - maskData->min_.y) 
         * (maskData->textureData.widthZ - 1); 
 
-    // 2. 周辺4ピクセルの座標を特定
-    int x0 = static_cast<int>(u);
-    int y0 = static_cast<int>(v);
-    int x1 = std::min(x0 + 1, maskData->textureData.widthX - 1);
-    int y1 = std::min(y0 + 1, maskData->textureData.widthZ - 1);
+    // 2. 周辺4ピクセルの座標を特定（確実に範囲内に収める）
+    int x0 = std::clamp(static_cast<int>(u), 0, maskData->textureData.widthX - 1);
+    int y0 = std::clamp(static_cast<int>(v), 0, maskData->textureData.widthZ - 1);
+    int x1 = std::clamp(x0 + 1, 0, maskData->textureData.widthX - 1);
+    int y1 = std::clamp(y0 + 1, 0, maskData->textureData.widthZ - 1);
 
     // 3. ピクセル内の余り（0.0〜1.0）
     float fx = u - x0;
