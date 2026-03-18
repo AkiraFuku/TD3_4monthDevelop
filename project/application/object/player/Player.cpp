@@ -188,6 +188,21 @@ void Player::Update() {
 
     ImGui::End();
 
+    // Player.cpp などでの呼び出し
+    CollisionMask::RayResult res = CollisionMask::GetInstance()->CastRayThroughWall(translate_, GetForward(), 50.0f);
+    if (res.hit) {
+        ImGui::Begin("Ray Debug");
+        ImGui::Text("Hit World: %.2f, %.2f", res.hitPos.x, res.hitPos.y);
+        // 画像上のピクセル位置を逆算して表示
+        auto mask = CollisionMask::GetInstance()->GetMaskData(CollisionMask::GetInstance()->GetCurrentMaskMap());
+        float hitU = (res.hitPos.x - mask->min_.x) / (mask->max_.x - mask->min_.x);
+        float hitV = (res.hitPos.y - mask->min_.y) / (mask->max_.y - mask->min_.y);
+        ImGui::Text("Hit Pixel: %.1f, %.1f", hitU * mask->textureData.widthX, hitV * mask->textureData.widthZ);
+        ImGui::End();
+    }
+
+
+
 #endif
     // 当たり判定
     if (onThread_)
@@ -506,19 +521,27 @@ void Player::FireThread() {
     // プレイヤーの位置
     Vector3 playerPos = GetPosition();
 
-    // 始点（プレイヤーの中心より少し上から出すなど、調整可能）
-    Vector3 startPos = {playerPos.x, playerPos.y, playerPos.z};
+    rayResult_ = CollisionMask::GetInstance()->
+        CastRayThroughWall(playerPos, forward, 50.0f);
 
-    // 終点（向いている方向に距離を掛けた位置）
-    float threadLength = 10.0f; // 糸を飛ばす距離を指定
-    Vector3 endPos = {
-        startPos.x + forward.x * threadLength,
-        startPos.y + forward.y * threadLength,
-        startPos.z + forward.z * threadLength
-    };
+    //// 始点（プレイヤーの中心より少し上から出すなど、調整可能）
+    //Vector3 startPos = {playerPos.x, playerPos.y, playerPos.z};
+
+    //// 終点（向いている方向に距離を掛けた位置）
+    //float threadLength = 10.0f; // 糸を飛ばす距離を指定
+    //Vector3 endPos = {
+    //    startPos.x + forward.x * threadLength,
+    //    startPos.y + forward.y * threadLength,
+    //    startPos.z + forward.z * threadLength
+    //};
+
+    //// ThreadManagerに糸の生成を依頼
+    //thread_->AddThread(startPos, endPos);
 
     // ThreadManagerに糸の生成を依頼
-    thread_->AddThread(startPos, endPos);
+    thread_->AddThread(
+        { rayResult_.hitPos.x, 0.0f, rayResult_.hitPos.y },
+        { rayResult_.exitPos.x, 0.0f, rayResult_.exitPos.y });
 }
 
 void Player::SetPosition(const Vector3& pos)

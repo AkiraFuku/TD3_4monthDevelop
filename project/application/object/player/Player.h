@@ -5,8 +5,8 @@
 #include "Object3D.h"
 #include "DrawFunction.h"
 #include"PlayerState.h"
+#include "CollisionMask.h"
 
-class CollisionMask;
 class ThreadManager;
 
 class Player {
@@ -123,6 +123,8 @@ private:
 
     // 糸の上を歩いているかのフラグ
     bool onThread_ = false;
+
+    CollisionMask::RayResult rayResult_;
 
 private:
 

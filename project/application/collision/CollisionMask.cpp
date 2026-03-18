@@ -338,7 +338,14 @@ float CollisionMask::GetSDFValue(float worldX, float worldZ)
     float d0 = d00 * (1 - fx) + d10 * fx;
     float d1 = d01 * (1 - fx) + d11 * fx;
 
-    return d0 * (1 - fy) + d1 * fy;
+    float pixelDist = d0 * (1 - fy) + d1 * fy;
+
+    // --- ここが重要！ピクセル距離をワールド距離(メートル)に変換 ---
+    // 1ピクセルあたりのワールド座標での長さを求める
+    float worldRangeX = std::abs(maskData->max_.x - maskData->min_.x);
+    float worldPerPixel = worldRangeX / (maskData->textureData.widthX - 1);
+
+    return pixelDist * worldPerPixel;
 }
 
 Vector2 CollisionMask::GetSDFNormal(float worldX, float worldZ)
@@ -423,3 +430,52 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
     return false;
 }
 
+CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector3 direction, float maxDist)
+{
+    RayResult result;
+    float traveled = 0.0f;
+
+    // 進行方向をXZ平面（水平）に限定して正規化
+    float len = std::sqrt(direction.x * direction.x + direction.z * direction.z);
+    if (len < 0.001f) return result;
+    Vector2 dirH = { direction.x / len, direction.z / len };
+
+    // ステップ1: 壁の入り口を探す
+    while (traveled < maxDist) {
+        Vector3 currentPos; 
+        currentPos.x = start.x + direction.x * traveled;
+        currentPos.z = start.z + direction.z * traveled;
+        float dist = GetSDFValue(currentPos.x, currentPos.z);
+
+        // 距離がほぼ0（壁の表面）に到達
+        if (dist <= 0.1f) {
+            result.hit = true;
+            result.hitPos = {currentPos.x, currentPos.z};
+            break;
+        }
+        // 安全な距離分だけ進む
+        traveled += std::max(dist, 0.1f);
+    }
+
+    if (!result.hit) return result;
+
+    // ステップ2: そのまま突き進んで「出口」を探す
+    // 壁の中では SDF 値が 0 になるように FindNearestWallDist で作ったので、
+    // ここでは一定間隔（1ピクセル分など）で少しずつ進みます
+    float exitTraveled = traveled + 0.5f;
+    while (exitTraveled < maxDist) {
+        Vector3 currentPos;
+        currentPos.x = start.x + direction.x * exitTraveled;
+        currentPos.z = start.z + direction.z * exitTraveled;
+        float dist = GetSDFValue(currentPos.x, currentPos.z);
+
+        // 距離が再びプラス（空白）になったらそこが出口
+        if (dist > 0.1f) {
+            result.exitPos = { currentPos.x, currentPos.z };
+            break;
+        }
+        exitTraveled += 0.5f; // 壁の中は慎重に進む
+    }
+
+    return result;
+}
