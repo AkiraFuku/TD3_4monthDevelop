@@ -125,7 +125,10 @@ bool ThreadManager::GetThreadHeight(const Vector3& pos, float radius, float& out
 
     for (const auto& physics : physicsList_) {
         const auto& nodes = physics->GetNodes();
-        if (nodes.size() < 2) continue;
+        if (nodes.size() < 2) 
+        {
+            continue;
+        }
 
         for (size_t i = 0; i < nodes.size() - 1; ++i) {
             Vector3 flatA = {nodes[i].currentPos.x, 0.0f, nodes[i].currentPos.z};
@@ -135,13 +138,38 @@ bool ThreadManager::GetThreadHeight(const Vector3& pos, float radius, float& out
             Vector3 ab = flatB - flatA;
             Vector3 ap = flatPos - flatA;
 
-            // プレイヤーが線分ABのどの辺り（割合）にいるかを計算 (0.0 ～ 1.0)
+            // プレイヤーが線分ABのどの辺り（割合）にいるかを計算
             float ab2 = ab.x * ab.x + ab.z * ab.z;
             float t = 0.0f;
             if (ab2 > 0.0f) {
                 t = (ap.x * ab.x + ap.z * ab.z) / ab2;
-                if (t < 0.0f) t = 0.0f;
-                if (t > 1.0f) t = 1.0f;
+
+                // --- ここから変更 ---
+                float minT = 0.0f;
+                float maxT = 1.0f;
+
+                // 端をどれくらい広げるか（ゲームのスケールに合わせて調整してください）
+                float extensionLength = 1.0f;
+                float length = std::sqrt(ab2);
+
+                // 最初のセグメント（始点側）の場合はマイナス方向へ判定を拡張
+                if (i == 0 && length > 0.0f) {
+                    minT = -extensionLength / length;
+                }
+                // 最後のセグメント（終点側）の場合はプラス方向へ判定を拡張
+                if (i == nodes.size() - 2 && length > 0.0f) {
+                    maxT = 1.0f + (extensionLength / length);
+                }
+
+                if (t < minT) 
+                {
+                    t = minT;
+                }
+                if (t > maxT) 
+                {
+                    t = maxT;
+                }
+                // --- ここまで変更 ---
             }
 
             // 線分上の最も近い点（XZ平面）を求めて距離を測る

@@ -355,7 +355,7 @@ void Player::IsCollision()
         moveVel_.z = 0.0f;
     }*/
 
-    float threadWalkRadius_ = 0.5f;
+    
 
     // --- X軸方向の判定 ---
     // 移動先が壁かどうかチェック
@@ -363,8 +363,8 @@ void Player::IsCollision()
     {
         // 壁にぶつかった！でも糸の上ならセーフにする
         Vector3 nextPos = {nextX, translate_.y, translate_.z};
-        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
-            // 糸の上でもないので移動をキャンセル
+        float threadY = 0.0f;
+        if (!thread_->GetThreadHeight(nextPos, threadWalkRadius_, threadY)) {
             moveVel_.x = 0.0f;
         }
     }
@@ -374,9 +374,9 @@ void Player::IsCollision()
     {
         // 壁にぶつかった！でも糸の上ならセーフにする
         Vector3 nextPos = {translate_.x, translate_.y, nextZ};
-        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
-            // 糸の上でもないので移動をキャンセル
-            moveVel_.z = 0.0f;
+        float threadY = 0.0f;
+        if (!thread_->GetThreadHeight(nextPos, threadWalkRadius_, threadY)) {
+            moveVel_.x = 0.0f;
         }
     }
 }
@@ -581,12 +581,10 @@ void Player::UpdateThreadInteraction()
         thread_->ApplyPlayerWeight(translate_, influenceRadius, playerWeight);
 
         float threadY = 0.0f;
-        float walkRadius = 1.0f; // 糸の上に乗れる半径（IsOnThreadで使っている値と同じくらい）
-
-        onThread_ = thread_->GetThreadHeight(translate_, walkRadius, threadY);
+        onThread_ = thread_->GetThreadHeight(translate_, threadWalkRadius_, threadY);
 
         // 糸の上にいるなら、Y座標を上書きする
-        if (thread_->GetThreadHeight(translate_, walkRadius, threadY)) {
+        if (onThread_) {
 
             // プレイヤーの原点が中心にあるか足元にあるかで調整が必要
             float playerOffsetY = 0.0f; // もし体が糸に半分めり込むなら 1.0f など足して調整

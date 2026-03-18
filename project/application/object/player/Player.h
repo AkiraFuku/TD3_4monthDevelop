@@ -119,7 +119,7 @@ private:
     // 調整用パラメータ
     float threadInfluenceRadius_ = 1.5f; // 糸を巻き込む広さ
     float threadPlayerWeight_ = 0.05f;   // 糸を沈ませる重さ
-    float threadWalkRadius_ = 1.0f;      // 糸に乗れる判定半径
+    float threadWalkRadius_ = 0.5f;      // 糸に乗れる判定半径
 
     // 糸の上を歩いているかのフラグ
     bool onThread_ = false;

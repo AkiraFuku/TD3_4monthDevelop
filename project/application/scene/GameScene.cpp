@@ -467,7 +467,6 @@ void GameScene::CheckAllCollisions()
         // 衝突していない場合はヒットフラグをリセット
         egg_->SetHitFlag(false);
     }
-
     // 敵の座標
     AABB enemyAABB = enemy_->GetAABB();
 
@@ -496,6 +495,7 @@ bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
 
 void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB)
 {
+
     // 各軸ごとのめり込み量を計算
     // min(右側のめり込み, 左側のめり込み) をとる
     float overlapX = std::min(playerAABB.max.x - otherAABB.min.x, otherAABB.max.x - playerAABB.min.x);
