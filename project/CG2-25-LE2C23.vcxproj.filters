@@ -71,6 +71,7 @@
     <ClCompile Include="engine\math\RotateFunction.cpp" />
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="application\object\player\PlayerState.cpp" />
+    <ClCompile Include="Anima.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -135,6 +136,7 @@
     <ClInclude Include="engine\math\Transform.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="application\object\player\PlayerState.h" />
+    <ClInclude Include="Anima.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

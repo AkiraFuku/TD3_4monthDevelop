@@ -15,6 +15,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Anima.cpp" />
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
     <ClCompile Include="application\debugCamera\DebugCameraFunction.cpp" />
@@ -78,6 +79,7 @@
     <ClCompile Include="application\collision\Vector4Function.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Anima.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />

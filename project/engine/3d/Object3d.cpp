@@ -24,6 +24,8 @@ void Object3d::Initialize()
 void Object3d::Update()
 {
 
+    ImguiInstances();
+
     // --- 1. 全体のベースとなる行列を計算 ---
     // これが「Object3d全体の中心点」になります
     Matrix4x4 objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
@@ -70,62 +72,7 @@ void Object3d::Update()
     }
 }
 
-//if (model_)
-//{
-//    model_->Update();
-//}
 
-
-//// 1. 全体のベースとなるワールド行列（Object3d自体の座標）
-//Matrix4x4 baseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-
-//for (auto& instance : models_) {
-//    // 2. インスタンス個別のローカル行列を計算
-//    instance->localMatrix = MakeAfineMatrix(
-//        instance->transform.scale,
-//        instance->transform.rotate,
-//        instance->transform.translate
-//    );
-
-//    // 3. 親子関係の計算
-//    if (instance->parent) {
-//        // 親があるなら 親のワールド行列 × 自分のローカル行列
-//        instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
-//    } else {
-//        // 親がないなら Object3dのベース行列 × 自分のローカル行列
-//        instance->worldMatrix = Multiply(instance->localMatrix, baseMatrix);
-//    }
-//}
-
-////  WVP行列の作成
-//Matrix4x4 worldMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-//Matrix4x4 worldViewProjectionMatrix = {};
-////ワールド行列とビュー行列とプロジェクション行列を掛け算
-//if (camera_&&model_)
-//{
-//    cameraData_->worldPosition = camera_->GetTranslate();
-//    worldViewProjectionMatrix = Multiply(Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix), camera_->GetViewProtectionMatrix());
-//    //   worldViewProjectionMatrix = Multiply( worldMatrix, camera_->GetViewProtectionMatrix());
-//} else {
-//    worldViewProjectionMatrix = Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix);
-//}
-////行列をGPUに転送
-//wvpResource_->WVP = worldViewProjectionMatrix;
-//wvpResource_->World = worldMatrix;
-//wvpResource_->WorldInverseTranspose = Transpose(Inverse(worldMatrix));
-
-//if (camera_ && cameraData_)
-//{
-//    cameraData_->worldPosition = camera_->GetTranslate();
-//    cameraData_->farClip = camera_->GetFarCrip(); // ★ここを追加
-//    // ★追加: カメラのワールド行列から前方ベクトル(Z軸)を抽出
-//    // 一般的な行優先(Row-Major)の4x4行列の場合、3行目(m[2])がZ軸(Forward)です
-//    const Matrix4x4& mat = camera_->GetWorldMatrix();
-//    // 正規化されているはずですが、念のため正規化して送ると安全です
-//    Vector3 forward = { mat.m[2][0], mat.m[2][1], mat.m[2][2] };
-//    cameraData_->cameraForward = Normalize(forward);
-//}
-//}
 
 void Object3d::Draw()
 {
@@ -167,12 +114,17 @@ void Object3d::SetModel(const std::string& filePath)
 }
 
 
-void Object3d::AddModel(const std::string& modelPath, const std::string& name, ModelInstance* parent)
+void Object3d::AddModel(const std::string& modelPath, const std::string& name, const std::string&parent)
 {
     auto newInst = std::make_unique<ModelInstance>();
     newInst->model = ModelManager::GetInstance()->findModel(modelPath);
     newInst->name = name;
-    newInst->parent = parent;
+    if (!parent.empty())
+    {
+        newInst->parent =this->FindInstance(parent);
+
+    }
+   
 
     // インスタンス専用の定数バッファを作成 (DXCommonの機能を利用)
     newInst->resource = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
@@ -200,6 +152,21 @@ Object3d::ModelInstance* Object3d::FindInstance(const std::string& name)
     return nullptr; // 見つからない場合はnullptrを返す
 }
 
+void Object3d::ImguiInstances()
+{
+#ifdef USE_IMGUI
+     for (auto& instance : models_) {
+         if (ImGui::TreeNode(instance->name.c_str())) {
+            ImGui::DragFloat3("Scale", &instance->transform.scale.x, 0.01f);
+            ImGui::DragFloat3("Rotate", &instance->transform.rotate.x, 0.5f);
+            ImGui::DragFloat3("Translate", &instance->transform.translate.x, 0.1f);
+            ImGui::TreePop();
+         }
+    }
+
+    
+#endif // USE_IMGUI
+}
 void Object3d::CreateWVPResource()
 {
     //座標変換

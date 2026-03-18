@@ -101,12 +101,19 @@ public:
     void SetPsoName(const std::string& psoName) {
         psoName_ = psoName;
     }
+    ///モデルインスタンスのゲッター
+     const std::vector<std::unique_ptr<ModelInstance>>& GetModelInstances() const {
+        return models_;
+     }
+    
     // モデルを追加する関数
-    void AddModel(const std::string& modelPath, const std::string& name, ModelInstance* parent = nullptr);
+     void AddModel(const std::string& modelPath, const std::string& name, const std::string& parent ={});
 
     // 特定のモデルの座標を操作するゲッターなど
     ModelInstance* FindInstance(const std::string& name);
 private:
+
+    void ImguiInstances();
 
     //float radius_ = 1.0f;
     std::vector<std::unique_ptr<ModelInstance>> models_; // 複数のモデル実体

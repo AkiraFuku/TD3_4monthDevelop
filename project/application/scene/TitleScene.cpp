@@ -53,22 +53,62 @@ void TitleScene::Initialize() {
     ModelManager::GetInstance()->LoadModel("resources/AnimatedCube", "AnimatedCube.gltf");
     ModelManager::GetInstance()->LoadModel("resources", "axis.obj");
     ModelManager::GetInstance()->CreateSphereModel("Sphere", 16);
-    object3d = std::make_unique<Object3d>();
-    object3d->Initialize();
+    object3d_ = std::make_unique<Object3d>();
+    object3d_->Initialize();
     //    object3d->SetModel("AnimatedCube.gltf");
 
-    object3d->AddModel("Sphere", "Sphere1");
-    object3d->AddModel("axis.obj", "axis");
-    object3d->SetCamera(camera.get());
+    object3d_->AddModel("Sphere", "Head");
+    object3d_->AddModel("axis.obj", "arm", "Head");
+    object3d_->AddModel("axis.obj", "arm2", "Head");
+    object3d_->SetCamera(camera.get());
 
-    // object3d->SetAnimations(animation.get());
-    Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
-    Object3d::ModelInstance* b = object3d->FindInstance("axis");
+    //// object3d->SetAnimations(animation.get());
+    //Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
+    //Object3d::ModelInstance* b = object3d->FindInstance("axis");
 
-    a->transform.scale={0.5f,0.5f,0.5f};
-    b->transform.scale={0.5f,0.5f,0.5f};
+    //a->transform.scale={0.5f,0.5f,0.5f};
+    //b->transform.scale={0.5f,0.5f,0.5f};
+
+    anima = std::make_unique<Anima>();
+    anima->Initialize(object3d_.get());
+    Anima::AnimeMove move;
+    move.moveFunction = [this](Object3d::ModelInstance& instance) {
+
+        if (instance.name == "Head")
+        {
+            // 回転を更新
+            //instance.transform.rotate.y += this->velocity;
+
+            //// 360度を超えた、または0度を下回った場合に反転
 
 
+        }
+        if (instance.name == "arm")
+        {
+            instance.transform.translate.x -= velocity;
+
+        }
+        if (instance.name == "arm2")
+        {
+            instance.transform.translate.x += velocity;
+
+        }
+        if (instance.transform.translate.x >= 3.0f)
+        {
+            instance.transform.translate.x = 3.0f; // 境界で固定してめり込み防止
+            this->velocity *= -1.0f;
+        } else if (instance.transform.translate.x <= -3.0f)
+        {
+            instance.transform.translate.x = -3.0f;   // 境界で固定
+            this->velocity *= -1.0f;
+        }
+
+        };
+
+    anima->SetCurrentMove(move);
+    anima->Play();
+
+   // debugCamera_.Initialize();
 
 }
 void TitleScene::Finalize() {
@@ -77,11 +117,17 @@ void TitleScene::Finalize() {
 }
 void TitleScene::Update() {
 
-    Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
-    Object3d::ModelInstance* b = object3d->FindInstance("axis");
+    anima->Update();
 
-    a->transform.translate.x += 1.0f / 60.0f;
-    b->transform.translate.x -= 1.0f / 60.0f;
+    //Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
+    //Object3d::ModelInstance* b = object3d->FindInstance("axis")
+
+    Vector3 pos= object3d_->GetTranslate();
+    pos.x+=1.0f/60.0f;
+    object3d_->SetTranslate(pos);   
+
+    //a->transform.translate.x += 1.0f / 60.0f;
+    //b->transform.translate.x -= 1.0f / 60.0f;
     XINPUT_STATE state;
 
     // 現在のジョイスティックを取得
@@ -104,21 +150,29 @@ void TitleScene::Update() {
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
 
+        if (isDebugCamera_)
+        {
+            isDebugCamera_=false;
 
+        } else
+        {
+            isDebugCamera_=true;
+
+        }
 
         // Aボタンを押したときの処理
 
-        if (Audio::GetInstance()->IsPlaying(handle_))
-        {
+       //if (Audio::GetInstance()->IsPlaying(handle_))
+       // {
 
-            Audio::GetInstance()->StopAudio(handle_);
-        }
+       //     Audio::GetInstance()->StopAudio(handle_);
+       // }
 
-        GetSceneManager()->ChangeScene("GameScene");
+    //    GetSceneManager()->ChangeScene("GameScene");
 
-    }
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
-    {
+    //}
+    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))
+    //{
 
     }
 
@@ -155,7 +209,7 @@ void TitleScene::Update() {
         camera->UpdateView();
     }
     camera->UpdateViewProjection();
-    object3d->Update();
+    object3d_->Update();
 
 #ifdef USE_IMGUI
     ImGui::Begin("Debug");
@@ -165,6 +219,11 @@ void TitleScene::Update() {
         sprite->GetPosition();
     ImGui::SliderFloat2("Position", &(Position.x), 0.1f, 1000.0f);
     sprite->SetPosition(Position);
+    ImGui::Text("obj");
+    
+    Vector3 Pos = object3d_->GetTranslate();
+    ImGui::SliderFloat3("Pos", &(Pos.x), 0.1f, 1000.0f);
+    object3d_->SetTranslate(Pos);
 
     ImGui::End();
 #endif // USE_IMGUI
@@ -177,5 +236,5 @@ void TitleScene::Draw() {
     ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画
     //sprite->Draw();
-    object3d->Draw();
+    object3d_->Draw();
 }
