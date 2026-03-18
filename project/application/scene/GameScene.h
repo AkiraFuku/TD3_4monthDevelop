@@ -18,6 +18,7 @@
 #include "CollisionMask.h"
 
 #include "ThreadManager.h"
+#include "SpiderWebManager.h"
 
 class GameScene : public Scene {
 public:
@@ -61,6 +62,9 @@ private:
 
   // ----- Thread -----
   std::unique_ptr<ThreadManager> thread_;
+
+  // ★蜘蛛の巣マネージャー
+  std::unique_ptr<SpiderWebManager> spiderWebManager_;
 
   // 敵
   std::unique_ptr<Enemy> enemy_;

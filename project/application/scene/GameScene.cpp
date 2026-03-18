@@ -86,6 +86,19 @@ void GameScene::Initialize() {
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
 
+    // ==========================================
+    // ★ 蜘蛛の巣の初期化
+    // ==========================================
+    spiderWebManager_ = std::make_unique<SpiderWebManager>();
+
+    // 最大表示数(例:100個)とカメラを渡して初期化
+    spiderWebManager_->Initialize(100, camera.get());
+
+    // テスト配置：(座標X, Y, Z), スケール
+    spiderWebManager_->AddWeb({0.0f, 0.0f, 0.0f}, 1.0f); // 原点
+    spiderWebManager_->AddWeb({2.0f, 1.0f, 0.0f}, 1.5f); // 少し大きめ
+    spiderWebManager_->AddWeb({-2.0f, -0.5f, 2.0f}, 0.8f); // 少し小さめ
+
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
     player_->Initialize(playerPos_, thread_.get());
@@ -389,6 +402,12 @@ void GameScene::Update()
     // 糸の更新処理
     thread_->Update();
 
+    // ==========================================
+    // ★ 蜘蛛の巣の更新
+    // ==========================================
+    // 内部で頂点バッファ(VBO)の書き換えと行列計算が行われます
+    spiderWebManager_->Update();
+
     // ゴールの更新処理
     goal_->Update();
 
@@ -440,6 +459,13 @@ void GameScene::Draw() {
     player_->Draw();
 
     thread_->Draw();
+
+    // ==========================================
+    // ★ 蜘蛛の巣の描画 (半透明オブジェクト)
+    // ==========================================
+    // ※蜘蛛の巣はテクスチャの透過(アルファ)を使うため、
+    //   地形などの「不透明なオブジェクト」を全て描き終わった後にDrawを呼ぶのがセオリーです。
+    spiderWebManager_->Draw();
 
     if(isVisibleCollisionMask_)
     {
