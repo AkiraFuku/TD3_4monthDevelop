@@ -23,5 +23,6 @@ cbuffer Transformation : register(b1)
 struct VSOutput
 {
     float4 pos : SV_POSITION;
+    float2 uv : TEXCOORD; 
     float3 normal : NORMAL;
 };

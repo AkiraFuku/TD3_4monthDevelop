@@ -1,10 +1,12 @@
 #include "SpiderWeb.hlsli"
 
-StructuredBuffer<InstanceData> gInstanceData : register(t0);
+// ★ C++側で t1 に設定したので register(t1) に修正
+StructuredBuffer<InstanceData> gInstanceData : register(t1);
 
 struct VSInput
 {
     float4 pos : POSITION;
+    float2 uv : TEXCOORD; // ★追加：C++の頂点レイアウトに合わせる
     float3 normal : NORMAL;
 };
 
@@ -15,9 +17,11 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID)
     
     float4 worldPos = mul(input.pos, worldMat);
     
-    // ★ gTransformation.WVP を使う（中身にはカメラの ViewProjection を入れる）
     output.pos = mul(worldPos, gTransformation.WVP);
     output.normal = mul(input.normal, (float3x3) worldMat);
+    
+    // ★追加：UV座標をそのままピクセルシェーダーへ送る
+    output.uv = input.uv;
     
     return output;
 }

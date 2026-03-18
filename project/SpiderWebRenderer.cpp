@@ -1,26 +1,185 @@
+#define NOMINMAX
 #include "SpiderWebRenderer.h"
 
-#include "SpiderWebManager.h" // SpiderWebDataの定義用
+#include "SpiderWebManager.h" 
 #include "Camera.h"
 #include "DXCommon.h"
 #include "TextureManager.h"
 #include "MathFunction.h"
+#include "DrawFunction.h"
+#include "PSOManager.h"
+#include "SrvManager.h"
+
+#include <cmath>
+#include <random>
+
+SpiderWebRenderer::~SpiderWebRenderer() {
+    if (instanceBuffer_ && mappedInstanceData_) {
+        instanceBuffer_->Unmap(0, nullptr);
+    }
+    if (viewProjMatrixResource_ && mappedViewProjMatrix_) {
+        viewProjMatrixResource_->Unmap(0, nullptr);
+    }
+}
 
 void SpiderWebRenderer::Initialize(int maxWebs) {
     maxWebs_ = maxWebs;
 
-    // ==========================================
-    // 1. 「究極に滑らかで最強の1個」を生成する
-    // ==========================================
-    // 糸の数を16本、リングを8重にする（ガタガタがほぼ消えます）
-    int numSpokes = 16;
-    int numRings = 8;
-    float threadThickness = 0.01f; // 少し細めにすると綺麗
+    CreateVertexBuffer();
+    CreateInstanceBuffer();
+    CreateConstantBuffers();
 
-    // バッファサイズの計算（大体2500頂点くらいになります）
-    verticesPerWeb_ = (numSpokes * 12) + (numSpokes * numRings * 12);
-    verticesPerWeb_ *= 2; // X字に2枚交差させるので2倍
-    verticesPerWeb_ += 100; // 余裕を持たせる
+    textureHandle_ = TextureManager::GetInstance()->GetTextureIndexByFilePath("resources/white.png");
+    RegisterPSO();
+}
+
+void SpiderWebRenderer::Update(const std::vector<SpiderWebData>& webs, Camera* camera) {
+    currentWebCount_ = std::min(static_cast<int>(webs.size()), maxWebs_);
+
+    // --- 各蜘蛛の巣のWorld行列を計算してインスタンスバッファに書き込む ---
+    for (int i = 0; i < currentWebCount_; ++i) {
+        Matrix4x4 scaleMat = MakeScaleMatrix({webs[i].scale, webs[i].scale, webs[i].scale});
+        Matrix4x4 transMat = MakeTranslateMatrix(webs[i].position);
+        mappedInstanceData_[i].World = Multiply(scaleMat, transMat);
+    }
+
+    // --- カメラ情報の更新 ---
+    if (camera && mappedViewProjMatrix_) {
+        mappedViewProjMatrix_->WVP = camera->GetViewProtectionMatrix();
+        mappedViewProjMatrix_->World = Makeidetity4x4(); // 既存関数そのまま
+        mappedViewProjMatrix_->WorldInverseTranspose = Makeidetity4x4();
+    }
+}
+
+void SpiderWebRenderer::Draw() {
+    if (currentWebCount_ == 0) return;
+    auto cmdList = DXCommon::GetInstance()->GetCommandList();
+
+    const PsoSet& pso = PSOManager::GetInstance()->GetPso("SpiderWeb", BlendMode::Normal);
+    cmdList->SetGraphicsRootSignature(pso.rootSignature.Get());
+    cmdList->SetPipelineState(pso.pipelineState.Get());
+
+    cmdList->IASetVertexBuffers(0, 1, &vbView_);
+    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // Root parameters
+    cmdList->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress()); // b0
+    cmdList->SetGraphicsRootConstantBufferView(1, viewProjMatrixResource_->GetGPUVirtualAddress()); // b1
+    cmdList->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetSrvHandleGPU(textureHandle_)); // t0
+    cmdList->SetGraphicsRootDescriptorTable(3, instanceSrvHandleGPU_); // t1
+
+    cmdList->DrawInstanced(verticesPerWeb_, currentWebCount_, 0, 0);
+}
+
+// =========================================================================
+// 頂点生成用のプライベートヘルパー関数
+// =========================================================================
+
+void SpiderWebRenderer::PushLineQuad(VertexData* mappedVertexData, int& vIndex, const Vector3& p0, const Vector3& p1, float thickness, const Vector3& normal) const {
+    Vector3 dir = Subtract(p1, p0);
+    if (Length(dir) < 0.0001f) return;
+
+    dir = Normalize(dir);
+    Vector3 right = Normalize(Cross(dir, normal));
+    right = Multiply(thickness * 0.5f, right);
+
+    Vector3 tl = Subtract(p0, right);
+    Vector3 tr = Add(p0, right);
+    Vector3 bl = Subtract(p1, right);
+    Vector3 br = Add(p1, right);
+
+    Vector2 dummyUV = {0.0f, 0.0f};
+
+    // --- 表面 (時計回り) ---
+    mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, normal};
+    mappedVertexData[vIndex++] = {{tr.x, tr.y, tr.z, 1.0f}, dummyUV, normal};
+    mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, normal};
+    mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, normal};
+    mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, normal};
+    mappedVertexData[vIndex++] = {{bl.x, bl.y, bl.z, 1.0f}, dummyUV, normal};
+
+    // --- 裏面 (反時計回り) ---
+    Vector3 invertedNormal = {-normal.x, -normal.y, -normal.z};
+    mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, invertedNormal};
+    mappedVertexData[vIndex++] = {{bl.x, bl.y, bl.z, 1.0f}, dummyUV, invertedNormal};
+    mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, invertedNormal};
+    mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, invertedNormal};
+    mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, invertedNormal};
+    mappedVertexData[vIndex++] = {{tr.x, tr.y, tr.z, 1.0f}, dummyUV, invertedNormal};
+}
+
+void SpiderWebRenderer::BuildFlatWeb(VertexData* mappedVertexData, int& vIndex, const Vector3& rightVec, const Vector3& upVec) const {
+    std::mt19937 randEngine(12345); // 固定シード
+    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+    Vector3 center = {0.0f, 0.0f, 0.0f};
+    Vector3 normal = Cross(rightVec, upVec);
+
+    // 1. 各放射状の糸（Spokes）の角度決定
+    std::vector<float> spokeAngles(kNumSpokes);
+    for (int i = 0; i < kNumSpokes; ++i) {
+        float baseAngle = (kPi * 2.0f / kNumSpokes) * i;
+        float angleJitter = dist(randEngine) * ((kPi * 2.0f) / kNumSpokes * 0.3f);
+        spokeAngles[i] = baseAngle + angleJitter;
+    }
+
+    // 2. 各円状の糸（Rings）のベース半径決定
+    std::vector<float> ringBaseRadii(kNumRings);
+    float baseStep = 1.0f / kNumRings;
+    for (int r = 0; r < kNumRings; ++r) {
+        float normalRadius = static_cast<float>(r + 1) * baseStep;
+        float jitter = dist(randEngine) * (baseStep * 0.4f);
+        ringBaseRadii[r] = normalRadius + jitter;
+    }
+
+    // 3. 全交点（ノード）の座標計算
+    std::vector<std::vector<Vector3>> nodes(kNumRings, std::vector<Vector3>(kNumSpokes));
+    for (int r = 0; r < kNumRings; ++r) {
+        for (int i = 0; i < kNumSpokes; ++i) {
+            float finalRadius = ringBaseRadii[r] + dist(randEngine) * (baseStep * 0.2f);
+            float c = std::cos(spokeAngles[i]) * finalRadius;
+            float s = std::sin(spokeAngles[i]) * finalRadius;
+
+            nodes[r][i] = Add(center, Add(Multiply(c,rightVec), Multiply(s, upVec)));
+        }
+    }
+
+    // 4. 放射状の糸(Spokes)を描画
+    for (int i = 0; i < kNumSpokes; ++i) {
+        PushLineQuad(mappedVertexData, vIndex, center, nodes[kNumRings - 1][i], kThreadThickness, normal);
+    }
+
+    // 5. 円状の糸(Rings)を描画（たわみ追加）
+    for (int r = 0; r < kNumRings; ++r) {
+        for (int i = 0; i < kNumSpokes; ++i) {
+            int next_i = (i + 1) % kNumSpokes;
+            Vector3 p0 = nodes[r][i];
+            Vector3 p1 = nodes[r][next_i];
+            Vector3 prevPoint = p0;
+
+            for (int j = 1; j <= kSegmentsPerArc; ++j) {
+                float t = static_cast<float>(j) / kSegmentsPerArc;
+
+                // 線形補間
+                Vector3 lin = Add(p0, Multiply(t, Subtract(p1, p0)));
+
+                // たわみ計算
+                float weight = 4.0f * t * (1.0f - t);
+                Vector3 dirToCenter = Normalize(Subtract(center, lin)); // 中心へ向かうベクトル
+                float currentSag = kSagAmount * (static_cast<float>(r + 1) / kNumRings);
+
+                // オフセット適用
+                Vector3 arcP = Add(lin, Multiply(currentSag * weight, dirToCenter));
+
+                PushLineQuad(mappedVertexData, vIndex, prevPoint, arcP, kThreadThickness * 0.8f, normal);
+                prevPoint = arcP;
+            }
+        }
+    }
+}
+
+void SpiderWebRenderer::CreateVertexBuffer() {
+    verticesPerWeb_ = ((kNumSpokes * 12) + (kNumSpokes * kNumRings * kSegmentsPerArc * 12)) * 3 + 100;
 
     vertexBuffer_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(VertexData) * verticesPerWeb_);
     vbView_.BufferLocation = vertexBuffer_->GetGPUVirtualAddress();
@@ -29,145 +188,90 @@ void SpiderWebRenderer::Initialize(int maxWebs) {
 
     VertexData* mappedVertexData = nullptr;
     vertexBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&mappedVertexData));
+    if (!mappedVertexData) return; // マップ失敗時の安全対策
+
     int vIndex = 0;
 
-    // 線の生成関数（前と同じ）
-    auto PushLineQuad = [&](const Vector3& p0, const Vector3& p1, float thickness, const Vector3& normal) {
-        
-            Vector3 dir = {p1.x - p0.x, p1.y - p0.y, p1.z - p0.z};
-            float len = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
-            if (len < 0.0001f) return;
-            dir = {dir.x / len, dir.y / len, dir.z / len};
-
-            Vector3 right = {
-                dir.y * normal.z - dir.z * normal.y,
-                dir.z * normal.x - dir.x * normal.z,
-                dir.x * normal.y - dir.y * normal.x
-            };
-            float rLen = std::sqrt(right.x * right.x + right.y * right.y + right.z * right.z);
-            if (rLen > 0.0001f) { right = {right.x / rLen, right.y / rLen, right.z / rLen}; }
-
-            right = {right.x * thickness * 0.5f, right.y * thickness * 0.5f, right.z * thickness * 0.5f};
-
-            Vector3 tl = {p0.x - right.x, p0.y - right.y, p0.z - right.z};
-            Vector3 tr = {p0.x + right.x, p0.y + right.y, p0.z + right.z};
-            Vector3 bl = {p1.x - right.x, p1.y - right.y, p1.z - right.z};
-            Vector3 br = {p1.x + right.x, p1.y + right.y, p1.z + right.z};
-
-            Vector2 dummyUV = {0, 0};
-
-            // 表面 (時計回り)
-            mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, normal};
-            mappedVertexData[vIndex++] = {{tr.x, tr.y, tr.z, 1.0f}, dummyUV, normal};
-            mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, normal};
-            mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, normal};
-            mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, normal};
-            mappedVertexData[vIndex++] = {{bl.x, bl.y, bl.z, 1.0f}, dummyUV, normal};
-
-            // 裏面 (反時計回り - どの角度からでも見えるように必須)
-            mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, {-normal.x, -normal.y, -normal.z}};
-            mappedVertexData[vIndex++] = {{bl.x, bl.y, bl.z, 1.0f}, dummyUV, {-normal.x, -normal.y, -normal.z}};
-            mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, {-normal.x, -normal.y, -normal.z}};
-            mappedVertexData[vIndex++] = {{tl.x, tl.y, tl.z, 1.0f}, dummyUV, {-normal.x, -normal.y, -normal.z}};
-            mappedVertexData[vIndex++] = {{br.x, br.y, br.z, 1.0f}, dummyUV, {-normal.x, -normal.y, -normal.z}};
-            mappedVertexData[vIndex++] = {{tr.x, tr.y, tr.z, 1.0f}, dummyUV, {-normal.x, -normal.y, -normal.z}};
-        };
-
-    // 面の生成関数（原点 0,0,0 に作る）
-    auto BuildFlatWeb = [&](const Vector3& rightVec, const Vector3& upVec) {
-        Vector3 center = {0, 0, 0};
-        float radius = 1.0f; // 基準サイズは1.0
-        Vector3 normal = {
-            rightVec.y * upVec.z - rightVec.z * upVec.y,
-            rightVec.z * upVec.x - rightVec.x * upVec.z,
-            rightVec.x * upVec.y - rightVec.y * upVec.x
-        };
-
-        std::vector<Vector3> spokeEnds(numSpokes);
-        for (int i = 0; i < numSpokes; ++i) {
-            float angle = (360.0f / numSpokes) * i * (PI / 180.0f);
-            float c = std::cos(angle) * radius;
-            float s = std::sin(angle) * radius;
-            Vector3 endPos = {center.x + (rightVec.x * c) + (upVec.x * s), center.y + (rightVec.y * c) + (upVec.y * s), center.z + (rightVec.z * c) + (upVec.z * s)};
-            PushLineQuad(center, endPos, threadThickness, normal);
-            spokeEnds[i] = endPos;
-        }
-
-        for (int r = 1; r <= numRings; ++r) {
-            float t = static_cast<float>(r) / numRings;
-            for (int i = 0; i < numSpokes; ++i) {
-                int next_i = (i + 1) % numSpokes;
-                Vector3 p0 = {center.x + spokeEnds[i].x * t, center.y + spokeEnds[i].y * t, center.z + spokeEnds[i].z * t};
-                Vector3 p1 = {center.x + spokeEnds[next_i].x * t, center.y + spokeEnds[next_i].y * t, center.z + spokeEnds[next_i].z * t};
-                PushLineQuad(p0, p1, threadThickness * 0.8f, normal);
-            }
-        }
-        };
-
-    // X字に2枚作る
-    BuildFlatWeb({0.707f, 0.0f, 0.707f}, {0.0f, 1.0f, 0.0f});
-    BuildFlatWeb({0.707f, 0.0f, -0.707f}, {0.0f, 1.0f, 0.0f});
+    // 3つの平面を組み合わせて球体状にする
+    BuildFlatWeb(mappedVertexData, vIndex, {0.707f, 0.0f, 0.707f}, {0.0f, 1.0f, 0.0f});
+    BuildFlatWeb(mappedVertexData, vIndex, {0.707f, 0.0f, -0.707f}, {0.0f, 1.0f, 0.0f});
+    BuildFlatWeb(mappedVertexData, vIndex, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f});
 
     vertexBuffer_->Unmap(0, nullptr);
-    verticesPerWeb_ = vIndex; // 実際の頂点数を記録
+    verticesPerWeb_ = vIndex;
+}
 
-    // ==========================================
-    // 2. インスタンス用・定数バッファの初期化
-    // ==========================================
-    // 蜘蛛の巣100個分の「位置データ」を入れるバッファ
+void SpiderWebRenderer::CreateInstanceBuffer() {
     instanceBuffer_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(InstanceData) * maxWebs_);
     instanceBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&mappedInstanceData_));
 
+    uint32_t srvIndex = SrvManager::GetInstance()->AllocateSRV();
+    SrvManager::GetInstance()->CreateSRVforStructuredBuffer(
+        srvIndex,
+        instanceBuffer_.Get(),
+        maxWebs_,
+        sizeof(InstanceData)
+    );
+
+    instanceSrvHandleGPU_ = SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex);
+}
+
+void SpiderWebRenderer::CreateConstantBuffers() {
     viewProjMatrixResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
     viewProjMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&mappedViewProjMatrix_));
-    //*mappedViewProjMatrix_ = Makeidetity4x4();
 
     materialResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialData));
-    MaterialData* matData;
+    MaterialData* matData = nullptr;
     materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&matData));
-    matData->color = {1.0f, 1.0f, 1.0f, 1.0f}; // 白色
-    matData->enableLighting = 0;
+    if (matData) {
+        matData->color = {1.0f, 1.0f, 1.0f, 1.0f};
+        matData->enableLighting = 0;
+    }
     materialResource_->Unmap(0, nullptr);
 }
 
-void SpiderWebRenderer::Update(const std::vector<SpiderWebData>& webs, Camera* camera) {
-    currentWebCount_ = static_cast<int>(webs.size());
-    if (currentWebCount_ > maxWebs_) currentWebCount_ = maxWebs_;
+void SpiderWebRenderer::RegisterPSO() {
+    PsoConfig config {};
 
-    // 毎フレームやるのは行列計算だけ！超軽量！
-    for (int i = 0; i < currentWebCount_; ++i) {
-        // スケール行列
-        Matrix4x4 scaleMat = MakeScaleMatrix({webs[i].scale, webs[i].scale, webs[i].scale});
-        // 平行移動行列
-        Matrix4x4 transMat = MakeTranslateMatrix(webs[i].position);
+    config.vsPath = L"resources/shaders/SpiderWeb/SpiderWeb.VS.hlsl";
+    config.psPath = L"resources/shaders/SpiderWeb/SpiderWeb.PS.hlsl";
 
-        // World行列 = Scale * Translate (回転が必要ならここで追加)
-        mappedInstanceData_[i].World = Multiply(scaleMat, transMat);
-    }
+    config.inputLayoutGenerator = []() {
+        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+        };
+        };
 
-    if (camera) {
-    // ★ 構造体の WVP 部分にカメラ行列を入れる。
-    // 他の World 等は SpiderWeb では使わないが、念のため単位行列で埋めて安全を確保する。
-    mappedViewProjMatrix_->WVP = camera->GetViewProtectionMatrix();
-    mappedViewProjMatrix_->World = Makeidetity4x4();
-    mappedViewProjMatrix_->WorldInverseTranspose = Makeidetity4x4();
-}
-}
+    config.rootSignatureGenerator = []() {
+        auto device = DXCommon::GetInstance()->GetDevice();
+        CD3DX12_ROOT_PARAMETER rootParameters[4] {};
 
-void SpiderWebRenderer::Draw() {
-    if (currentWebCount_ == 0) return;
+        rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // b0
+        rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // b1
 
-    auto cmdList = DXCommon::GetInstance()->GetCommandList();
+        CD3DX12_DESCRIPTOR_RANGE texRange;
+        texRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+        rootParameters[2].InitAsDescriptorTable(1, &texRange, D3D12_SHADER_VISIBILITY_ALL); // t0
 
-    cmdList->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-    cmdList->SetGraphicsRootConstantBufferView(1, viewProjMatrixResource_->GetGPUVirtualAddress());
+        CD3DX12_DESCRIPTOR_RANGE instRange;
+        instRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+        rootParameters[3].InitAsDescriptorTable(1, &instRange, D3D12_SHADER_VISIBILITY_ALL); // t1
 
-    // ★ インスタンスバッファをセット (※SRVとしてセットする前提です)
-    // cmdList->SetGraphicsRootDescriptorTable(2, ...); 
+        auto sampler = PSOManager::GetInstance()->StaticSamplers();
+        CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    cmdList->IASetVertexBuffers(0, 1, &vbView_);
-    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
+        Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+        D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 
-    // ★ 魔法の関数！ [1個の巣の頂点数] を [巣の個数分] 一気に描画しろ！
-    cmdList->DrawInstanced(verticesPerWeb_, currentWebCount_, 0, 0);
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSig;
+        device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig));
+        return rootSig;
+        };
+
+    config.cullMode = D3D12_CULL_MODE_NONE;
+
+    PSOManager::GetInstance()->RegisterPsoGenerator("SpiderWeb", config);
 }

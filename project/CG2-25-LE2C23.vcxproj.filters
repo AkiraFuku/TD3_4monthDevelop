@@ -11,8 +11,8 @@
     <FxCompile Include="resources\shaders\Player\Player.VS.hlsl" />
     <FxCompile Include="resources\shaders\MaskMap\Mask.PS.hlsl" />
     <FxCompile Include="resources\shaders\MaskMap\Mask.VS.hlsl" />
-    <FxCompile Include="SpiderWeb.VS.hlsl" />
-    <FxCompile Include="SpiderWeb.PS.hlsl" />
+    <FxCompile Include="resources\shaders\SpiderWeb\SpiderWeb.VS.hlsl" />
+    <FxCompile Include="resources\shaders\SpiderWeb\SpiderWeb.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
@@ -148,7 +148,7 @@
     <None Include="resources\shaders\Sprite\Sprite.hlsli" />
     <None Include="resources\shaders\Player\Player.hlsli" />
     <None Include="resources\shaders\MaskMap\Mask.hlsli" />
-    <None Include="SpiderWeb.hlsli" />
+    <None Include="resources\shaders\SpiderWeb\SpiderWeb.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
