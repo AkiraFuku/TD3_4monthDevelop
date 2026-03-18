@@ -129,38 +129,33 @@ void Object3d::Update()
 
 void Object3d::Draw()
 {
-    // カメラがセットされていない場合は描画できないので終了
+   if (!camera_ || models_.empty()) return;
 
-
+    // 共通設定（RootSignatureやTopology）
     Object3dCommon::GetInstance()->Object3dCommonDraw();
+    
+    // PSOの取得とセット
     auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
-
     auto commandList = DXCommon::GetInstance()->GetCommandList();
     commandList->SetGraphicsRootSignature(psoSet.rootSignature.Get());
     commandList->SetPipelineState(psoSet.pipelineState.Get());
 
-    // PSOをセット
-      //WVP行列リソースの設定
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_.Get()->GetGPUVirtualAddress());
-    //light
+    // 共通リソースのセット（ライト: b3/t1-t3, カメラ: b2）
     LightManager::GetInstance()->Draw(3);
-    if (!camera_) return;
+    commandList->SetGraphicsRootConstantBufferView(7, cameraResource_->GetGPUVirtualAddress());
 
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(7, cameraResource_->GetGPUVirtualAddress());
-
+    // --- 各モデルインスタンスの描画 ---
     for (auto& instance : models_) {
-        // 各モデルの worldMatrix を定数バッファ(WVPResource)に転送
-        wvpResource_->World = instance->worldMatrix;
-        wvpResource_->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+        if (!instance->model) continue;
 
-        // ★最重要：このインスタンス専用のバッファ (instance->resource) をセットする
-        // これにより、シェーダーはインスタンスごとの個別行列を読み込めるようになります
-        DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(
-            0, instance->resource->GetGPUVirtualAddress());
+        // ★重要：このインスタンス専用の定数バッファ(b0)をセット
+        // Object3dCommon::Initialize で kTransform は register(b0) に割り当てられています
+        commandList->SetGraphicsRootConstantBufferView(
+            1, // RootParameterIndex (Object3dCommonでのkTransformのインデックス)
+            instance->resource->GetGPUVirtualAddress()
+        );
 
-        // GPUに書き込み後、描画
-        // ※現状だと1つの定数バッファを使い回すため、
-        // 本来はインスタンスごとに定数バッファを持つか、Draw直前に書き込む工夫が必要です。
+        // インスタンスごとのモデル描画
         instance->model->Draw();
     }
 

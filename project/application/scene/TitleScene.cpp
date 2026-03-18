@@ -80,7 +80,7 @@ void TitleScene::Update() {
     Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
     Object3d::ModelInstance* b = object3d->FindInstance("axis");
 
-    //a->transform.translate.x += 1.0f / 60.0f;
+    a->transform.translate.x += 1.0f / 60.0f;
     b->transform.translate.x -= 1.0f / 60.0f;
     XINPUT_STATE state;
 
