@@ -205,10 +205,10 @@ void Player::Update() {
 
 #endif
     // 当たり判定
-    if (!onThread_) {
+
         // 糸の上に乗っていない時だけ、SDFでの壁押し出し処理を行う
-        IsCollisionSDF();
-    }
+    IsCollisionSDF();
+
 
     //
 
@@ -361,7 +361,7 @@ void Player::IsCollision() {
         // 壁にぶつかった！でも糸の上ならセーフにする
         Vector3 nextPos = {translate_.x, translate_.y, nextZ};
         if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
-            moveVel_.x = 0.0f;
+            moveVel_.z = 0.0f;
         }
     }
 }
@@ -372,49 +372,27 @@ void Player::ResultMove() {
 }
 
 void Player::IsCollisionSDF() {
-    // 1. 仮の移動先座標を計算
     Vector3 nextPos = translate_ + moveVel_;
 
-    // 2. 移動先でのSDF値（壁との距離）を取得
+    if (IsWalkablePosition(nextPos)) {
+        return;
+    }
+
     float dist = CollisionMask::GetInstance()->GetSDFValue(nextPos.x, nextPos.z);
     float playerRadius = kWidth * 0.5f;
 
-    // 3. 壁にめり込んでいるかチェック
     if (dist < playerRadius) {
-
-        // ★ 移動先が「糸の上」なら、壁判定をスルーしてそのまま歩ける
-        if (thread_ && thread_->IsOnThread(nextPos, threadWalkRadius_)) {
-            return;
-        }
-
-        // ----- ここから下は「糸の上ではない」場合の壁処理 -----
-
         Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(nextPos.x, nextPos.z);
 
-        // 【追加対策1】壁の奥深くに入りすぎて、押し戻す方向(法線)が消失している場合
         if (std::abs(normal.x) < 0.001f && std::abs(normal.y) < 0.001f) {
-            // 押し戻しが効かないため、移動速度を強制的にゼロにして壁に入れないようにする
             moveVel_.x = 0.0f;
             moveVel_.z = 0.0f;
             return;
         }
 
-        // 通常のSDFによる押し戻し処理
         float penetration = playerRadius - dist;
         moveVel_.x += normal.x * penetration;
         moveVel_.z += normal.y * penetration;
-
-        // 【追加対策2（フェールセーフ）】
-        // 押し戻した後の最終的な位置でも、まだ壁に深くめり込んでいるかをチェック
-        Vector3 finalPos = translate_ + moveVel_;
-        float finalDist = CollisionMask::GetInstance()->GetSDFValue(finalPos.x, finalPos.z);
-
-        // もし押し戻し後も壁の中（ここでは半径の半分以上めり込んでいる場合）なら
-        // 壁の中を強引に歩こうとしているとみなし、移動を無効化する
-        if (finalDist < playerRadius * 0.5f) {
-            moveVel_.x = 0.0f;
-            moveVel_.z = 0.0f;
-        }
     }
 }
 
@@ -487,27 +465,46 @@ AABB Player::GetAABB() const {
 /// 糸の相互作用
 /// </summary>
 void Player::UpdateThreadInteraction() {
-    if (thread_) {
+    if (!thread_) {
+        onThread_ = false;
+        return;
+    }
 
-        float influenceRadius = 1.5f; // どれくらい広い範囲の糸を巻き込んでたわませるか
-        float playerWeight = 0.05f;   // どれくらい下に沈ませるか
+    thread_->ApplyPlayerWeight(translate_, threadInfluenceRadius_, threadPlayerWeight_);
 
-        // 毎フレーム、現在位置の周りの糸を下へ押し下げる
-        thread_->ApplyPlayerWeight(translate_, influenceRadius, playerWeight);
+    float threadY = 0.0f;
+    onThread_ = thread_->GetThreadHeightWithEndRelax(
+        translate_,
+        threadCenterRadius_,
+        threadEndRadius_,
+        threadEndSegments_,
+        threadY);
 
-        float threadY = 0.0f;
-        float walkRadius = 1.0f;
-
-        onThread_ = thread_->GetThreadHeight(translate_, walkRadius, threadY);
-
-        if (thread_->GetThreadHeight(translate_, walkRadius, threadY)) {
-            float playerOffsetY = 0.0f;
-            translate_.y = threadY + playerOffsetY;
-        }
+    if (onThread_) {
+        translate_.y = threadY;
     }
 }
 
 Matrix4x4 Player::GetWorldMatrix() const {
     Matrix4x4 worldMatrix = MakeAfineMatrix(scale_, rotate_, translate_);
     return worldMatrix;
+}
+
+bool Player::IsWalkablePosition(const Vector3& pos) const {
+    float dist = CollisionMask::GetInstance()->GetSDFValue(pos.x, pos.z);
+    float playerRadius = kWidth * 0.5f;
+
+    if (dist >= playerRadius) {
+        return true;
+    }
+
+    if (thread_ && thread_->IsOnThreadWithEndRelax(
+        pos,
+        threadCenterRadius_,
+        threadEndRadius_,
+        threadEndSegments_)) {
+        return true;
+    }
+
+    return false;
 }

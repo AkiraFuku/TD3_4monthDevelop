@@ -58,6 +58,17 @@ public:
     /// <returns>糸の上にいるならtrue</returns>
     bool GetThreadHeight(const Vector3& pos, float radius, float& outY) const;
 
+    bool IsOnThreadWithEndRelax(const Vector3& pos,
+        float centerRadius,
+        float endRadius,
+        int relaxSegments) const;
+
+    bool GetThreadHeightWithEndRelax(const Vector3& pos,
+        float centerRadius,
+        float endRadius,
+        int relaxSegments,
+        float& outY) const;
+
     // 既存の physicsList_ を外部から読み取れるようにする
     const std::vector<std::unique_ptr<ThreadPhysics>>& GetPhysicsList() const { return physicsList_; }
 

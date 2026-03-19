@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "ThreadManager.h"
 
 #include "Camera.h"
@@ -169,5 +170,132 @@ bool ThreadManager::GetThreadHeight(const Vector3& pos, float radius, float& out
         outY = bestY;
         return true;
     }
+    return false;
+}
+
+namespace {
+    float Lerp(float a, float b, float t) {
+        return a + (b - a) * t;
+    }
+
+    float Clamp01(float x) {
+        if (x < 0.0f) return 0.0f;
+        if (x > 1.0f) return 1.0f;
+        return x;
+    }
+
+    // 端に近いほど endRadius、中央ほど centerRadius
+    float CalcRadiusBySegmentIndex(size_t segIndex,
+        size_t segCount,
+        float centerRadius,
+        float endRadius,
+        int relaxSegments) {
+        if (segCount == 0) {
+            return centerRadius;
+        }
+
+        size_t distFromStart = segIndex;
+        size_t distFromEnd = (segCount - 1) - segIndex;
+        size_t distFromEdge = (distFromStart < distFromEnd) ? distFromStart : distFromEnd;
+
+        if (relaxSegments <= 0) {
+            return centerRadius;
+        }
+
+        float t = 1.0f - Clamp01(static_cast<float>(distFromEdge) / static_cast<float>(relaxSegments));
+        return Lerp(centerRadius, endRadius, t);
+    }
+}
+
+bool ThreadManager::IsOnThreadWithEndRelax(const Vector3& pos,
+    float centerRadius,
+    float endRadius,
+    int relaxSegments) const {
+    Vector3 flatPos = {pos.x, 0.0f, pos.z};
+
+    for (const auto& physics : physicsList_) {
+        const auto& nodes = physics->GetNodes();
+        if (nodes.size() < 2) continue;
+
+        size_t segCount = nodes.size() - 1;
+
+        for (size_t i = 0; i < segCount; ++i) {
+            Vector3 flatA = {nodes[i].currentPos.x, 0.0f, nodes[i].currentPos.z};
+            Vector3 flatB = {nodes[i + 1].currentPos.x, 0.0f, nodes[i + 1].currentPos.z};
+
+            float localRadius = CalcRadiusBySegmentIndex(
+                i, segCount, centerRadius, endRadius, relaxSegments);
+
+            float distSq = DistanceSqPointToSegment(flatPos, flatA, flatB);
+            if (distSq <= localRadius * localRadius) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool ThreadManager::GetThreadHeightWithEndRelax(const Vector3& pos,
+    float centerRadius,
+    float endRadius,
+    int relaxSegments,
+    float& outY) const {
+    Vector3 flatPos = {pos.x, 0.0f, pos.z};
+
+    float closestDistSq = std::numeric_limits<float>::max();
+    bool found = false;
+    float bestY = 0.0f;
+
+    for (const auto& physics : physicsList_) {
+        const auto& nodes = physics->GetNodes();
+        if (nodes.size() < 2) continue;
+
+        size_t segCount = nodes.size() - 1;
+
+        for (size_t i = 0; i < segCount; ++i) {
+            Vector3 flatA = {nodes[i].currentPos.x, 0.0f, nodes[i].currentPos.z};
+            Vector3 flatB = {nodes[i + 1].currentPos.x, 0.0f, nodes[i + 1].currentPos.z};
+
+            Vector3 ab = flatB - flatA;
+            Vector3 ap = flatPos - flatA;
+
+            float ab2 = ab.x * ab.x + ab.z * ab.z;
+            float t = 0.0f;
+            if (ab2 > 0.0f) {
+                t = (ap.x * ab.x + ap.z * ab.z) / ab2;
+                if (t < 0.0f) t = 0.0f;
+                if (t > 1.0f) t = 1.0f;
+            }
+
+            Vector3 closestFlat = {
+                flatA.x + ab.x * t,
+                0.0f,
+                flatA.z + ab.z * t
+            };
+
+            float dx = flatPos.x - closestFlat.x;
+            float dz = flatPos.z - closestFlat.z;
+            float distSq = dx * dx + dz * dz;
+
+            float localRadius = CalcRadiusBySegmentIndex(
+                i, segCount, centerRadius, endRadius, relaxSegments);
+
+            if (distSq <= localRadius * localRadius && distSq < closestDistSq) {
+                closestDistSq = distSq;
+                found = true;
+
+                float yA = nodes[i].currentPos.y;
+                float yB = nodes[i + 1].currentPos.y;
+                bestY = yA + (yB - yA) * t;
+            }
+        }
+    }
+
+    if (found) {
+        outY = bestY;
+        return true;
+    }
+
     return false;
 }

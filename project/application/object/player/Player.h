@@ -121,6 +121,13 @@ private:
     float threadPlayerWeight_ = 0.05f;   // 糸を沈ませる重さ
     float threadWalkRadius_ = 0.2f;      // 糸に乗れる判定半径
 
+    float threadRideRadius_ = 0.20f;  // 糸に“乗っている”判定用
+    float threadPathRadius_ = 0.95f;  // 糸を“道として通れる”判定用
+
+    float threadCenterRadius_ = 0.4f;   // 中央
+    float threadEndRadius_ = 1.0f;   // 両端だけ甘くする
+    int   threadEndSegments_ = 1;       // 端から2区間ぶん甘くする
+
     // 糸の上を歩いているかのフラグ
     bool onThread_ = false;
 
@@ -132,4 +139,6 @@ private:
     /// 糸の相互作用
     /// </summary>
     void UpdateThreadInteraction();
+
+    bool IsWalkablePosition(const Vector3& pos) const;
 };
