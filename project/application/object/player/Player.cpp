@@ -159,9 +159,6 @@ void Player::Update() {
         state_->Update(this);
     }
 
-    // 糸の相互作用
-    UpdateThreadInteraction();
-
 #ifdef USE_IMGUI
 
     ImGui::Begin("Player Window");
@@ -188,38 +185,36 @@ void Player::Update() {
 
     ImGui::End();
 
-    // Player.cpp などでの呼び出し
-    CollisionMask::RayResult res = CollisionMask::GetInstance()->CastRayThroughWall(translate_, GetForward(), 50.0f);
+    CollisionMask::RayResult res =
+        CollisionMask::GetInstance()->CastRayThroughWall(translate_, GetForward(), 50.0f);
     if (res.hit) {
         ImGui::Begin("Ray Debug");
         ImGui::Text("Hit World: %.2f, %.2f", res.hitPos.x, res.hitPos.y);
-        // 画像上のピクセル位置を逆算して表示
-        auto mask = CollisionMask::GetInstance()->GetMaskData(CollisionMask::GetInstance()->GetCurrentMaskMap());
+
+        auto mask = CollisionMask::GetInstance()->GetMaskData(
+            CollisionMask::GetInstance()->GetCurrentMaskMap());
         float hitU = (res.hitPos.x - mask->min_.x) / (mask->max_.x - mask->min_.x);
         float hitV = (res.hitPos.y - mask->min_.y) / (mask->max_.y - mask->min_.y);
-        ImGui::Text("Hit Pixel: %.1f, %.1f", hitU * mask->textureData.widthX, hitV * mask->textureData.widthZ);
+        ImGui::Text("Hit Pixel: %.1f, %.1f",
+            hitU * mask->textureData.widthX,
+            hitV * mask->textureData.widthZ);
         ImGui::End();
     }
 
-
-
 #endif
-    // 当たり判定
 
-        // 糸の上に乗っていない時だけ、SDFでの壁押し出し処理を行う
+    // すでに糸に乗ってロック中の時だけ、糸方向移動を適用
+    if (threadLocked_) {
+        ConstrainMoveToThread();
+    }
+
     IsCollisionSDF();
-
-
-    //
-
-
-
-
-
-    // 移動距離確定処理
     ResultMove();
 
-    // モデルの更新
+    // 移動後に糸判定
+    UpdateThreadInteraction();
+
+    object_->SetTranslate(translate_);
     object_->Update();
 }
 /// <summary>
@@ -313,54 +308,21 @@ void Player::UpdateMove(Vector3& moveDirection) {
 }
 
 void Player::IsCollision() {
-
     float nextX = translate_.x + moveVel_.x;
     float nextZ = translate_.z + moveVel_.z;
 
-    //// 移動先が壁かどうかチェック
-    //if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth)) 
-    //{
-    //    // 壁なら移動をキャンセル（または押し戻し）
-    //    moveVel_.x = 0.0f;
-    //}
-
-    //if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
-    //{
-    //    // 壁なら移動をキャンセル（または押し戻し）
-    //    moveVel_.z = 0.0f;
-    //}
-
-    /*float nextX = translate_.x + moveVel_.x;
-    if (CollisionMask::GetInstance()->IsWall(nextX, translate_.z))
-    {
-        moveVel_.x = 0.0f;
-    }
-
-    float nextZ = translate_.z + moveVel_.z;
-    if (CollisionMask::GetInstance()->IsWall(translate_.x, nextZ))
-    {
-        moveVel_.z = 0.0f;
-    }*/
-
-
-
     // --- X軸方向の判定 ---
-    // 移動先が壁かどうかチェック
-    if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth))
-    {
-        // 壁にぶつかった！でも糸の上ならセーフにする
+    if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth)) {
         Vector3 nextPos = {nextX, translate_.y, translate_.z};
-        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
+        if (!thread_ || !thread_->IsOnThread(nextPos, threadWalkRadius_)) {
             moveVel_.x = 0.0f;
         }
     }
 
     // --- Z軸方向の判定 ---
-    if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
-    {
-        // 壁にぶつかった！でも糸の上ならセーフにする
+    if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth)) {
         Vector3 nextPos = {translate_.x, translate_.y, nextZ};
-        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
+        if (!thread_ || !thread_->IsOnThread(nextPos, threadWalkRadius_)) {
             moveVel_.z = 0.0f;
         }
     }
@@ -466,22 +428,54 @@ AABB Player::GetAABB() const {
 /// </summary>
 void Player::UpdateThreadInteraction() {
     if (!thread_) {
-        onThread_ = false;
+        UnlockThread();
+        translate_.y = 0.0f;
         return;
     }
 
     thread_->ApplyPlayerWeight(translate_, threadInfluenceRadius_, threadPlayerWeight_);
 
-    float threadY = 0.0f;
-    onThread_ = thread_->GetThreadHeightWithEndRelax(
-        translate_,
-        threadCenterRadius_,
-        threadEndRadius_,
-        threadEndSegments_,
-        threadY);
+    // 降りた直後は、少し糸から離れるまで再乗車禁止
+    if (threadRelockBlocked_) {
+        if (thread_->IsOnThread(translate_, threadStayRadius_)) {
+            onThread_ = false;
+            translate_.y = 0.0f;
+            return;
+        }
+        threadRelockBlocked_ = false;
+    }
 
-    if (onThread_) {
+    float threadY = 0.0f;
+
+    // まだ乗っていない時
+    if (!onThread_) {
+        if (thread_->GetThreadHeight(translate_, threadEnterRadius_, threadY)) {
+            onThread_ = true;
+            translate_.y = threadY;
+
+            ThreadManager::ThreadPointInfo enterInfo;
+            if (thread_->GetClosestThreadPointWithEndRelax(
+                translate_,
+                threadCenterRadius_,
+                threadEndRadius_,
+                threadEndSegments_,
+                enterInfo)) {
+                threadLocked_ = true;
+                lockedThreadIndex_ = enterInfo.threadIndex;
+            }
+        } else {
+            onThread_ = false;
+            translate_.y = 0.0f;
+        }
+        return;
+    }
+
+    // すでに乗っている時は少し広めで維持
+    if (thread_->GetThreadHeight(translate_, threadStayRadius_, threadY)) {
         translate_.y = threadY;
+    } else {
+        UnlockThread();
+        translate_.y = 0.0f;
     }
 }
 
@@ -494,10 +488,12 @@ bool Player::IsWalkablePosition(const Vector3& pos) const {
     float dist = CollisionMask::GetInstance()->GetSDFValue(pos.x, pos.z);
     float playerRadius = kWidth * 0.5f;
 
+    // 普通の地面として歩ける
     if (dist >= playerRadius) {
         return true;
     }
 
+    // まだ乗っていなくても、糸の上は進入可能にする
     if (thread_ && thread_->IsOnThreadWithEndRelax(
         pos,
         threadCenterRadius_,
@@ -507,4 +503,111 @@ bool Player::IsWalkablePosition(const Vector3& pos) const {
     }
 
     return false;
+}
+
+void Player::UnlockThread() {
+    threadLocked_ = false;
+    lockedThreadIndex_ = kInvalidThreadIndex;
+    onThread_ = false;
+    threadRelockBlocked_ = true;
+}
+
+void Player::ConstrainMoveToThread() {
+    if (!thread_) {
+        return;
+    }
+
+    if (!threadLocked_) {
+        return;
+    }
+
+    ThreadManager::ThreadPointInfo currentInfo;
+    if (!thread_->GetClosestPointOnThread(lockedThreadIndex_, translate_, currentInfo)) {
+        UnlockThread();
+        return;
+    }
+
+    Vector3 rawMove = moveVel_;
+    float rawLenSq = rawMove.x * rawMove.x + rawMove.z * rawMove.z;
+
+    if (rawLenSq <= 0.000001f) {
+        translate_.y = currentInfo.closestPos.y;
+        onThread_ = true;
+        return;
+    }
+
+    const float leaveRadiusSq = threadLeaveEndRadius_ * threadLeaveEndRadius_;
+    bool atStart = currentInfo.distToStartSq <= leaveRadiusSq;
+    bool atEnd = currentInfo.distToEndSq <= leaveRadiusSq;
+    bool canLeave = atStart || atEnd;
+
+    float tangentDot =
+        rawMove.x * currentInfo.tangent.x +
+        rawMove.z * currentInfo.tangent.z;
+
+    bool wantsExit = false;
+    if (atStart) {
+        wantsExit = (tangentDot <= 0.0f);
+    } else if (atEnd) {
+        wantsExit = (tangentDot >= 0.0f);
+    }
+
+    // ここが変更点
+    float rawLen = std::sqrt(rawLenSq);
+    Vector3 rawDir = {
+        rawMove.x / rawLen,
+        0.0f,
+        rawMove.z / rawLen
+    };
+
+    // 1フレーム先ではなく、プレイヤー半径ぶん先を見る
+    float exitCheckDistance = kWidth * 0.5f + 0.1f;
+    Vector3 exitCheckPos = {
+        translate_.x + rawDir.x * exitCheckDistance,
+        translate_.y,
+        translate_.z + rawDir.z * exitCheckDistance
+    };
+
+    if (canLeave && wantsExit && IsGroundWalkablePosition(exitCheckPos)) {
+        UnlockThread();
+        moveVel_ = rawMove;
+        return;
+    }
+
+    Vector3 projectedMove = {
+        currentInfo.tangent.x * tangentDot,
+        0.0f,
+        currentInfo.tangent.z * tangentDot
+    };
+
+    Vector3 projectedNextPos = translate_ + projectedMove;
+
+    ThreadManager::ThreadPointInfo nextInfo;
+    if (!thread_->GetClosestPointOnThread(lockedThreadIndex_, projectedNextPos, nextInfo)) {
+        UnlockThread();
+        return;
+    }
+
+    moveVel_.x = nextInfo.closestPos.x - translate_.x;
+    moveVel_.z = nextInfo.closestPos.z - translate_.z;
+    translate_.y = nextInfo.closestPos.y;
+    onThread_ = true;
+
+    if (std::abs(tangentDot) > 0.0001f) {
+        Vector3 faceDir = nextInfo.tangent;
+        if (tangentDot < 0.0f) {
+            faceDir.x *= -1.0f;
+            faceDir.z *= -1.0f;
+        }
+
+        rotationY_ = std::atan2(faceDir.x, faceDir.z);
+        rotate_ = {0.0f, rotationY_, 0.0f};
+        object_->SetRotate(rotate_);
+    }
+}
+
+bool Player::IsGroundWalkablePosition(const Vector3& pos) const {
+    float dist = CollisionMask::GetInstance()->GetSDFValue(pos.x, pos.z);
+    float playerRadius = kWidth * 0.5f;
+    return dist >= playerRadius;
 }

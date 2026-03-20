@@ -4,8 +4,10 @@
 #include "Model.h"
 #include "Object3D.h"
 #include "DrawFunction.h"
-#include"PlayerState.h"
+#include "PlayerState.h"
 #include "CollisionMask.h"
+
+#include <limits>
 
 class ThreadManager;
 
@@ -56,7 +58,6 @@ public:
     /// <summary>
     /// 状態遷移
     /// </summary>
-    /// <param name="newState">次の状態</param>
     void ChangeState(std::unique_ptr<IPlayerState> newState);
 
     /// <summary>
@@ -64,24 +65,26 @@ public:
     /// </summary>
     void FireThread();
 
-public: // 外部入出力
-    // ----- Getter -----
-
+public:
     // 位置
     Vector3 GetPosition() const { return object_->GetTranslate(); }
     void SetPosition(const Vector3& pos);
 
     // 向いている方向
-    Vector3 GetForward()const;
+    Vector3 GetForward() const;
 
     // 糸の上を歩いているか？
-    bool OnThread()const { return onThread_; }
+    bool OnThread() const { return onThread_; }
 
     // AABBを取得
     AABB GetAABB() const;
 
     // アフィン行列
     Matrix4x4 GetWorldMatrix() const;
+
+private:
+    static inline const size_t kInvalidThreadIndex =
+        (std::numeric_limits<size_t>::max)();
 
 private:
     // 現在の状態
@@ -111,7 +114,7 @@ private:
     // 速度
     Vector3 velocity_ = {0.05f, 0.0f, 0.05f};
     // 実際に動く時の速度
-    Vector3 moveVel_;
+    Vector3 moveVel_ = {0.0f, 0.0f, 0.0f};
 
     // ThreadManager
     ThreadManager* thread_ = nullptr;
@@ -121,24 +124,36 @@ private:
     float threadPlayerWeight_ = 0.05f;   // 糸を沈ませる重さ
     float threadWalkRadius_ = 0.2f;      // 糸に乗れる判定半径
 
-    float threadRideRadius_ = 0.20f;  // 糸に“乗っている”判定用
-    float threadPathRadius_ = 0.95f;  // 糸を“道として通れる”判定用
+    float threadRideRadius_ = 0.220f;     // 糸にまだ乗っているとみなす判定用
+    float threadPathRadius_ = 0.95f;     // 糸を道として通れる判定用
+    float threadLeaveEndRadius_ = 0.8f;  // 端に来たら降りられる半径
 
-    float threadCenterRadius_ = 0.4f;   // 中央
-    float threadEndRadius_ = 1.0f;   // 両端だけ甘くする
-    int   threadEndSegments_ = 1;       // 端から2区間ぶん甘くする
+    float threadCenterRadius_ = 0.4f;    // 中央
+    float threadEndRadius_ = 1.0f;       // 両端だけ甘くする
+    int threadEndSegments_ = 1;          // 端から何区間甘くするか
+
+    float threadEnterRadius_ = 0.10f; // 乗り始め専用。かなり小さめ
+    float threadStayRadius_ = 0.22f; // 一度乗った後の維持用
+    bool threadRelockBlocked_ = false;
 
     // 糸の上を歩いているかのフラグ
     bool onThread_ = false;
 
+    // 一度乗ったら、端まで降りられないようにするロック
+    bool threadLocked_ = false;
+    size_t lockedThreadIndex_ = kInvalidThreadIndex;
+
     CollisionMask::RayResult rayResult_;
 
 private:
-
     /// <summary>
     /// 糸の相互作用
     /// </summary>
     void UpdateThreadInteraction();
 
+    void ConstrainMoveToThread();
+    void UnlockThread();
+
+    bool IsGroundWalkablePosition(const Vector3& pos) const;
     bool IsWalkablePosition(const Vector3& pos) const;
 };
