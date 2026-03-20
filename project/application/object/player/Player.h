@@ -39,11 +39,6 @@ public:
     void UpdateMove(Vector3& moveDirection);
 
     /// <summary>
-    /// 衝突判定
-    /// </summary>
-    void IsCollision();
-
-    /// <summary>
     /// 移動距離確定
     /// </summary>
     void ResultMove();
@@ -116,20 +111,29 @@ private:
     // ThreadManager
     ThreadManager* thread_ = nullptr;
 
-    // 調整用パラメータ
-    float threadInfluenceRadius_ = 1.5f; // 糸を巻き込む広さ
-    float threadPlayerWeight_ = 0.05f;   // 糸を沈ませる重さ
-    float threadWalkRadius_ = 0.5f;      // 糸に乗れる判定半径
+private:
+    bool TryMoveOnThread(const Vector3& moveDirection);
+    void ResolveThreadMove();
+    void TurnToDirection(const Vector3& direction);
 
-    // 糸の上を歩いているかのフラグ
+private:
+    // Thread上を歩いているか
     bool onThread_ = false;
+
+    // 今乗っているThreadの情報（デバッグや将来拡張用）
+    Vector3 threadStart_ = {0.0f, 0.0f, 0.0f};
+    Vector3 threadEnd_ = {0.0f, 0.0f, 0.0f};
+
+    // Thread判定パラメータ
+    static inline const float kThreadEnterRadius = 0.55f;
+    static inline const float kThreadStickRadius = 1.25f;
+    static inline const float kThreadWeightRadius = 0.90f;
+    static inline const float kThreadWeight = 0.06f;
+    static inline const float kThreadExitThreshold = 0.05f;
+
+    static inline const float kThreadLateralFollowStrength = 0.65f; // 横ズレ補正の強さ
+    static inline const float kThreadEndSnapFadeRange = 0.18f;      // 端で補正を弱める範囲
 
     CollisionMask::RayResult rayResult_;
 
-private:
-
-    /// <summary>
-    /// 糸の相互作用
-    /// </summary>
-    void UpdateThreadInteraction();
 };
