@@ -30,7 +30,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
     object_->SetModel("player/player.obj");
 
-    PsoConfig config {};
+    PsoConfig config{};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
     config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
 
@@ -38,11 +38,11 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
-        D3D12_STATIC_SAMPLER_DESC sampler {};
+        D3D12_STATIC_SAMPLER_DESC sampler{};
         sampler = PSOManager::GetInstance()->StaticSamplers();
 
         staticSamplers.push_back(sampler);
-        D3D12_DESCRIPTOR_RANGE descRangeTexture[1] {};
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
         descRangeTexture[0].BaseShaderRegister = 0; // t0
         descRangeTexture[0].NumDescriptors = 1;
         descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -101,12 +101,12 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
         rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
 
         // シリアライズ
-        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature {};
+        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
         descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         descriptionRootSignature.pParameters = rootParameters.data();
-        descriptionRootSignature.NumParameters = (UINT) rootParameters.size();
+        descriptionRootSignature.NumParameters = (UINT)rootParameters.size();
         descriptionRootSignature.pStaticSamplers = staticSamplers.data();
-        descriptionRootSignature.NumStaticSamplers = (UINT) staticSamplers.size();
+        descriptionRootSignature.NumStaticSamplers = (UINT)staticSamplers.size();
 
 
         Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
@@ -125,14 +125,14 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
 
         return rootSignature;
-        };
+    };
     config.inputLayoutGenerator = []() {
         return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-            {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
-        };
+    };
     // 深度設定
     config.depthEnable = true;
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -159,13 +159,56 @@ void Player::Update() {
         state_->Update(this);
     }
 
-    if (onThread_) {
-        ResolveThreadMove();
-    } else {
-        IsCollisionSDF();
+    // 糸の相互作用
+    UpdateThreadInteraction();
+
+#ifdef USE_IMGUI
+
+    ImGui::Begin("Player Window");
+
+    Vector3 scale = object_->GetScale();
+    if (ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.1f, 10.0f)) {
+        object_->SetScale(scale);
     }
 
+    Vector3 rotate = object_->GetRotate();
+    if (ImGui::DragFloat3("Rotate", &rotate.x, 0.1f, -360.0f, 360.0f)) {
+        object_->SetRotate(rotate);
+    }
+
+    Vector3 translate = translate_;
+    if (ImGui::DragFloat3("Translate", &translate.x, 0.1f, -100.0f, 100.0f)) {
+        translate_ = translate;
+    }
+
+    Vector3 moveVel = moveVel_;
+    if (ImGui::DragFloat3("Move Velocity", &moveVel.x, 0.01f, -1.0f, 1.0f)) {
+        moveVel_ = moveVel;
+    }
+
+    ImGui::End();
+
+#endif
+    // 当たり判定
+    if (onThread_)
+    {
+        IsCollision();
+    }
+    else
+    {
+        IsCollisionSDF();
+    }
+    
+    //
+
+   
+
+    
+
+    // 移動距離確定処理
     ResultMove();
+
+    // モデルの更新
     object_->Update();
 }
 /// <summary>
@@ -180,58 +223,157 @@ void Player::Draw() {
 /// 移動処理
 /// </summary>
 void Player::UpdateMove(Vector3& moveDirection) {
+    // 移動方向を蓄積する変数
     moveDirection = {0.0f, 0.0f, 0.0f};
 
-    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) 
+    {
         moveDirection.x += 0.7f;
         moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) 
+    {
         moveDirection.x += 0.7f;
         moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S))
+    {
         moveDirection.x -= 0.7f;
         moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+    }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W))
+    {
         moveDirection.x -= 0.7f;
         moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
+    }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_D))
+    {
         moveDirection.x += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_A))
+    {
         moveDirection.x -= 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
+    }
+    else if (Input::GetInstance()->PushedKeyDown(DIK_W)) 
+    {
         moveDirection.z += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
+    } 
+    else if (Input::GetInstance()->PushedKeyDown(DIK_S)) 
+    {
         moveDirection.z -= 1.0f;
-    } else {
-        return;
+    } 
+    else
+    {
+        moveDirection.x = 0.0f;
+        moveDirection.z = 0.0f;
     }
 
-    float length = std::sqrtf(moveDirection.x * moveDirection.x +
-        moveDirection.z * moveDirection.z);
 
-    if (length > 0.0f) {
-        moveDirection.x /= length;
-        moveDirection.z /= length;
+
+    if (moveDirection.x != 0.0f || moveDirection.z != 0.0f) {
+        // ベクトルの長さを計算
+        float length = std::sqrtf(moveDirection.x * moveDirection.x +
+            moveDirection.z * moveDirection.z);
+        // 正規化
+        if (length != 0.0f) {
+            moveDirection.x /= length;
+            moveDirection.z /= length;
+        }
+
+        // 入力方向から角度を計算
+        float targetAngleY = std::atan2(moveDirection.x, moveDirection.z);
+
+        // 目標角度と現在の角度の差分
+        float diffrence = targetAngleY - rotationY_;
+
+        // 差分を-π ~ πの範囲に収める(最短経路で旋回)
+        while (diffrence > std::numbers::pi_v<float>) {
+            diffrence -= 2.0f * std::numbers::pi_v<float>;
+        }
+        while (diffrence < -std::numbers::pi_v<float>) {
+            diffrence += 2.0f * std::numbers::pi_v<float>;
+        }
+
+        // 現在の角度に差分の一部を加算
+        rotationY_ += diffrence * kTurnSpeed;
+
+        // モデルに適用
+        rotate_ = {0.0f, rotationY_, 0.0f};
+        object_->SetRotate(rotate_);
+
+        // 正規化した方向に指定速度を掛けて加算
+        moveVel_.x += moveDirection.x * velocity_.x;
+        moveVel_.z += moveDirection.z * velocity_.z;
     }
 
-    // 先にThread移動を試す
-    if (TryMoveOnThread(moveDirection)) {
-        return;
-    }
 
-    // 通常移動
-    TurnToDirection(moveDirection);
-
-    moveVel_.x += moveDirection.x * velocity_.x;
-    moveVel_.z += moveDirection.z * velocity_.z;
 }
 
-void Player::ResultMove() {
+void Player::IsCollision()
+{
+
+    float nextX = translate_.x + moveVel_.x;
+    float nextZ = translate_.z + moveVel_.z;
+
+    //// 移動先が壁かどうかチェック
+    //if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth)) 
+    //{
+    //    // 壁なら移動をキャンセル（または押し戻し）
+    //    moveVel_.x = 0.0f;
+    //}
+
+    //if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
+    //{
+    //    // 壁なら移動をキャンセル（または押し戻し）
+    //    moveVel_.z = 0.0f;
+    //}
+
+    /*float nextX = translate_.x + moveVel_.x;
+    if (CollisionMask::GetInstance()->IsWall(nextX, translate_.z))
+    {
+        moveVel_.x = 0.0f;
+    }
+
+    float nextZ = translate_.z + moveVel_.z;
+    if (CollisionMask::GetInstance()->IsWall(translate_.x, nextZ))
+    {
+        moveVel_.z = 0.0f;
+    }*/
+
+    float threadWalkRadius_ = 0.5f;
+
+    // --- X軸方向の判定 ---
+    // 移動先が壁かどうかチェック
+    if (CollisionMask::GetInstance()->IsCollisionWall(nextX, translate_.z, kWidth))
+    {
+        // 壁にぶつかった！でも糸の上ならセーフにする
+        Vector3 nextPos = {nextX, translate_.y, translate_.z};
+        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
+            // 糸の上でもないので移動をキャンセル
+            moveVel_.x = 0.0f;
+        }
+    }
+
+    // --- Z軸方向の判定 ---
+    if (CollisionMask::GetInstance()->IsCollisionWall(translate_.x, nextZ, kWidth))
+    {
+        // 壁にぶつかった！でも糸の上ならセーフにする
+        Vector3 nextPos = {translate_.x, translate_.y, nextZ};
+        if (!thread_->IsOnThread(nextPos, threadWalkRadius_)) {
+            // 糸の上でもないので移動をキャンセル
+            moveVel_.z = 0.0f;
+        }
+    }
+}
+
+void Player::ResultMove()
+{
     translate_ += moveVel_;
     object_->SetTranslate(translate_);
 }
 
-void Player::IsCollisionSDF() {
+void Player::IsCollisionSDF()
+{
     Vector3 nextPos = {};
     nextPos.x = translate_.x + moveVel_.x;
     nextPos.z = translate_.z + moveVel_.z;
@@ -242,16 +384,16 @@ void Player::IsCollisionSDF() {
 
     // 四隅の座標リスト
     Vector2 corners[4] = {
-        {nextPos.x - hW, nextPos.z - hH}, // 左下
-        {nextPos.x + hW, nextPos.z - hH}, // 右下
-        {nextPos.x - hW, nextPos.z + hH}, // 左上
-        {nextPos.x + hW, nextPos.z + hH}  // 右上
+        { nextPos.x - hW, nextPos.z - hH }, // 左下
+        { nextPos.x + hW, nextPos.z - hH }, // 右下
+        { nextPos.x - hW, nextPos.z + hH }, // 左上
+        { nextPos.x + hW, nextPos.z + hH }  // 右上
     };
 
     // 3. 四隅の中で「最も壁に近い点」を探す
     float minDist = 10000.0f;
-    Vector2 targetCorner = {nextPos.x, nextPos.z};
-
+    Vector2 targetCorner = { nextPos.x, nextPos.z };
+    
 
     for (const auto& corner : corners) {
         float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
@@ -282,66 +424,117 @@ void Player::IsCollisionSDF() {
                 moveVel_.x -= dot * normal.x;
                 moveVel_.z -= dot * normal.y;
             }
-
+           
         }
     }
+
+    //for (int i = 0; i < 3; i++)
+    //{
+    //    bool collided = false;
+
+    //    collided = true;
+
+    //    // どこにも衝突しなくなったらループ終了
+    //    if (!collided) break;
+    //}
+
+    
+
+//    // 1. 移動後の座標でのSDF値（距離）を取得
+//    float dist = CollisionMask::GetInstance()->GetSDFValue(nextPos.x, nextPos.z);
+//
+//    // 2. もし半径（プレイヤーの大きさ）より距離が小さければ衝突
+//    float playerRadius = kWidth * 0.5f;
+//    if (dist < playerRadius) {
+//        // 3. 「法線（勾配）」を求める
+//        // 周囲のSDF値の差から、どっちに動けば距離が増えるか（壁から離れるか）がわかる
+//        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(nextPos.x, nextPos.z);
+//
+//        // 4. 距離が足りない分だけ、法線方向に一気に押し戻す！
+//        float pushBack = playerRadius - dist;
+//
+//        // 座標を直接補正する
+//        nextPos.x += normal.x * pushBack;
+//        nextPos.z += normal.y * pushBack;
+//
+//        // 【重要】速度ベクトルを壁に沿わせる（法線方向の速度を消す）
+//        // これをしないと、壁に向かって進み続けようとしてガタつきます
+//        float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+//        if (dot < 0) { // 壁に向かう成分がある場合のみ
+//            moveVel_.x -= dot * normal.x;
+//            moveVel_.z -= dot * normal.y;
+//        }
+//    }
+//
+//#ifdef USE_IMGUI
+//    ImGui::Begin("Collision Debug");
+//    float worldX = translate_.x;
+//    float worldZ = translate_.z;
+//
+//    auto mask = CollisionMask::GetInstance()->GetMaskData(static_cast<int>(CollisionMask::GetInstance()->GetCurrentMaskMap()));
+//    float u = (worldX - mask->min_.x) / (mask->max_.x - mask->min_.x);
+//    float v = (worldZ - mask->min_.y) / (mask->max_.y - mask->min_.y);
+//
+//    ImGui::Text("World Pos: %.2f, %.2f", worldX, worldZ);
+//    ImGui::Text("UV Pos: %.3f, %.3f", u, v); // これが 0.0~1.0 になっているか
+//    ImGui::Text("Pixel: %d, %d", (int)(u * mask->textureData.widthX), (int)(v * mask->textureData.widthZ));
+//    ImGui::Text("SDF Dist: %.2f", CollisionMask::GetInstance()->GetSDFValue(worldX, worldZ));
+//    ImGui::End();
+//#endif
 }
 
 /// <summary>
 /// 状態遷移
 /// </summary>
 /// <param name="newState">次の状態</param>
-void Player::ChangeState(std::unique_ptr<IPlayerState> newState) {
+void Player::ChangeState(std::unique_ptr<IPlayerState> newState)
+{
     state_ = std::move(newState);
     state_->Initialize(this);
 }
 
 /// <summary>
 /// 糸を発射する処理
+/// </summary>
 void Player::FireThread() {
     if (!thread_) {
         return;
     }
 
+    // 向いている方向
     Vector3 forward = GetForward();
+    // プレイヤーの位置
     Vector3 playerPos = GetPosition();
 
-    rayResult_ = CollisionMask::GetInstance()->CastRayThroughWall(playerPos, forward, 50.0f);
+    // 始点（プレイヤーの中心より少し上から出すなど、調整可能）
+    Vector3 startPos = {playerPos.x, playerPos.y, playerPos.z};
 
-    if (!rayResult_.hit) {
-        return;
-    }
+    // 終点（向いている方向に距離を掛けた位置）
+    float threadLength = 10.0f; // 糸を飛ばす距離を指定
+    Vector3 endPos = {
+        startPos.x + forward.x * threadLength,
+        startPos.y + forward.y * threadLength,
+        startPos.z + forward.z * threadLength
+    };
 
-    Vector3 start = {rayResult_.hitPos.x, 0.0f, rayResult_.hitPos.y};
-    Vector3 end = {rayResult_.exitPos.x, 0.0f, rayResult_.exitPos.y};
-
-    Vector3 dir = end - start;
-    float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
-    if (len > 0.0001f) {
-        dir.x /= len;
-        dir.z /= len;
-
-        const float extend = 0.4f;
-        start.x -= dir.x * extend;
-        start.z -= dir.z * extend;
-        end.x += dir.x * extend;
-        end.z += dir.z * extend;
-    }
-
-    thread_->AddThread(start, end);
+    // ThreadManagerに糸の生成を依頼
+    thread_->AddThread(startPos, endPos);
 }
 
-void Player::SetPosition(const Vector3& pos) {
+void Player::SetPosition(const Vector3& pos)
+{
     translate_ = pos;
     object_->SetTranslate(translate_);
 }
 
 // 向いている方向
-Vector3 Player::GetForward() const {
+Vector3 Player::GetForward() const
+{
     return {std::sin(rotationY_), 0.0f, std::cos(rotationY_)};
 }
 
-AABB Player::GetAABB() const {
+AABB Player::GetAABB() const
+{
     Vector3 worldPos = GetPosition();
     AABB aabb;
 
@@ -351,197 +544,37 @@ AABB Player::GetAABB() const {
     return aabb;
 }
 
-Matrix4x4 Player::GetWorldMatrix() const {
+/// <summary>
+/// 糸の相互作用
+/// </summary>
+void Player::UpdateThreadInteraction()
+{
+    if (thread_) {
+        
+        float influenceRadius = 1.5f; // どれくらい広い範囲の糸を巻き込んでたわませるか
+        float playerWeight = 0.05f;   // どれくらい下に沈ませるか
+
+        // 毎フレーム、現在位置の周りの糸を下へ押し下げる
+        thread_->ApplyPlayerWeight(translate_, influenceRadius, playerWeight);
+
+        float threadY = 0.0f;
+        float walkRadius = 1.0f; // 糸の上に乗れる半径（IsOnThreadで使っている値と同じくらい）
+
+        onThread_ = thread_->GetThreadHeight(translate_, walkRadius, threadY);
+
+        // 糸の上にいるなら、Y座標を上書きする
+        if (thread_->GetThreadHeight(translate_, walkRadius, threadY)) {
+
+            // プレイヤーの原点が中心にあるか足元にあるかで調整が必要
+            float playerOffsetY = 0.0f; // もし体が糸に半分めり込むなら 1.0f など足して調整
+
+            translate_.y = threadY + playerOffsetY;
+        }
+    }
+}
+
+Matrix4x4 Player::GetWorldMatrix() const
+{
     Matrix4x4 worldMatrix = MakeAfineMatrix(scale_, rotate_, translate_);
     return worldMatrix;
-}
-
-void Player::TurnToDirection(const Vector3& direction) {
-    if (std::abs(direction.x) < 0.0001f && std::abs(direction.z) < 0.0001f) {
-        return;
-    }
-
-    float targetAngleY = std::atan2(direction.x, direction.z);
-    float diffrence = targetAngleY - rotationY_;
-
-    while (diffrence > std::numbers::pi_v<float>) {
-        diffrence -= 2.0f * std::numbers::pi_v<float>;
-    }
-    while (diffrence < -std::numbers::pi_v<float>) {
-        diffrence += 2.0f * std::numbers::pi_v<float>;
-    }
-
-    rotationY_ += diffrence * kTurnSpeed;
-
-    rotate_ = {0.0f, rotationY_, 0.0f};
-    object_->SetRotate(rotate_);
-}
-
-bool Player::TryMoveOnThread(const Vector3& moveDirection) {
-    if (!thread_) {
-        return false;
-    }
-
-    ThreadManager::ThreadQueryResult query {};
-
-    Vector3 probePos = translate_;
-    const float probeDistance = kWidth * 0.5f + kThreadEnterRadius;
-    probePos.x += moveDirection.x * probeDistance;
-    probePos.z += moveDirection.z * probeDistance;
-
-    bool found = false;
-
-    if (onThread_) {
-        // 乗っている最中は現在位置優先で見る
-        found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
-        if (!found) {
-            found = thread_->FindNearestThread(probePos, kThreadStickRadius, query);
-        }
-    } else {
-        // 降りた直後の再吸着を防ぐため、off中は probePos のみで判定する
-        found = thread_->FindNearestThread(probePos, kThreadEnterRadius, query);
-    }
-
-    if (!found) {
-        onThread_ = false;
-        return false;
-    }
-
-    // 今いる線分の接線方向
-    Vector3 tangent = query.segmentEnd - query.segmentStart;
-    tangent.y = 0.0f;
-
-    float tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
-    if (tangentLength <= 0.0001f) {
-        tangent = query.endPoint - query.startPoint;
-        tangent.y = 0.0f;
-        tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
-
-        if (tangentLength <= 0.0001f) {
-            moveVel_ = {0.0f, 0.0f, 0.0f};
-            return true;
-        }
-    }
-
-    tangent.x /= tangentLength;
-    tangent.z /= tangentLength;
-
-    // 入力をThread方向へ射影
-    float along = moveDirection.x * tangent.x + moveDirection.z * tangent.z;
-
-    // 端から外向きに行くなら降りる
-    if (onThread_) {
-        bool atStart = query.t <= kThreadExitThreshold;
-        bool atEnd = query.t >= (1.0f - kThreadExitThreshold);
-
-        bool leavingFromStart = atStart && (along < -0.0001f);
-        bool leavingFromEnd = atEnd && (along > 0.0001f);
-
-        if (leavingFromStart || leavingFromEnd) {
-            onThread_ = false;
-            return false; // 通常移動へ
-        }
-    }
-
-    onThread_ = true;
-    threadStart_ = query.startPoint;
-    threadEnd_ = query.endPoint;
-
-    moveVel_.x = tangent.x * along * velocity_.x;
-    moveVel_.z = tangent.z * along * velocity_.z;
-
-    if (std::abs(along) > 0.0001f) {
-        Vector3 faceDir = tangent;
-        if (along < 0.0f) {
-            faceDir.x *= -1.0f;
-            faceDir.z *= -1.0f;
-        }
-        TurnToDirection(faceDir);
-    }
-
-    return true;
-}
-
-void Player::ResolveThreadMove() {
-    if (!thread_) {
-        onThread_ = false;
-        IsCollisionSDF();
-        return;
-    }
-
-    ThreadManager::ThreadQueryResult query{};
-
-    // 今フレームの予定移動先
-    Vector3 nextPos = translate_;
-    nextPos.x += moveVel_.x;
-    nextPos.z += moveVel_.z;
-
-    bool found = thread_->FindNearestThread(nextPos, kThreadStickRadius, query);
-    if (!found) {
-        found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
-    }
-
-    if (!found) {
-        onThread_ = false;
-        IsCollisionSDF();
-        return;
-    }
-
-    onThread_ = true;
-    threadStart_ = query.startPoint;
-    threadEnd_ = query.endPoint;
-
-    // 今いる線分の接線方向
-    Vector3 tangent = query.segmentEnd - query.segmentStart;
-    tangent.y = 0.0f;
-
-    float tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
-    if (tangentLength <= 0.0001f) {
-        tangent = query.endPoint - query.startPoint;
-        tangent.y = 0.0f;
-        tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
-
-        if (tangentLength <= 0.0001f) {
-            return;
-        }
-    }
-
-    tangent.x /= tangentLength;
-    tangent.z /= tangentLength;
-
-    // 最近点との差
-    Vector3 toClosest = {
-        query.closestPoint.x - nextPos.x,
-        0.0f,
-        query.closestPoint.z - nextPos.z
-    };
-
-    // 最近点との差を「接線方向成分」と「横方向成分」に分解
-    float alongError = toClosest.x * tangent.x + toClosest.z * tangent.z;
-
-    Vector3 lateral = {
-        toClosest.x - tangent.x * alongError,
-        0.0f,
-        toClosest.z - tangent.z * alongError
-    };
-
-    // 端に近いほど横補正を弱める
-    float edgeFade = 1.0f;
-
-    if (query.t < kThreadEndSnapFadeRange) {
-        edgeFade = query.t / kThreadEndSnapFadeRange;
-    } else if (query.t > (1.0f - kThreadEndSnapFadeRange)) {
-        edgeFade = (1.0f - query.t) / kThreadEndSnapFadeRange;
-    }
-
-    edgeFade = std::clamp(edgeFade, 0.0f, 1.0f);
-
-    // 横方向だけ補正する
-    moveVel_.x += lateral.x * kThreadLateralFollowStrength * edgeFade;
-    moveVel_.z += lateral.z * kThreadLateralFollowStrength * edgeFade;
-
-    // Yだけは糸に合わせる
-    translate_.y = query.closestPoint.y;
-
-    thread_->ApplyPlayerWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
 }

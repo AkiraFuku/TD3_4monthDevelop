@@ -24,12 +24,6 @@ public:
         std::vector<float> sdfData;
     };
 
-    struct RayResult {
-        bool hit = false;
-        Vector2 hitPos;  // 壁の入り口
-        Vector2 exitPos; // 壁の出口（貫通先）
-    };
-
     enum class MaskMap
     {
         Map1,
@@ -89,10 +83,6 @@ public:
     bool IsCollisionWall(const float& x, const float& z, const float& width);
 
     int GetCurrentMaskMap() const { return static_cast<int>(currentMaskMap_); }
-
-    RayResult CastRayThroughWall(Vector3 start, Vector3 direction, float maxDist);
-
-   
 
 
 public:
