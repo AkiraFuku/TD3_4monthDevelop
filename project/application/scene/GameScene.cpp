@@ -87,6 +87,8 @@ void GameScene::Initialize() {
     thread_->Initialize(50, 20, camera.get());
     //thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
     //thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
+    spiderWeb_ = std::make_unique<SpiderWebManager>();
+    spiderWeb_->Initialize(camera.get());
 
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
@@ -95,6 +97,7 @@ void GameScene::Initialize() {
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
     egg_->Initialize();
+    player_->SetEgg(egg_.get());
     egg_->SetPlayer(player_.get());
 
     // ゴールの初期化
@@ -390,6 +393,7 @@ void GameScene::Update()
 
     // 糸の更新処理
     thread_->Update();
+    spiderWeb_->Update(*thread_);
 
     // ゴールの更新処理
     goal_->Update();
@@ -442,6 +446,8 @@ void GameScene::Draw() {
     player_->Draw();
 
     thread_->Draw();
+
+    spiderWeb_->Draw();
 
     if(isVisibleCollisionMask_)
     {

@@ -5,6 +5,7 @@
 #include "CollisionMask.h"
 
 #include"ThreadManager.h"
+#include "Egg.h"
 
 #include <cmath>
 #include <numbers>
@@ -303,6 +304,10 @@ void Player::FireThread() {
         return;
     }
 
+    if (!CanFireThread()) {
+        return;
+    }
+
     Vector3 forward = GetForward();
     Vector3 playerPos = GetPosition();
 
@@ -354,6 +359,19 @@ AABB Player::GetAABB() const {
 Matrix4x4 Player::GetWorldMatrix() const {
     Matrix4x4 worldMatrix = MakeAfineMatrix(scale_, rotate_, translate_);
     return worldMatrix;
+}
+
+bool Player::CanFireThread() const {
+    if (!egg_) {
+        return true;
+    }
+
+    // Eggに触れている間も、Eggを持っている間も発射禁止
+    if (egg_->IsHit() || egg_->IsOnPlayer()) {
+        return false;
+    }
+
+    return true;
 }
 
 void Player::TurnToDirection(const Vector3& direction) {
