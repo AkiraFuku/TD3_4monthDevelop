@@ -4,136 +4,94 @@
 #include "Model.h"
 #include "Object3D.h"
 #include "DrawFunction.h"
-#include"PlayerState.h"
+#include "PlayerState.h"
 #include "CollisionMask.h"
 
 class ThreadManager;
 
 class Player {
 public:
-    /// <summary>
-    /// 初期化
-    /// </summary>
-    /// <param name="pos">初期位置</param>
-    /// <param name="threadManager">ThreadManagerのポインタ</param>
     void Initialize(const Vector3& pos, ThreadManager* thread);
-
-    /// <summary>
-    /// 終了
-    /// </summary>
     void Finalize();
-
-    /// <summary>
-    /// 更新
-    /// </summary>
     void Update();
-
-    /// <summary>
-    /// 描画
-    /// </summary>
     void Draw();
 
-    /// <summary>
-    /// 移動処理
-    /// </summary>
     void UpdateMove(Vector3& moveDirection);
-
-    /// <summary>
-    /// 移動距離確定
-    /// </summary>
     void ResultMove();
-
-    /// <summary>
-    ///
-    /// </summary>
     void IsCollisionSDF();
-
-    /// <summary>
-    /// 状態遷移
-    /// </summary>
-    /// <param name="newState">次の状態</param>
     void ChangeState(std::unique_ptr<IPlayerState> newState);
-
-    /// <summary>
-    /// 糸を発射する処理
-    /// </summary>
     void FireThread();
 
-public: // 外部入出力
-    // ----- Getter -----
-
-    // 位置
+public:
     Vector3 GetPosition() const { return object_->GetTranslate(); }
     void SetPosition(const Vector3& pos);
 
-    // 向いている方向
-    Vector3 GetForward()const;
+    Vector3 GetForward() const;
+    bool OnThread() const { return onThread_; }
 
-    // 糸の上を歩いているか？
-    bool OnThread()const { return onThread_; }
-
-    // AABBを取得
     AABB GetAABB() const;
-
-    // アフィン行列
     Matrix4x4 GetWorldMatrix() const;
-
-private:
-    // 現在の状態
-    std::unique_ptr<IPlayerState> state_;
-
-    // モデル
-    std::unique_ptr<Object3d> object_;
-
-    // 拡縮
-    Vector3 scale_ = {1.0f, 1.0f, 1.0f};
-    // 回転
-    Vector3 rotate_ = {0.0f, 0.0f, 0.0f};
-    // 平行移動
-    Vector3 translate_ = {0.0f, 0.0f, 0.0f};
-
-    // 現状向いているY軸の角度(単位: ラジアン)
-    float rotationY_ = 0.0f;
-    // 旋回速度
-    static inline const float kTurnSpeed = 0.15f;
-
-    // キャラクターの当たり判定サイズ
-    static inline const float kWidth = 1.6f;
-    static inline const float kHeight = 1.6f;
-
-    // 速さ
-    float speed_ = 0.2f;
-    // 速度
-    Vector3 velocity_ = {0.05f, 0.0f, 0.05f};
-    // 実際に動く時の速度
-    Vector3 moveVel_;
-
-    // ThreadManager
-    ThreadManager* thread_ = nullptr;
 
 private:
     bool TryMoveOnThread(const Vector3& moveDirection);
     void ResolveThreadMove();
     void TurnToDirection(const Vector3& direction);
 
+    void ResolveSDFCollision(float collisionThreshold);
+    void StartThreadExitGrace(float exitY, const Vector3& exitPos);
+    bool CanUseRelaxedGroundCollision() const;
+
 private:
-    // Thread上を歩いているか
+    std::unique_ptr<IPlayerState> state_;
+    std::unique_ptr<Object3d> object_;
+
+    Vector3 scale_ = {1.0f, 1.0f, 1.0f};
+    Vector3 rotate_ = {0.0f, 0.0f, 0.0f};
+    Vector3 translate_ = {0.0f, 0.0f, 0.0f};
+
+    float rotationY_ = 0.0f;
+    static inline const float kTurnSpeed = 0.15f;
+
+    static inline const float kWidth = 1.6f;
+    static inline const float kHeight = 1.6f;
+
+    float speed_ = 0.2f;
+    Vector3 velocity_ = {0.05f, 0.0f, 0.05f};
+    Vector3 moveVel_;
+
+    ThreadManager* thread_ = nullptr;
+
+private:
     bool onThread_ = false;
 
-    // 今乗っているThreadの情報（デバッグや将来拡張用）
     Vector3 threadStart_ = {0.0f, 0.0f, 0.0f};
     Vector3 threadEnd_ = {0.0f, 0.0f, 0.0f};
 
     // Thread判定パラメータ
     static inline const float kThreadEnterRadius = 0.55f;
-    static inline const float kThreadStickRadius = 1.25f;
+    static inline const float kThreadStickRadius = 0.5f;
     static inline const float kThreadWeightRadius = 0.90f;
     static inline const float kThreadWeight = 0.06f;
-    static inline const float kThreadExitThreshold = 0.05f;
 
-    static inline const float kThreadLateralFollowStrength = 0.65f; // 横ズレ補正の強さ
-    static inline const float kThreadEndSnapFadeRange = 0.18f;      // 端で補正を弱める範囲
+    static inline const float kThreadExitThreshold = 0.02f;
+    static inline const float kThreadLateralFollowStrength = 0.65f;
+    static inline const float kThreadEndSnapFadeRange = 0.18f;
+
+    static inline const float kNormalCollisionThreshold = 0.075f;
+    static inline const float kThreadExitRelaxCollisionThreshold = 0.02f;
+
+    static inline const int kThreadExitGraceFrames = 6;
+    int threadExitGraceFrames_ = 0;
+
+    static inline const int kThreadReattachCooldownFrames = 2;
+    int threadReattachCooldownFrames_ = 0;
+
+    // 追加
+    Vector3 lastThreadExitPos_ = {0.0f, 0.0f, 0.0f};
+    bool hasLastThreadExitPos_ = false;
+
+    // 追加
+    static inline const float kThreadExitRelaxAreaRadius = 0.75f;
 
     CollisionMask::RayResult rayResult_;
-
 };

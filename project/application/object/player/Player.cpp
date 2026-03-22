@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <numbers>
+#include <algorithm>
 
 #include "PSOManager.h"
 #include "Logger.h"
@@ -155,14 +156,27 @@ void Player::Update() {
 
     moveVel_ = {0.0f, 0.0f, 0.0f};
 
+    if (threadReattachCooldownFrames_ > 0) {
+        --threadReattachCooldownFrames_;
+    }
+
     if (state_) {
         state_->Update(this);
     }
 
     if (onThread_) {
+        // 糸の上にいる間は通常壁判定をしない
+        threadExitGraceFrames_ = 0;
         ResolveThreadMove();
     } else {
-        IsCollisionSDF();
+        // Thread降り口の近くにいる間だけ、ギザギザ許容
+        if (CanUseRelaxedGroundCollision()) {
+            ResolveSDFCollision(kThreadExitRelaxCollisionThreshold);
+            --threadExitGraceFrames_;
+        } else {
+            threadExitGraceFrames_ = 0;
+            ResolveSDFCollision(kNormalCollisionThreshold);
+        }
     }
 
     ResultMove();
@@ -231,61 +245,61 @@ void Player::ResultMove() {
     object_->SetTranslate(translate_);
 }
 
-void Player::IsCollisionSDF() {
-    Vector3 nextPos = {};
-    nextPos.x = translate_.x + moveVel_.x;
-    nextPos.z = translate_.z + moveVel_.z;
-
-    // 2. 矩形の四隅のオフセット（中心からの距離）
-    float hW = kWidth * 0.5f;
-    float hH = kHeight * 0.5f;
-
-    // 四隅の座標リスト
-    Vector2 corners[4] = {
-        {nextPos.x - hW, nextPos.z - hH}, // 左下
-        {nextPos.x + hW, nextPos.z - hH}, // 右下
-        {nextPos.x - hW, nextPos.z + hH}, // 左上
-        {nextPos.x + hW, nextPos.z + hH}  // 右上
-    };
-
-    // 3. 四隅の中で「最も壁に近い点」を探す
-    float minDist = 10000.0f;
-    Vector2 targetCorner = {nextPos.x, nextPos.z};
-
-
-    for (const auto& corner : corners) {
-        float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
-        if (d < minDist) {
-            minDist = d;
-            targetCorner = corner;
-        }
-    }
-
-    // 4. 衝突判定（最も近い点が「中」に入っていたら）
-    // 矩形判定の場合、理想的な距離（閾値）は 0 です。
-    if (minDist < 0.075f) {
-        // 最もめり込んでいる点の法線を取得
-        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
-
-        if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
-        {
-            // 押し戻し量
-            float pushBack = 0.075f - minDist;
-
-            // 座標を補正
-            moveVel_.x += normal.x * pushBack;
-            moveVel_.z += normal.y * pushBack;
-
-            // 速度の射影（滑り処理）
-            float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
-            if (dot < 0) {
-                moveVel_.x -= dot * normal.x;
-                moveVel_.z -= dot * normal.y;
-            }
-
-        }
-    }
-}
+//void Player::IsCollisionSDF() {
+//    Vector3 nextPos = {};
+//    nextPos.x = translate_.x + moveVel_.x;
+//    nextPos.z = translate_.z + moveVel_.z;
+//
+//    // 2. 矩形の四隅のオフセット（中心からの距離）
+//    float hW = kWidth * 0.5f;
+//    float hH = kHeight * 0.5f;
+//
+//    // 四隅の座標リスト
+//    Vector2 corners[4] = {
+//        {nextPos.x - hW, nextPos.z - hH}, // 左下
+//        {nextPos.x + hW, nextPos.z - hH}, // 右下
+//        {nextPos.x - hW, nextPos.z + hH}, // 左上
+//        {nextPos.x + hW, nextPos.z + hH}  // 右上
+//    };
+//
+//    // 3. 四隅の中で「最も壁に近い点」を探す
+//    float minDist = 10000.0f;
+//    Vector2 targetCorner = {nextPos.x, nextPos.z};
+//
+//
+//    for (const auto& corner : corners) {
+//        float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
+//        if (d < minDist) {
+//            minDist = d;
+//            targetCorner = corner;
+//        }
+//    }
+//
+//    // 4. 衝突判定（最も近い点が「中」に入っていたら）
+//    // 矩形判定の場合、理想的な距離（閾値）は 0 です。
+//    if (minDist < 0.075f) {
+//        // 最もめり込んでいる点の法線を取得
+//        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
+//
+//        if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
+//        {
+//            // 押し戻し量
+//            float pushBack = 0.075f - minDist;
+//
+//            // 座標を補正
+//            moveVel_.x += normal.x * pushBack;
+//            moveVel_.z += normal.y * pushBack;
+//
+//            // 速度の射影（滑り処理）
+//            float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+//            if (dot < 0) {
+//                moveVel_.x -= dot * normal.x;
+//                moveVel_.z -= dot * normal.y;
+//            }
+//
+//        }
+//    }
+//}
 
 /// <summary>
 /// 状態遷移
@@ -377,29 +391,118 @@ void Player::TurnToDirection(const Vector3& direction) {
     object_->SetRotate(rotate_);
 }
 
+void Player::ResolveSDFCollision(float collisionThreshold) {
+    Vector3 nextPos = {};
+    nextPos.x = translate_.x + moveVel_.x;
+    nextPos.z = translate_.z + moveVel_.z;
+
+    float hW = kWidth * 0.5f;
+    float hH = kHeight * 0.5f;
+
+    Vector2 corners[4] = {
+        {nextPos.x - hW, nextPos.z - hH},
+        {nextPos.x + hW, nextPos.z - hH},
+        {nextPos.x - hW, nextPos.z + hH},
+        {nextPos.x + hW, nextPos.z + hH}
+    };
+
+    float minDist = 10000.0f;
+    Vector2 targetCorner = {nextPos.x, nextPos.z};
+
+    for (const auto& corner : corners) {
+        float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
+        if (d < minDist) {
+            minDist = d;
+            targetCorner = corner;
+        }
+    }
+
+    if (minDist < collisionThreshold) {
+        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
+
+        if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f) {
+            float pushBack = collisionThreshold - minDist;
+
+            moveVel_.x += normal.x * pushBack;
+            moveVel_.z += normal.y * pushBack;
+
+            float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+            if (dot < 0.0f) {
+                moveVel_.x -= dot * normal.x;
+                moveVel_.z -= dot * normal.y;
+            }
+        }
+    }
+}
+
+void Player::IsCollisionSDF() {
+    ResolveSDFCollision(kNormalCollisionThreshold);
+}
+
+void Player::StartThreadExitGrace(float exitY, const Vector3& exitPos) {
+    onThread_ = false;
+
+    translate_.y = exitY;
+    object_->SetTranslate(translate_);
+
+    threadExitGraceFrames_ = kThreadExitGraceFrames;
+    threadReattachCooldownFrames_ = kThreadReattachCooldownFrames;
+
+    lastThreadExitPos_ = exitPos;
+    hasLastThreadExitPos_ = true;
+}
 bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     if (!thread_) {
         return false;
     }
 
+    // 降りた直後は再吸着しない
+    if (!onThread_ && threadReattachCooldownFrames_ > 0) {
+        return false;
+    }
+
     ThreadManager::ThreadQueryResult query {};
 
-    Vector3 probePos = translate_;
-    const float probeDistance = kWidth * 0.5f + kThreadEnterRadius;
-    probePos.x += moveDirection.x * probeDistance;
-    probePos.z += moveDirection.z * probeDistance;
+    Vector3 frontPos = translate_;
+    frontPos.x += moveDirection.x * (kWidth * 0.5f);
+    frontPos.z += moveDirection.z * (kWidth * 0.5f);
 
     bool found = false;
 
     if (onThread_) {
-        // 乗っている最中は現在位置優先で見る
         found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
         if (!found) {
-            found = thread_->FindNearestThread(probePos, kThreadStickRadius, query);
+            found = thread_->FindNearestThread(frontPos, kThreadStickRadius, query);
         }
     } else {
-        // 降りた直後の再吸着を防ぐため、off中は probePos のみで判定する
-        found = thread_->FindNearestThread(probePos, kThreadEnterRadius, query);
+        // 乗る時は「今いる位置 or 足元の少し前」だけを見る
+        found = thread_->FindNearestThread(frontPos, kThreadEnterRadius, query);
+        if (!found) {
+            found = thread_->FindNearestThread(translate_, kThreadEnterRadius, query);
+        }
+
+        if (found) {
+            auto distSqXZ = [](const Vector3& a, const Vector3& b) {
+                float dx = a.x - b.x;
+                float dz = a.z - b.z;
+                return dx * dx + dz * dz;
+                };
+
+            float enterRadiusSq = kThreadEnterRadius * kThreadEnterRadius;
+
+            bool nearStart =
+                distSqXZ(frontPos, query.startPoint) <= enterRadiusSq ||
+                distSqXZ(translate_, query.startPoint) <= enterRadiusSq;
+
+            bool nearEnd =
+                distSqXZ(frontPos, query.endPoint) <= enterRadiusSq ||
+                distSqXZ(translate_, query.endPoint) <= enterRadiusSq;
+
+            // 端に近くないなら、まだ乗せない
+            if (!nearStart && !nearEnd) {
+                return false;
+            }
+        }
     }
 
     if (!found) {
@@ -407,7 +510,6 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         return false;
     }
 
-    // 今いる線分の接線方向
     Vector3 tangent = query.segmentEnd - query.segmentStart;
     tangent.y = 0.0f;
 
@@ -426,10 +528,8 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     tangent.x /= tangentLength;
     tangent.z /= tangentLength;
 
-    // 入力をThread方向へ射影
     float along = moveDirection.x * tangent.x + moveDirection.z * tangent.z;
 
-    // 端から外向きに行くなら降りる
     if (onThread_) {
         bool atStart = query.t <= kThreadExitThreshold;
         bool atEnd = query.t >= (1.0f - kThreadExitThreshold);
@@ -438,8 +538,10 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         bool leavingFromEnd = atEnd && (along > 0.0001f);
 
         if (leavingFromStart || leavingFromEnd) {
-            onThread_ = false;
-            return false; // 通常移動へ
+            const Vector3 exitPoint = leavingFromStart ? query.startPoint : query.endPoint;
+            const float exitY = exitPoint.y;
+            StartThreadExitGrace(exitY, exitPoint);
+            return false;
         }
     }
 
@@ -465,13 +567,12 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
 void Player::ResolveThreadMove() {
     if (!thread_) {
         onThread_ = false;
-        IsCollisionSDF();
+        threadExitGraceFrames_ = 0;
         return;
     }
 
-    ThreadManager::ThreadQueryResult query{};
+    ThreadManager::ThreadQueryResult query {};
 
-    // 今フレームの予定移動先
     Vector3 nextPos = translate_;
     nextPos.x += moveVel_.x;
     nextPos.z += moveVel_.z;
@@ -482,8 +583,9 @@ void Player::ResolveThreadMove() {
     }
 
     if (!found) {
+        // Threadを見失っただけなら通常地上へ戻す
         onThread_ = false;
-        IsCollisionSDF();
+        threadExitGraceFrames_ = 0;
         return;
     }
 
@@ -491,7 +593,6 @@ void Player::ResolveThreadMove() {
     threadStart_ = query.startPoint;
     threadEnd_ = query.endPoint;
 
-    // 今いる線分の接線方向
     Vector3 tangent = query.segmentEnd - query.segmentStart;
     tangent.y = 0.0f;
 
@@ -509,14 +610,26 @@ void Player::ResolveThreadMove() {
     tangent.x /= tangentLength;
     tangent.z /= tangentLength;
 
-    // 最近点との差
+    float alongVelocity = moveVel_.x * tangent.x + moveVel_.z * tangent.z;
+
+    bool leavingFromStart = (query.t <= kThreadExitThreshold) &&
+        (alongVelocity < -0.0001f);
+    bool leavingFromEnd = (query.t >= (1.0f - kThreadExitThreshold)) &&
+        (alongVelocity > 0.0001f);
+
+    if (leavingFromStart || leavingFromEnd) {
+        const Vector3 exitPoint = leavingFromStart ? query.startPoint : query.endPoint;
+        const float exitY = exitPoint.y;
+        StartThreadExitGrace(exitY, exitPoint);
+        return;
+    }
+
     Vector3 toClosest = {
         query.closestPoint.x - nextPos.x,
         0.0f,
         query.closestPoint.z - nextPos.z
     };
 
-    // 最近点との差を「接線方向成分」と「横方向成分」に分解
     float alongError = toClosest.x * tangent.x + toClosest.z * tangent.z;
 
     Vector3 lateral = {
@@ -525,7 +638,6 @@ void Player::ResolveThreadMove() {
         toClosest.z - tangent.z * alongError
     };
 
-    // 端に近いほど横補正を弱める
     float edgeFade = 1.0f;
 
     if (query.t < kThreadEndSnapFadeRange) {
@@ -536,12 +648,27 @@ void Player::ResolveThreadMove() {
 
     edgeFade = std::clamp(edgeFade, 0.0f, 1.0f);
 
-    // 横方向だけ補正する
     moveVel_.x += lateral.x * kThreadLateralFollowStrength * edgeFade;
     moveVel_.z += lateral.z * kThreadLateralFollowStrength * edgeFade;
 
-    // Yだけは糸に合わせる
     translate_.y = query.closestPoint.y;
 
     thread_->ApplyPlayerWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
+}
+
+bool Player::CanUseRelaxedGroundCollision() const {
+    if (threadExitGraceFrames_ <= 0) {
+        return false;
+    }
+
+    if (!hasLastThreadExitPos_) {
+        return false;
+    }
+
+    float dx = translate_.x - lastThreadExitPos_.x;
+    float dz = translate_.z - lastThreadExitPos_.z;
+    float distSq = dx * dx + dz * dz;
+    float radiusSq = kThreadExitRelaxAreaRadius * kThreadExitRelaxAreaRadius;
+
+    return distSq <= radiusSq;
 }
