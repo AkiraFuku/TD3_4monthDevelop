@@ -93,13 +93,13 @@ void TitleScene::Initialize() {
             instance.transform.translate.x += velocity;
 
         }
-        if (instance.transform.translate.x >= 3.0f)
+        if (instance.transform.translate.x >= 1.5f)
         {
-            instance.transform.translate.x = 3.0f; // 境界で固定してめり込み防止
+            instance.transform.translate.x = 1.5f; // 境界で固定してめり込み防止
             this->velocity *= -1.0f;
-        } else if (instance.transform.translate.x <= -3.0f)
+        } else if (instance.transform.translate.x <= -1.5f)
         {
-            instance.transform.translate.x = -3.0f;   // 境界で固定
+            instance.transform.translate.x = -1.5f;   // 境界で固定
             this->velocity *= -1.0f;
         }
 
@@ -122,9 +122,9 @@ void TitleScene::Update() {
     //Object3d::ModelInstance* a = object3d->FindInstance("Sphere1");
     //Object3d::ModelInstance* b = object3d->FindInstance("axis")
 
-    Vector3 pos= object3d_->GetTranslate();
+ /*   Vector3 pos= object3d_->GetTranslate();
     pos.x+=1.0f/60.0f;
-    object3d_->SetTranslate(pos);   
+    object3d_->SetTranslate(pos);   */
 
     //a->transform.translate.x += 1.0f / 60.0f;
     //b->transform.translate.x -= 1.0f / 60.0f;
