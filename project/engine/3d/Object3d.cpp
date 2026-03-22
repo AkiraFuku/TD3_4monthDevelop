@@ -22,7 +22,11 @@ void Object3d::Initialize()
 }
 void Object3d::Update()
 {
-    model_->Update();
+
+    if (model_)
+    {
+        model_->Update();
+    }
     //  WVP行列の作成
     Matrix4x4 worldMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
     Matrix4x4 worldViewProjectionMatrix = {};
@@ -39,6 +43,50 @@ void Object3d::Update()
     wvpResource_->WVP = worldViewProjectionMatrix;
     wvpResource_->World = worldMatrix;
     wvpResource_->WorldInverseTranspose = Transpose(Inverse(worldMatrix));
+
+
+
+    ImguiInstances();
+
+    // --- 1. 全体のベースとなる行列を計算 ---
+    // これが「Object3d全体の中心点」になります
+   // Matrix4x4 objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+
+    // --- 2. 各パーツ（モデルインスタンス）の更新 ---
+    if (!models_.empty())
+    {
+
+
+        for (auto& instance : models_) {
+            // モデル内のボーンアニメーション等の更新（必要なら）
+            if (instance->model) {
+                instance->model->Update();
+            }
+
+            // 自身のトランスフォームからローカル行列を作成
+            instance->localMatrix = MakeAfineMatrix(
+                instance->transform.scale,
+                instance->transform.rotate,
+                instance->transform.translate
+            );
+
+            // 親子関係を解決してワールド行列を決定
+            if (instance->parent) {
+                // 親があるなら：親のワールド行列 × 自分のローカル行列
+                instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
+            } else {
+                // 親がないなら：Object3d全体の行列 × 自分のローカル行列
+                instance->worldMatrix = Multiply(instance->localMatrix, worldMatrix);
+            }
+
+            // --- 3. ★重要：計算結果をそのインスタンス専用のGPUバッファへ転送 ---
+            if (instance->mappedData && camera_) {
+                instance->mappedData->World = instance->worldMatrix;
+                instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+                instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
+            }
+        }
+    }
 
     if (camera_ && cameraData_)
     {
@@ -57,8 +105,6 @@ void Object3d::Draw()
 {
     // カメラがセットされていない場合は描画できないので終了
     if (!camera_) return;
-
-
     Object3dCommon::GetInstance()->Object3dCommonDraw();
     auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
 
@@ -69,11 +115,31 @@ void Object3d::Draw()
     // PSOをセット
    // DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
     //WVP行列リソースの設定
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_.Get()->GetGPUVirtualAddress());
     //light
     LightManager::GetInstance()->Draw(3);
     DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(7, cameraResource_->GetGPUVirtualAddress());
+
+    if (!models_.empty())
+    {
+        for (auto& instance : models_) {
+            if (!instance->model) continue;
+
+            // ★重要：このインスタンス専用の定数バッファ(b0)をセット
+            // Object3dCommon::Initialize で kTransform は register(b0) に割り当てられています
+            commandList->SetGraphicsRootConstantBufferView(
+                1, // RootParameterIndex (Object3dCommonでのkTransformのインデックス)
+                instance->resource->GetGPUVirtualAddress()
+            );
+
+            // インスタンスごとのモデル描画
+            instance->model->Draw();
+        }
+
+    }
+
     if (model_) {
+        DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_.Get()->GetGPUVirtualAddress());
+
         model_->Draw();
     }
 }
@@ -82,7 +148,59 @@ void Object3d::SetModel(const std::string& filePath)
 {
     model_ = ModelManager::GetInstance()->findModel(filePath);
 }
+void Object3d::AddModel(const std::string& modelPath, const std::string& name, const std::string& parent)
+{
+    auto newInst = std::make_unique<ModelInstance>();
+    newInst->model = ModelManager::GetInstance()->findModel(modelPath);
+    newInst->name = name;
+    if (!parent.empty())
+    {
+        newInst->parent = this->FindInstance(parent);
 
+    }
+
+
+    // インスタンス専用の定数バッファを作成 (DXCommonの機能を利用)
+    newInst->resource = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
+
+    // 書き込み用アドレスを取得(Map)し、構造体のポインタに保存しておく
+    newInst->resource->Map(0, nullptr, reinterpret_cast<void**>(&newInst->mappedData));
+
+    // 行列の初期化
+    newInst->mappedData->World = Makeidetity4x4();
+    newInst->mappedData->WVP = Makeidetity4x4();
+
+    // Object3dが管理するリストに追加
+    models_.push_back(std::move(newInst));
+
+
+}
+
+Object3d::ModelInstance* Object3d::FindInstance(const std::string& name)
+{
+    for (auto& instance : models_) {
+        if (instance->name == name) {
+            return instance.get();
+        }
+    }
+    return nullptr; // 見つからない場合はnullptrを返す
+}
+
+void Object3d::ImguiInstances()
+{
+#ifdef USE_IMGUI
+    for (auto& instance : models_) {
+        if (ImGui::TreeNode(instance->name.c_str())) {
+            ImGui::DragFloat3("Scale", &instance->transform.scale.x, 0.01f);
+            ImGui::DragFloat3("Rotate", &instance->transform.rotate.x, 0.5f);
+            ImGui::DragFloat3("Translate", &instance->transform.translate.x, 0.1f);
+            ImGui::TreePop();
+        }
+    }
+
+
+#endif // USE_IMGUI
+}
 
 void Object3d::CreateWVPResource()
 {
