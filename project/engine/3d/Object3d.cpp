@@ -76,11 +76,11 @@ void Object3d::Update()
 
 void Object3d::Draw()
 {
-   if (!camera_ || models_.empty()) return;
+    if (!camera_ || models_.empty()) return;
 
     // 共通設定（RootSignatureやTopology）
     Object3dCommon::GetInstance()->Object3dCommonDraw();
-    
+
     // PSOの取得とセット
     auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
     auto commandList = DXCommon::GetInstance()->GetCommandList();
@@ -105,6 +105,9 @@ void Object3d::Draw()
         // インスタンスごとのモデル描画
         instance->model->Draw();
     }
+    if (model_) {  // NULL チェックを追加
+        model_->Draw();
+    }
 
 }
 
@@ -114,17 +117,17 @@ void Object3d::SetModel(const std::string& filePath)
 }
 
 
-void Object3d::AddModel(const std::string& modelPath, const std::string& name, const std::string&parent)
+void Object3d::AddModel(const std::string& modelPath, const std::string& name, const std::string& parent)
 {
     auto newInst = std::make_unique<ModelInstance>();
     newInst->model = ModelManager::GetInstance()->findModel(modelPath);
     newInst->name = name;
     if (!parent.empty())
     {
-        newInst->parent =this->FindInstance(parent);
+        newInst->parent = this->FindInstance(parent);
 
     }
-   
+
 
     // インスタンス専用の定数バッファを作成 (DXCommonの機能を利用)
     newInst->resource = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
@@ -155,16 +158,16 @@ Object3d::ModelInstance* Object3d::FindInstance(const std::string& name)
 void Object3d::ImguiInstances()
 {
 #ifdef USE_IMGUI
-     for (auto& instance : models_) {
-         if (ImGui::TreeNode(instance->name.c_str())) {
+    for (auto& instance : models_) {
+        if (ImGui::TreeNode(instance->name.c_str())) {
             ImGui::DragFloat3("Scale", &instance->transform.scale.x, 0.01f);
             ImGui::DragFloat3("Rotate", &instance->transform.rotate.x, 0.5f);
             ImGui::DragFloat3("Translate", &instance->transform.translate.x, 0.1f);
             ImGui::TreePop();
-         }
+        }
     }
 
-    
+
 #endif // USE_IMGUI
 }
 void Object3d::CreateWVPResource()
