@@ -26,9 +26,8 @@ void PlayerStateIdle::Update(Player* player)
     }
 
     // SPACEで糸を発射
-    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
+    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) && player->CanFireThread()) {
         player->ChangeState(std::make_unique<PlayerStateShoot>());
-
         return;
     }
 }
@@ -58,9 +57,8 @@ void PlayerStateMove::Update(Player* player)
     }
 
     // 移動中にSPACEを押して発射状態に遷移
-    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
+    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) && player->CanFireThread()) {
         player->ChangeState(std::make_unique<PlayerStateShoot>());
-
         return;
     }
 

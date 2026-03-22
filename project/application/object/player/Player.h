@@ -8,6 +8,7 @@
 #include "CollisionMask.h"
 
 class ThreadManager;
+class Egg;
 
 class Player {
 public:
@@ -78,12 +79,18 @@ public: // 外部入出力
     // アフィン行列
     Matrix4x4 GetWorldMatrix() const;
 
+    void SetEgg(Egg* egg) { egg_ = egg; }
+    bool CanFireThread() const;
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
 
     // モデル
     std::unique_ptr<Object3d> object_;
+
+    // 卵
+    Egg* egg_ = nullptr;
 
     // 拡縮
     Vector3 scale_ = {1.0f, 1.0f, 1.0f};

@@ -10,17 +10,33 @@ class Camera;
 
 class ThreadManager {
 public:
+    struct ThreadIntersection {
+        Vector3 position = {};
+        float radius = 1.0f;
+
+        size_t threadIndexA = 0;
+        size_t threadIndexB = 0;
+
+        size_t segmentIndexA = 0;
+        size_t segmentIndexB = 0;
+
+        Vector3 segmentAStart = {};
+        Vector3 segmentAEnd = {};
+
+        Vector3 segmentBStart = {};
+        Vector3 segmentBEnd = {};
+    };
+
     struct ThreadQueryResult {
         bool hit = false;
         Vector3 closestPoint = {};
         Vector3 startPoint = {};
         Vector3 endPoint = {};
 
-        // 追加
         Vector3 segmentStart = {};
         Vector3 segmentEnd = {};
 
-        float t = 0.0f; // 糸全体の 0.0f ～ 1.0f
+        float t = 0.0f;
     };
 
 public:
@@ -35,9 +51,9 @@ public:
     void ApplyPlayerWeight(const Vector3& pos, float radius, float weight);
     bool GetThreadHeight(const Vector3& pos, float radius, float& outY) const;
 
-    // 追加
     bool FindNearestThread(const Vector3& pos, float radius, ThreadQueryResult& outResult) const;
 
+    const std::vector<ThreadIntersection>& GetIntersections() const { return intersections_; }
     const std::vector<std::unique_ptr<ThreadPhysics>>& GetPhysicsList() const { return physicsList_; }
 
 private:
@@ -46,4 +62,9 @@ private:
     Camera* camera_ = nullptr;
     int maxThreads_ = 0;
     int nodesPerThread_ = 0;
+
+    std::vector<ThreadIntersection> intersections_;
+
+private:
+    void CalculateIntersections();
 };

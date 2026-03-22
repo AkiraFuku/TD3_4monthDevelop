@@ -21,7 +21,8 @@ Vector3 operator*(float scalar, const Vector3& v);
 Vector3 operator*(const Vector3& v, float scalar);
 Vector3 operator/(const Vector3& v, float scalar);
 Vector3 operator/=(Vector3& v, float scalar);
-Matrix4x4 MakeBillboardMatrix(const Vector3& scale, const Vector3& rotate, Matrix4x4& billboardMatrix, const Vector3& translate);Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
+
+Matrix4x4 MakeBillboardMatrix(const Vector3& scale, const Vector3& rotate, Matrix4x4& billboardMatrix, const Vector3& translate); Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
 
 template <typename T>
 T Lerp(const T& v1, const T& v2, float t);
@@ -143,7 +144,6 @@ Vector3 Normalize(const Vector3& v);
 Vector3 TransformNormal(const Vector3& v, const Matrix4x4& m);
 
 template<typename T>
-inline T Lerp(const T& v1, const T& v2, float t)
-{
+inline T Lerp(const T& v1, const T& v2, float t) {
     return v1 + (v2 - v1) * t;
 }

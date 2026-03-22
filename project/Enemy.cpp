@@ -17,9 +17,9 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm) {
 
     auto IsInsideWall = [&](Point p) {
         if (p.x < 0 || p.x >= 512 || p.y < 0 || p.y >= 512) return true;
-        bool isWall = CollisionMask::GetInstance()->IsWall((float)p.x, (float)p.y);
-        bool hasThread = false;
-        if (tm) {
+
+        bool isWall = CollisionMask::GetInstance()->IsWall((float) p.x, (float) p.y);
+        bool hasThread = false;        if (tm) {
             for (auto& physics : tm->GetPhysicsList()) {
                 for (const auto& node : physics->GetNodes()) {
                     float dx = node.currentPos.x - (float)p.x;
@@ -85,6 +85,21 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
         float checkX = start.x + unitDiff.x * (i * 0.5f);
         float checkZ = start.z + unitDiff.z * (i * 0.5f);
 
+        if (tm) {
+            bool hitIntersection = false;
+            for (const auto& intersection : tm->GetIntersections()) {
+                float dx = intersection.position.x - checkX;
+                float dz = intersection.position.z - checkZ;
+                if ((dx * dx + dz * dz) < (intersection.radius * intersection.radius)) {
+                    hitIntersection = true;
+                    break;
+                }
+            }
+            if (hitIntersection) {
+                return false; // 交差点があるので直進不可
+            }
+        }
+
         // --- ここを PathFinder と同じロジックにする ---
         bool isWall = CollisionMask::GetInstance()->IsWall(checkX, checkZ);
         bool hasThread = false;
@@ -113,55 +128,90 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
 
 void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
 
-    if (isHit_)
-    {
+    if (isHit_) {
         // 卵に接触していたら何もしない
         return;
     }
 
-
     Vector3 currentPos = object_->GetTranslate();
+    Vector3 expectedPos = currentPos;
+    bool isMoving = false;
 
-    // 卵までの直線上に壁があるかチェック（簡易版）
+    // ==========================================
+    // 1. 移動方向と「予定座標(expectedPos)」の計算
+    // ==========================================
     if (IsPathClear(currentPos, eggPos, tm)) {
-        // 直進できるなら A* は使わず、直接卵の方向へ歩く
-        Vector3 diff = { eggPos.x - currentPos.x, 0.0f, eggPos.z - currentPos.z };
+        // --- 直進できる場合 ---
+        Vector3 diff = {eggPos.x - currentPos.x, 0.0f, eggPos.z - currentPos.z};
         float dist = std::sqrt(diff.x * diff.x + diff.z * diff.z);
         if (dist > 0.1f) {
-            currentPos.x += (diff.x / dist) * moveSpeed_;
-            currentPos.z += (diff.z / dist) * moveSpeed_;
-            object_->SetTranslate(currentPos);
+            expectedPos.x += (diff.x / dist) * moveSpeed_;
+            expectedPos.z += (diff.z / dist) * moveSpeed_;
+            isMoving = true;
         }
         path_.clear(); // 経路リストを空にしておく
-    }
-    else {
-
-        // 定期的に経路を更新（糸が増えたり卵が動いたりするため）
+    } else {
+        // --- 経路探索（A*）を使う場合 ---
         recalculateTimer_++;
         if (recalculateTimer_ > 30) {
             RecalculatePath(eggPos, tm);
             recalculateTimer_ = 0;
         }
 
-        // 移動処理
         if (!path_.empty()) {
-            Vector3 currentPos = object_->GetTranslate();
             Vector3 nextTarget = GridToWorld(path_.front());
-
-            Vector3 diff = { nextTarget.x - currentPos.x, 0.0f, nextTarget.z - currentPos.z };
+            Vector3 diff = {nextTarget.x - currentPos.x, 0.0f, nextTarget.z - currentPos.z};
             float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
 
             if (distance < 0.2f) {
-                path_.pop_front();
+                path_.pop_front(); // 目標地点に到達したらリストから消す
+            } else {
+                expectedPos.x += (diff.x / distance) * moveSpeed_;
+                expectedPos.z += (diff.z / distance) * moveSpeed_;
+                isMoving = true;
             }
-            else {
-                currentPos.x += (diff.x / distance) * moveSpeed_;
-                currentPos.z += (diff.z / distance) * moveSpeed_;
-                object_->SetTranslate(currentPos);
+        }
+    }
+
+    // ==========================================
+    // 2. 交差点（トラップ）での捕縛判定
+    // ==========================================
+    if (tm && isMoving) {
+        bool isTrapped = false;
+
+        for (const auto& intersection : tm->GetIntersections()) {
+            // 「現在の座標」が交差点の範囲に踏み込んでいるかチェック
+            Vector3 diff = {
+                currentPos.x - intersection.position.x,
+                0.0f,
+                currentPos.z - intersection.position.z
+            };
+
+            float distSq = diff.x * diff.x + diff.z * diff.z;
+
+            // 敵の半径を足さずに、交差点の範囲(0.8f)に入り込んだら捕まるようにする
+            float trapRadius = intersection.radius;
+
+            // 交差点の中に足を踏み入れた！
+            if (distSq <= trapRadius * trapRadius) {
+                isTrapped = true;
+                break; // 1つでも捕まっていればOK
             }
         }
 
+        // 罠に捕まっている場合は移動をキャンセル（その場から動けなくなる）
+        if (isTrapped) {
+            expectedPos = currentPos;
+
+            // ※もし「捕まった瞬間に交差点のド真ん中に引きずり込みたい」場合は
+            // ここで expectedPos = intersection.position; などにすることもできます
+        }
     }
+
+    // ==========================================
+    // 3. 座標の確定とモデルの更新
+    // ==========================================
+    object_->SetTranslate(expectedPos);
     object_->Update();
 }
 

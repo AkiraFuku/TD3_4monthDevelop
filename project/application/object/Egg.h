@@ -22,6 +22,8 @@ public:
     // ワールド座標を取得
     Vector3 GetWorldPosition() const;
 
+    bool IsHit() const { return isHit_; }
+
     // AABBを取得
     AABB GetAABB() const;
 

@@ -76,6 +76,7 @@
     <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
     <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
+    <ClCompile Include="SpiderWebManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
@@ -140,6 +141,7 @@
     <ClInclude Include="application\object\thread\ThreadPhysics.h" />
     <ClInclude Include="application\object\thread\ThreadRenderer.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
+    <ClInclude Include="SpiderWebManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
