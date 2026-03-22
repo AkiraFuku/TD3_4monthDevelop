@@ -23,6 +23,7 @@
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg.cpp" />
     <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
     <ClCompile Include="engine\math\Mass.cpp" />
@@ -87,6 +88,7 @@
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg.h" />
     <ClInclude Include="Enemy.h" />
+    <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
     <ClInclude Include="engine\math\Quanternion.h" />

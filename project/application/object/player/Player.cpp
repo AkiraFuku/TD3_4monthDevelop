@@ -29,7 +29,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     translate_ = pos;
     object_->SetTranslate(translate_);
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
-    object_->SetModel("player/player.obj");
+    object_->AddModel("player/player.obj","body");
 
     PsoConfig config {};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
