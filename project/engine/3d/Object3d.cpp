@@ -22,27 +22,28 @@ void Object3d::Initialize()
 }
 void Object3d::Update()
 {
+    Matrix4x4 worldMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 
     if (model_)
     {
         model_->Update();
+        //  WVP行列の作成
+        Matrix4x4 worldViewProjectionMatrix = {};
+        //ワールド行列とビュー行列とプロジェクション行列を掛け算
+        if (camera_)
+        {
+            cameraData_->worldPosition = camera_->GetTranslate();
+            worldViewProjectionMatrix = Multiply(Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix), camera_->GetViewProtectionMatrix());
+            //   worldViewProjectionMatrix = Multiply( worldMatrix, camera_->GetViewProtectionMatrix());
+        } else {
+            worldViewProjectionMatrix = Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix);
+        }
+        //行列をGPUに転送
+        wvpResource_->WVP = worldViewProjectionMatrix;
+        wvpResource_->World = worldMatrix;
+        wvpResource_->WorldInverseTranspose = Transpose(Inverse(worldMatrix));
+
     }
-    //  WVP行列の作成
-    Matrix4x4 worldMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-    Matrix4x4 worldViewProjectionMatrix = {};
-    //ワールド行列とビュー行列とプロジェクション行列を掛け算
-    if (camera_)
-    {
-        cameraData_->worldPosition = camera_->GetTranslate();
-        worldViewProjectionMatrix = Multiply(Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix), camera_->GetViewProtectionMatrix());
-        //   worldViewProjectionMatrix = Multiply( worldMatrix, camera_->GetViewProtectionMatrix());
-    } else {
-        worldViewProjectionMatrix = Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix);
-    }
-    //行列をGPUに転送
-    wvpResource_->WVP = worldViewProjectionMatrix;
-    wvpResource_->World = worldMatrix;
-    wvpResource_->WorldInverseTranspose = Transpose(Inverse(worldMatrix));
 
 
 
