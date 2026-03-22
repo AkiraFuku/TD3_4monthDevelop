@@ -31,6 +31,10 @@ public:
     void Play() { isPlaying_ = true; }
     void Stop() { isPlaying_ = false; }
 
+    float GetTimer() const {
+        return timer_;
+    }
+
 private:
 
     Object3d* target_ = nullptr;

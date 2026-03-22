@@ -13,6 +13,8 @@
 #include "PSOManager.h"
 #include "Logger.h"
 
+
+
 /// <summary>
 /// 初期化
 /// </summary>
@@ -29,7 +31,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     translate_ = pos;
     object_->SetTranslate(translate_);
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
-    object_->AddModel("player/player.obj","body");
+    object_->AddModel("player/player.obj","Body");
 
     PsoConfig config {};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
@@ -144,6 +146,14 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     // 待機状態で初期化
     ChangeState(std::make_unique<PlayerStateIdle>());
+
+    anima_ = std::make_unique<PlayerAnima>();
+    anima_->Initialize(object_.get());
+    anima_->Play();
+
+    anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
+
+
 }
 /// <summary>
 /// 終了
@@ -167,6 +177,9 @@ void Player::Update() {
     }
 
     ResultMove();
+
+    anima_->Update();
+
     object_->Update();
 }
 /// <summary>
@@ -182,49 +195,73 @@ void Player::Draw() {
 /// </summary>
 void Player::UpdateMove(Vector3& moveDirection) {
     moveDirection = {0.0f, 0.0f, 0.0f};
-
-    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.x += 0.7f;
-        moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.x += 0.7f;
-        moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.x -= 0.7f;
-        moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.x -= 0.7f;
-        moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
-        moveDirection.x += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
-        moveDirection.x -= 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.z += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.z -= 1.0f;
+    
+    // 入力を判定
+    bool isMoving = false;
+    
+    if (Input::GetInstance()) {
+        // 斜め移動の判定
+        if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+            moveDirection.x += 0.7f;
+            moveDirection.z += 0.7f;
+            isMoving = true;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+            moveDirection.x += 0.7f;
+            moveDirection.z -= 0.7f;
+            isMoving = true;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+            moveDirection.x -= 0.7f;
+            moveDirection.z -= 0.7f;
+            isMoving = true;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+            moveDirection.x -= 0.7f;
+            moveDirection.z += 0.7f;
+            isMoving = true;
+        }
+        // 縦横方向の移動判定
+        else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
+            moveDirection.x += 1.0f;
+            isMoving = true;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
+            moveDirection.x -= 1.0f;
+            isMoving = true;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
+            moveDirection.z += 1.0f;
+            isMoving = true;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
+            moveDirection.z -= 1.0f;
+            isMoving = true;
+        }
+    }
+    
+    // アニメーション状態を入力結果に基づいて更新
+    if (isMoving) {
+        // 移動中は歩きアニメーション
+        anima_->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+        
+        float length = std::sqrtf(moveDirection.x * moveDirection.x +
+            moveDirection.z * moveDirection.z);
+        
+        if (length > 0.0f) {
+            moveDirection.x /= length;
+            moveDirection.z /= length;
+        }
+        
+        // 先にThread移動を試す
+        if (TryMoveOnThread(moveDirection)) {
+            return;
+        }
+        
+        // 通常移動
+        TurnToDirection(moveDirection);
+        
+        moveVel_.x += moveDirection.x * velocity_.x;
+        moveVel_.z += moveDirection.z * velocity_.z;
     } else {
+        // 静止状態はアイドルアニメーション
+        anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
         return;
     }
-
-    float length = std::sqrtf(moveDirection.x * moveDirection.x +
-        moveDirection.z * moveDirection.z);
-
-    if (length > 0.0f) {
-        moveDirection.x /= length;
-        moveDirection.z /= length;
-    }
-
-    // 先にThread移動を試す
-    if (TryMoveOnThread(moveDirection)) {
-        return;
-    }
-
-    // 通常移動
-    TurnToDirection(moveDirection);
-
-    moveVel_.x += moveDirection.x * velocity_.x;
-    moveVel_.z += moveDirection.z * velocity_.z;
 }
 
 void Player::ResultMove() {

@@ -73,6 +73,7 @@
     <ClCompile Include="application\object\player\PlayerState.cpp" />
     <ClCompile Include="SpiderWebManager.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
+    <ClCompile Include="application\object\player\PlayerAnima.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -139,6 +140,7 @@
     <ClInclude Include="application\object\player\PlayerState.h" />
     <ClInclude Include="SpiderWebManager.h" />
     <ClInclude Include="engine\3d\Anima.h" />
+    <ClInclude Include="application\object\player\PlayerAnima.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

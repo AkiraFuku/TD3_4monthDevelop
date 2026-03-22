@@ -7,8 +7,10 @@
 #include"PlayerState.h"
 #include "CollisionMask.h"
 
+#include "PlayerAnima.h"
 class ThreadManager;
 class Egg;
+
 
 class Player {
 public:
@@ -142,5 +144,9 @@ private:
     static inline const float kThreadEndSnapFadeRange = 0.18f;      // 端で補正を弱める範囲
 
     CollisionMask::RayResult rayResult_;
+
+    private :
+        // アニメーション制御
+        std::unique_ptr<PlayerAnima> anima_;
 
 };
