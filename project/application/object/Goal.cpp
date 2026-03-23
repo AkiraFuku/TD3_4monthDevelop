@@ -9,8 +9,8 @@ void Goal::Initialize()
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("resources","player/player.obj");
-    object_->SetModel("player/player.obj");
+    ModelManager::GetInstance()->LoadModel("resources","goal/goal.obj");
+    object_->SetModel("goal/goal.obj");
 
     Vector3 translate = object_->GetTranslate();
     translate.y -= 4.0f; // ゴールの位置を少し下げる
