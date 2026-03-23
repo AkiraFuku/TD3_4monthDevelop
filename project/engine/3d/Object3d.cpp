@@ -104,43 +104,41 @@ void Object3d::Update()
 
 void Object3d::Draw()
 {
-    // カメラがセットされていない場合は描画できないので終了
     if (!camera_) return;
+    
     Object3dCommon::GetInstance()->Object3dCommonDraw();
-    auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
-
+    
     auto commandList = DXCommon::GetInstance()->GetCommandList();
+    
+    // ★重要: PSO の設定は全体で一度だけ
+    auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
     commandList->SetGraphicsRootSignature(psoSet.rootSignature.Get());
     commandList->SetPipelineState(psoSet.pipelineState.Get());
-
-    // PSOをセット
-   // DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
-    //WVP行列リソースの設定
-    //light
+    
+    // ライトとカメラ設定
     LightManager::GetInstance()->Draw(3);
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(7, cameraResource_->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(7, cameraResource_->GetGPUVirtualAddress());
 
+    // ★重要: インスタンス描画ループ
     if (!models_.empty())
     {
         for (auto& instance : models_) {
             if (!instance->model) continue;
 
-            // ★重要：このインスタンス専用の定数バッファ(b0)をセット
-            // Object3dCommon::Initialize で kTransform は register(b0) に割り当てられています
+            // このインスタンス専用の WVP 行列バッファをセット
             commandList->SetGraphicsRootConstantBufferView(
-                1, // RootParameterIndex (Object3dCommonでのkTransformのインデックス)
+                1, // kTransform
                 instance->resource->GetGPUVirtualAddress()
             );
 
             // インスタンスごとのモデル描画
             instance->model->Draw();
         }
-
     }
 
+    // ★単体モデルの描画
     if (model_) {
-        DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_.Get()->GetGPUVirtualAddress());
-
+        commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_.Get()->GetGPUVirtualAddress());
         model_->Draw();
     }
 }
