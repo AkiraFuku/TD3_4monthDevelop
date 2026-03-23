@@ -11,7 +11,7 @@ class Egg
 {
 public:
 
-    void Initialize();
+    void Initialize(const Vector3& pos);
 
     void Finalize();
 

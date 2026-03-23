@@ -4,7 +4,7 @@
 #include "Egg.h"
 #include "SceneManager.h"
 
-void Goal::Initialize()
+void Goal::Initialize(const Vector3& pos)
 {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
@@ -12,10 +12,7 @@ void Goal::Initialize()
     ModelManager::GetInstance()->LoadModel("resources","goal/goal.obj");
     object_->SetModel("goal/goal.obj");
 
-    Vector3 translate = object_->GetTranslate();
-    translate.y -= 4.0f; // ゴールの位置を少し下げる
-    translate.z -= 2.0f;
-    object_->SetTranslate(translate);
+    object_->SetTranslate(pos);
 }
 
 void Goal::Finalize()

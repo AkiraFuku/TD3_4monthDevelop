@@ -6,7 +6,7 @@
 #include "CollisionMask.h"
 #include "SceneManager.h"
 
-void Egg::Initialize()
+void Egg::Initialize(const Vector3& pos)
 {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
@@ -14,6 +14,7 @@ void Egg::Initialize()
 
     ModelManager::GetInstance()->LoadModel("resources","egg.obj");
     object_->SetModel("egg.obj");
+    object_->SetTranslate(pos);
 }
 
 void Egg::Finalize()

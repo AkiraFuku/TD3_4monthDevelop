@@ -46,8 +46,17 @@ private:
 
     /*Player *player_;
     Terrain *terrain_;*/
+
+    // 卵
     std::unique_ptr<Egg> egg_;
+    // 卵の位置
+    Vector3 eggPos = { -10.0f,0.0f,1.0f };
+
+    // ゴール
     std::unique_ptr<Goal> goal_;
+    // ゴールの位置
+    Vector3 goalPos = { 10.0f,0.0f,10.0f };
+
     /*Player* player_;
     Terrain* terrain_;*/
 
@@ -68,4 +77,5 @@ private:
   std::unique_ptr<Enemy> enemy_;
   // 敵の位置
   Vector3 enemyPos_ = { 10.0f,0.0f,4.0f };
+
 };
