@@ -225,16 +225,17 @@ void GameScene::Update()
         }
     }
 
-    camera->Update();
     if (isDebugCamera_)
     {
         debugCamera_.Update(camera->GetTransform());
-        camera->SetViewMatrix(debugCamera_.GetViewMatrix());
+        camera->SetTranslate(debugCamera_.GetTranslate());
+        camera->SetWorldMatrix(debugCamera_.GetWorldMatrix());
     }
     else
     {
-        camera->UpdateView();
+        camera->Update();
     }
+    camera->UpdateView();
     camera->UpdateViewProjection();
     object3d->Update();
     object3d2->Update();
@@ -364,7 +365,23 @@ void GameScene::Update()
     // ImGui::End();
 
     ImGui::Begin("DebugCamera Setting");
-    ImGui::Checkbox("DebugCamera", &isDebugCamera_);
+
+    Vector3 newSaveRotation, newSaveTranslate;
+
+    if (ImGui::Checkbox("DebugCamera", &isDebugCamera_))
+    {
+        newSaveRotation = debugSaveCameraRotation_;
+        newSaveTranslate = debugSaveCameraTranslate_;
+
+        debugSaveCameraRotation_ = camera->GetRotate();
+        debugSaveCameraTranslate_ = camera->GetTranslate();
+
+        camera->SetRotate(newSaveRotation);
+        camera->SetTranslate(newSaveTranslate);
+    }
+
+    ImGui::InputFloat3("SaveRotation", &debugSaveCameraRotation_.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat3("SaveTranslate", &debugSaveCameraTranslate_.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
     ImGui::End();
 
     ImGui::Begin("CollisionMask");

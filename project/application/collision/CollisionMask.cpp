@@ -194,16 +194,21 @@ void CollisionMask::Update()
         maskMapRequest_ = MaskMap::Unknown;
     }
 
+#ifdef _DEBUG
+
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentMaskMap_);
-    const char* items[] = {"Map1", "Map2", "Map3"};
+    const char* items[] = { "Map1", "Map2", "Map3" };
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
     }
 
     ImGui::End();
+
+#endif // _DEBUG
+    
 
     maskDatas_[static_cast<int>(currentMaskMap_)]->object->Update();
 }
@@ -418,11 +423,16 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
             // 黒ピクセルがあれば衝突
             if (maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.data[iz * widthX + ix] < 128)
             {
+            #ifdef _DEBUG
+
                 ImGui::Begin("Debug");
                 ImGui::Text("Hit at Pixel: X=%d, Z=%d", ix, iz);
                 ImGui::End();
 
                 return true;
+
+            #endif // _DEBUG
+
             }
         }
     }

@@ -44,6 +44,9 @@ private:
     DebugCamera debugCamera_;
     bool isDebugCamera_ = false;
 
+    Vector3 debugSaveCameraTranslate_ = { 0.0f, 0.0f, 0.0f };
+    Vector3 debugSaveCameraRotation_ = { 0.0f, 0.0f, 0.0f };
+
     /*Player *player_;
     Terrain *terrain_;*/
     std::unique_ptr<Egg> egg_;
