@@ -37,7 +37,10 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
         openList.erase(it);
         closedList.push_back(current);
 
-        Point directions[] = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} };
+        Point directions[] = {
+     {0, 1}, {0, -1}, {1, 0}, {-1, 0}, // 上下左右
+     {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // 斜めを追加
+        };
         for (auto& dir : directions) {
             Point nextPos = { current->pos.x + dir.x, current->pos.y + dir.y };
 
@@ -52,7 +55,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
 
             if (tm) {
                 // ThreadManager内の全糸ノードをチェック
-                float checkRadiusSq = 9.0f; // 半径3.0の2乗。広めに設定
+                float checkRadiusSq = 1.0f; // 半径3.0の2乗。広めに設定
 
                 for (auto& physics : tm->GetPhysicsList()) {
                     for (const auto& node : physics->GetNodes()) {

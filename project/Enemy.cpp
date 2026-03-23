@@ -94,7 +94,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm) {
 
 bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm)
 {
-    
+
     Vector3 diff = { end.x - start.x, 0.0f, end.z - start.z };
     float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
     if (distance < 0.5f) return true;
@@ -162,41 +162,58 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
     // ==========================================
     // 1. 移動方向と「予定座標(expectedPos)」の計算
     // ==========================================
-    if (IsPathClear(currentPos, eggPos, tm)) {
-        // --- 直進できる場合 ---
-        Vector3 diff = {eggPos.x - currentPos.x, 0.0f, eggPos.z - currentPos.z};
-        float dist = std::sqrt(diff.x * diff.x + diff.z * diff.z);
-        if (dist > 0.1f) {
-            expectedPos.x += (diff.x / dist) * moveSpeed_;
-            expectedPos.z += (diff.z / dist) * moveSpeed_;
-            isMoving = true;
-        }
-        path_.clear(); // 経路リストを空にしておく
-    } else {
 
-        recalculateTimer_++;
 
-        // タイマーが満了したか、外部からリクエストがあった場合に再計算
-        if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
-            RecalculatePath(eggPos, tm);
-            recalculateTimer_ = 0;
-            shouldReplanNextUpdate_ = false; // フラグを戻す
-        }
+    recalculateTimer_++;
 
-        if (!path_.empty()) {
-            Vector3 nextTarget = GridToWorld(path_.front());
-            Vector3 diff = {nextTarget.x - currentPos.x, 0.0f, nextTarget.z - currentPos.z};
-            float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
+    // タイマーが満了したか、外部からリクエストがあった場合に再計算
+    if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
+        RecalculatePath(eggPos, tm);
+        recalculateTimer_ = 0;
+        shouldReplanNextUpdate_ = false; // フラグを戻す
+    }
 
-            if (distance < 0.2f) {
-                path_.pop_front(); // 目標地点に到達したらリストから消す
-            } else {
-                expectedPos.x += (diff.x / distance) * moveSpeed_;
-                expectedPos.z += (diff.z / distance) * moveSpeed_;
-                isMoving = true;
+    if (!path_.empty()) {
+        // 1. 本来目指すマスの中心
+        Vector3 targetGridPos = GridToWorld(path_.front());
+
+        // 2. 【修正】そのマスの「中」にある実際の糸の座標を探す
+        Vector3 actualThreadTarget = targetGridPos; // 見つからない時のバックアップ
+        float closestDist = 2.0f; // 探す範囲（1.5〜2.0くらいが適当）
+
+        if (tm) {
+            for (auto& physics : tm->GetPhysicsList()) {
+                for (const auto& node : physics->GetNodes()) {
+                    // そのマス（targetGridPos）の近くにノードがあるか？
+                    float dx = node.currentPos.x - targetGridPos.x;
+                    float dz = node.currentPos.z - targetGridPos.z;
+                    float dSq = dx * dx + dz * dz;
+
+                    if (dSq < closestDist) {
+                        closestDist = dSq;
+                        actualThreadTarget = node.currentPos;
+                    }
+                }
             }
         }
+        actualThreadTarget.y = 0.0f;
+
+        // 3. GridToWorld の座標ではなく、見つけた糸の座標(actualThreadTarget)へ向かう
+        Vector3 nextTarget = actualThreadTarget;
+
+        Vector3 diff = { nextTarget.x - currentPos.x, 0.0f, nextTarget.z - currentPos.z };
+        float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
+
+        if (distance < 0.2f) {
+            path_.pop_front(); // 目標地点に到達したらリストから消す
+        }
+        else {
+            expectedPos.x += (diff.x / distance) * moveSpeed_;
+            expectedPos.z += (diff.z / distance) * moveSpeed_;
+            isMoving = true;
+        }
     }
+
 
     // ==========================================
     // 2. 交差点（トラップ）での捕縛判定
@@ -304,5 +321,5 @@ void Enemy::OnCollision(Egg* egg)
         attackTimer_--;
     }
 
-    
+
 }
