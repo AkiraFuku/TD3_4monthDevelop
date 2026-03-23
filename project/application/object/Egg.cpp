@@ -62,7 +62,7 @@ void Egg::Update()
             translate += velocity_;
 
             // 置いた先が壁だったら
-            if (CollisionMask::GetInstance()->IsWall(translate.x, translate.z))
+            if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z,kWidth))
             {
                 // プレイヤーと同じ場所に置く
                 translate = player_->GetPosition();

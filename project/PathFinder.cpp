@@ -16,7 +16,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
 
     while (!openList.empty()) {
         nodeCount++;
-        if (nodeCount > 5000) { // 5000ノード以上調べてもダメなら中断
+        if (nodeCount > 30000) { // 5000ノード以上調べてもダメなら中断
             break;
         }
         auto it = std::min_element(openList.begin(), openList.end(), [](Node* a, Node* b) {
@@ -44,17 +44,22 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height) continue;
 
             // --- 壁と糸の複合判定 ---
-            bool isWall = CollisionMask::GetInstance()->IsWall((float)nextPos.x, (float)nextPos.y);
+            float worldX = (float)nextPos.x - 256.0f;
+            float worldZ = (float)nextPos.y - 256.0f;
+
+            bool isWall = CollisionMask::GetInstance()->IsWall(worldX, worldZ);
             bool hasThread = false;
 
             if (tm) {
                 // ThreadManager内の全糸ノードをチェック
+                float checkRadiusSq = 9.0f; // 半径3.0の2乗。広めに設定
+
                 for (auto& physics : tm->GetPhysicsList()) {
                     for (const auto& node : physics->GetNodes()) {
-                        float dx = node.currentPos.x - (float)nextPos.x;
-                        float dz = node.currentPos.z - (float)nextPos.y;
-                        // 判定距離（マスの中心から約0.8マス以内なら「糸がある」とみなす）
-                        if ((dx * dx + dz * dz) < 0.64f) {
+                        float dx = node.currentPos.x - worldX;
+                        float dz = node.currentPos.z - worldZ;
+
+                        if ((dx * dx + dz * dz) < checkRadiusSq) {
                             hasThread = true;
                             break;
                         }
@@ -79,7 +84,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             }
             else if (newG < openNode->g) {
                 openNode->g = newG;
-                openNode->f = openNode->g + openNode->h;
+                openNode->f = (float)openNode->g + (float)openNode->h;
                 openNode->parent = current;
             }
         }
@@ -87,6 +92,15 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
 
     for (auto n : openList) delete n;
     for (auto n : closedList) delete n;
+
+    if (finalPath.empty()) {
+        if (openList.empty()) {
+            OutputDebugStringA("Reason: No path exists (Isolated)\n"); // 物理的に繋がってない
+        }
+        else {
+            OutputDebugStringA("Reason: Search limit reached\n"); // 遠すぎて諦めた
+        }
+    }
 
     return finalPath;
 }

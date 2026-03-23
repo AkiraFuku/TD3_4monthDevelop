@@ -12,19 +12,40 @@ void Enemy::Initialize(const Vector3& pos) {
 }
 
 void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm) {
-    Point start = WorldToGrid(object_->GetTranslate());
-    Point goal = WorldToGrid(eggPos);
+    // 1. 生のワールド座標を取得
+    Vector3 myPos = object_->GetTranslate();
+    Vector3 targetPos = eggPos;
 
+    // 2. A*探索用のグリッド座標を計算 (これは内部の探索用)
+    Point start = WorldToGrid(myPos);
+    Point goal = WorldToGrid(targetPos);
+
+    // 【重要】デバッグログ：生のワールド座標で判定してみる
+    bool startIsWall = CollisionMask::GetInstance()->IsWall(myPos.x, myPos.z);
+    bool goalIsWall = CollisionMask::GetInstance()->IsWall(targetPos.x, targetPos.z);
+
+    char buf[256];
+    sprintf_s(buf, "StartWorld(%.1f, %.1f) Wall: %s | GoalWorld(%.1f, %.1f) Wall: %s\n",
+        myPos.x, myPos.z, startIsWall ? "YES" : "NO",
+        targetPos.x, targetPos.z, goalIsWall ? "YES" : "NO");
+    OutputDebugStringA(buf);
+
+    // 3. 壁判定ラムダ式の修正
     auto IsInsideWall = [&](Point p) {
         if (p.x < 0 || p.x >= 512 || p.y < 0 || p.y >= 512) return true;
 
-        bool isWall = CollisionMask::GetInstance()->IsWall((float) p.x, (float) p.y);
-        bool hasThread = false;        if (tm) {
+        // グリッド座標 p を 一度ワールド座標に戻してから IsWall に投げる
+        Vector3 worldP = GridToWorld(p);
+        bool isWall = CollisionMask::GetInstance()->IsWall(worldP.x, worldP.z);
+
+        bool hasThread = false;
+        if (tm) {
             for (auto& physics : tm->GetPhysicsList()) {
                 for (const auto& node : physics->GetNodes()) {
-                    float dx = node.currentPos.x - (float)p.x;
-                    float dz = node.currentPos.z - (float)p.y;
-                    if ((dx * dx + dz * dz) < 0.64f) { hasThread = true; break; }
+                    float dx = node.currentPos.x - worldP.x;
+                    float dz = node.currentPos.z - worldP.z;
+                    // 糸の判定（少し広めに 1.5マス分 = 2.25f）
+                    if ((dx * dx + dz * dz) < 2.25f) { hasThread = true; break; }
                 }
                 if (hasThread) break;
             }
@@ -137,6 +158,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
     Vector3 expectedPos = currentPos;
     bool isMoving = false;
 
+
     // ==========================================
     // 1. 移動方向と「予定座標(expectedPos)」の計算
     // ==========================================
@@ -151,11 +173,14 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
         }
         path_.clear(); // 経路リストを空にしておく
     } else {
-        // --- 経路探索（A*）を使う場合 ---
+
         recalculateTimer_++;
-        if (recalculateTimer_ > 30) {
+
+        // タイマーが満了したか、外部からリクエストがあった場合に再計算
+        if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
             RecalculatePath(eggPos, tm);
             recalculateTimer_ = 0;
+            shouldReplanNextUpdate_ = false; // フラグを戻す
         }
 
         if (!path_.empty()) {
@@ -218,15 +243,25 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
 void Enemy::Draw() { object_->Draw(); }
 
 Point Enemy::WorldToGrid(const Vector3& pos) {
-    // 高さを無視し、地面の座標だけで判定
-    return { (int)std::floor(pos.x), (int)std::floor(pos.z) };
+    // CollisionMaskが512x512で、中心を(0,0)としたい場合
+    const float offset = 256.0f;
+
+    int gx = (int)std::floor(pos.x + offset);
+    int gz = (int)std::floor(pos.z + offset);
+
+    // 範囲外チェック（これをしないと配列外参照でクラッシュします）
+    if (gx < 0) gx = 0; if (gx >= 512) gx = 511;
+    if (gz < 0) gz = 0; if (gz >= 512) gz = 511;
+
+    return { gx, gz };
 }
 
 Vector3 Enemy::GridToWorld(const Point& grid) {
+    const float offset = 256.0f;
     return {
-        (float)grid.x + 0.5f,
+        (float)grid.x - offset + 0.5f,
         0.0f,
-        (float)grid.y + 0.5f
+        (float)grid.y - offset + 0.5f
     };
 }
 

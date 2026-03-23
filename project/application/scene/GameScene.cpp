@@ -409,6 +409,15 @@ void GameScene::Update()
         targetPos = egg_->GetWorldPosition();
     }
 
+    // プレイヤーが糸を撃った瞬間を検知
+    if (player_->GetAndResetDidFireThread()) {
+        // 敵に「道が変わったぞ！」と教える
+        enemy_->RequestPathReplan();
+
+        // デバッグ用ログ
+        OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+    }
+
     // 決定した目的地を敵に渡す
     enemy_->Update(targetPos, thread_.get());
 
@@ -531,6 +540,34 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
         else
         {
             currentPos.z += overlapZ; // 奥へ
+        }
+    }
+
+    // 押し戻した先が壁だったら
+    if (CollisionMask::GetInstance()->IsWall(currentPos.x, currentPos.z))
+    {
+        if (overlapX < overlapZ) {
+            // X軸方向の押し戻し
+            if (playerAABB.min.x < otherAABB.min.x)
+            {
+                currentPos.x += (overlapX * 2.0f);
+            }
+            else
+            {
+                currentPos.x -= (overlapX * 2.0f);
+            }
+        }
+        else
+        {
+            // Z軸方向の押し戻し
+            if (playerAABB.min.z < otherAABB.min.z)
+            {
+                currentPos.z += (overlapZ * 2.0f);
+            }
+            else
+            {
+                currentPos.z -= (overlapZ * 2.0f);
+            }
         }
     }
    

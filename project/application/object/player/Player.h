@@ -82,6 +82,15 @@ public: // 外部入出力
     void SetEgg(Egg* egg) { egg_ = egg; }
     bool CanFireThread() const;
 
+    // 糸を撃ったかどうかを確認し、確認したらフラグを折る関数
+    bool GetAndResetDidFireThread() {
+        if (didFireThread_) {
+            didFireThread_ = false;
+            return true;
+        }
+        return false;
+    }
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
@@ -142,5 +151,7 @@ private:
     static inline const float kThreadEndSnapFadeRange = 0.18f;      // 端で補正を弱める範囲
 
     CollisionMask::RayResult rayResult_;
+
+    bool didFireThread_ = false; // 糸発射フラグ
 
 };
