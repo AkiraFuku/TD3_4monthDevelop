@@ -77,6 +77,7 @@ public:
             anima_->ChangeAnimation(newState);
         }
     }
+   
 
 
 public: // 外部入出力

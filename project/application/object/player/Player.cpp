@@ -31,9 +31,9 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     translate_ = pos;
     object_->SetTranslate(translate_);
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
-    object_->AddModel("player/player.obj","Body");
+    object_->AddModel("player/player.obj", "Body");
 
-    PsoConfig config {};
+    PsoConfig config{};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
     config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
 
@@ -41,11 +41,11 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
-        D3D12_STATIC_SAMPLER_DESC sampler {};
+        D3D12_STATIC_SAMPLER_DESC sampler{};
         sampler = PSOManager::GetInstance()->StaticSamplers();
 
         staticSamplers.push_back(sampler);
-        D3D12_DESCRIPTOR_RANGE descRangeTexture[1] {};
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
         descRangeTexture[0].BaseShaderRegister = 0; // t0
         descRangeTexture[0].NumDescriptors = 1;
         descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -104,12 +104,12 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
         rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
 
         // シリアライズ
-        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature {};
+        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
         descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         descriptionRootSignature.pParameters = rootParameters.data();
-        descriptionRootSignature.NumParameters = (UINT) rootParameters.size();
+        descriptionRootSignature.NumParameters = (UINT)rootParameters.size();
         descriptionRootSignature.pStaticSamplers = staticSamplers.data();
-        descriptionRootSignature.NumStaticSamplers = (UINT) staticSamplers.size();
+        descriptionRootSignature.NumStaticSamplers = (UINT)staticSamplers.size();
 
 
         Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
@@ -132,8 +132,8 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     config.inputLayoutGenerator = []() {
         return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-            {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
         };
     // 深度設定
@@ -158,23 +158,40 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 /// <summary>
 /// 終了
 /// </summary>
-void Player::Finalize() {}
+void Player::Finalize() {
+}
 /// <summary>
 /// 更新
 /// </summary>
 void Player::Update() {
 
-    moveVel_ = {0.0f, 0.0f, 0.0f};
+    moveVel_ = { 0.0f, 0.0f, 0.0f };
 
     if (state_) {
         state_->Update(this);
     }
 
-    if (onThread_) {
-        ResolveThreadMove();
-    } else {
-        IsCollisionSDF();
-    }
+    //if (Input::GetInstance())
+    //{  // スレッド上の移動判定と場合分けしてアニメーション制御
+    //    bool wasOnThread = onThread_;
+
+    //    if (onThread_) {
+    //        ResolveThreadMove();
+    //    } else {
+    //        IsCollisionSDF();
+    //    }
+
+    //    // スレッド状態が変わった場合のアニメーション切り替え
+    //    if (!wasOnThread && onThread_) {
+    //        // 地面 → スレッド上
+    //        ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+    //    } else if (wasOnThread && !onThread_) {
+    //        // スレッド上 → 地面
+    //        ChangeAnimation(PlayerAnima::AnimationState::Walk);
+    //    }
+
+    //}
+
 
     ResultMove();
 
@@ -232,7 +249,7 @@ void Player::IsCollisionSDF() {
 
     // 3. 四隅の中で「最も壁に近い点」を探す
     float minDist = 10000.0f;
-    Vector2 targetCorner = {nextPos.x, nextPos.z};
+    Vector2 targetCorner = { nextPos.x, nextPos.z };
 
 
     for (const auto& corner : corners) {
@@ -298,8 +315,8 @@ void Player::FireThread() {
         return;
     }
 
-    Vector3 start = {rayResult_.hitPos.x, 0.0f, rayResult_.hitPos.y};
-    Vector3 end = {rayResult_.exitPos.x, 0.0f, rayResult_.exitPos.y};
+    Vector3 start = { rayResult_.hitPos.x, 0.0f, rayResult_.hitPos.y };
+    Vector3 end = { rayResult_.exitPos.x, 0.0f, rayResult_.exitPos.y };
 
     Vector3 dir = end - start;
     float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
@@ -324,15 +341,15 @@ void Player::SetPosition(const Vector3& pos) {
 
 // 向いている方向
 Vector3 Player::GetForward() const {
-    return {std::sin(rotationY_), 0.0f, std::cos(rotationY_)};
+    return { std::sin(rotationY_), 0.0f, std::cos(rotationY_) };
 }
 
 AABB Player::GetAABB() const {
     Vector3 worldPos = GetPosition();
     AABB aabb;
 
-    aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
-    aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
+    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
+    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
 
     return aabb;
 }
@@ -372,7 +389,7 @@ void Player::TurnToDirection(const Vector3& direction) {
 
     rotationY_ += diffrence * kTurnSpeed;
 
-    rotate_ = {0.0f, rotationY_, 0.0f};
+    rotate_ = { 0.0f, rotationY_, 0.0f };
     object_->SetRotate(rotate_);
 }
 
@@ -381,7 +398,7 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         return false;
     }
 
-    ThreadManager::ThreadQueryResult query {};
+    ThreadManager::ThreadQueryResult query{};
 
     Vector3 probePos = translate_;
     const float probeDistance = kWidth * 0.5f + kThreadEnterRadius;
@@ -392,9 +409,9 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
 
     if (onThread_) {
 
-       // anima_->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+        // anima_->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
 
-        // 乗っている最中は現在位置優先で見る
+         // 乗っている最中は現在位置優先で見る
         found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
         if (!found) {
             found = thread_->FindNearestThread(probePos, kThreadStickRadius, query);
@@ -420,7 +437,7 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
 
         if (tangentLength <= 0.0001f) {
-            moveVel_ = {0.0f, 0.0f, 0.0f};
+            moveVel_ = { 0.0f, 0.0f, 0.0f };
             return true;
         }
     }

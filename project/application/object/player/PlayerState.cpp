@@ -12,6 +12,7 @@
 // 初期化
 void PlayerStateIdle::Initialize(Player* player)
 {
+    player->ChangeAnimation(PlayerAnima::AnimationState::Idle);
 }
 
 // 更新
@@ -30,6 +31,9 @@ void PlayerStateIdle::Update(Player* player)
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
     }
+
+
+
 }
 
 // ======================================
@@ -39,11 +43,19 @@ void PlayerStateIdle::Update(Player* player)
 // 初期化
 void PlayerStateMove::Initialize(Player* player)
 {
+    if (player->OnThread())
+    {
+        player->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+
+    }else{
+       player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+ 
+    }
 }
 
 // 更新
 void PlayerStateMove::Update(Player* player) {
-    Vector3 moveDirection = {0.0f, 0.0f, 0.0f};
+    Vector3 moveDirection = { 0.0f, 0.0f, 0.0f };
 
     // 1. 【脳の処理】キー入力から進みたい方向（意志）を決定する
     if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
@@ -81,10 +93,31 @@ void PlayerStateMove::Update(Player* player) {
         moveDirection.z /= length;
     }
 
+    // ★重要: 移動前のスレッド状態を記録
+    bool wasOnThread = player->OnThread();
+
     // 4. 【肉体への指示】計算した方向ベクトルを渡して移動してもらう
     player->Move(moveDirection);
 
-    // 5. 状態遷移の判断（SPACEでShootへ）
+    // 5. スレッド上の移動処理
+    if (player->OnThread()) {
+        // ResolveThreadMove は Player::Update で呼ばれるので、ここでは不要
+    } else {
+        player->IsCollisionSDF();
+    }
+
+    // ★重要: 状態が変わったかを比較
+    bool isNowOnThread = player->OnThread();
+
+    if (!wasOnThread && isNowOnThread) {
+        // 地面 → スレッド上に乗った
+        player->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+    } else if (wasOnThread && !isNowOnThread) {
+        // スレッド上 → 地面に降りた
+        player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+    }
+
+    // 6. 状態遷移の判断（SPACEでShootへ）
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) && player->CanFireThread()) {
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
