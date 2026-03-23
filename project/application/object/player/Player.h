@@ -37,7 +37,7 @@ public:
     /// <summary>
     /// 移動処理
     /// </summary>
-    void UpdateMove(Vector3& moveDirection);
+    void Move(const Vector3& moveDirection);
 
     /// <summary>
     /// 移動距離確定

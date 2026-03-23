@@ -42,26 +42,53 @@ void PlayerStateMove::Initialize(Player* player)
 }
 
 // 更新
-void PlayerStateMove::Update(Player* player)
-{
-    Vector3 moveDirection = {};
+void PlayerStateMove::Update(Player* player) {
+    Vector3 moveDirection = {0.0f, 0.0f, 0.0f};
 
-    // 移動処理
-    player->UpdateMove(moveDirection);
+    // 1. 【脳の処理】キー入力から進みたい方向（意志）を決定する
+    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+        moveDirection.x += 0.7f;
+        moveDirection.z += 0.7f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+        moveDirection.x += 0.7f;
+        moveDirection.z -= 0.7f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+        moveDirection.x -= 0.7f;
+        moveDirection.z -= 0.7f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+        moveDirection.x -= 0.7f;
+        moveDirection.z += 0.7f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
+        moveDirection.x += 1.0f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
+        moveDirection.x -= 1.0f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
+        moveDirection.z += 1.0f;
+    } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
+        moveDirection.z -= 1.0f;
+    }
 
-    // 入力がなくなったら待機状態に遷移
+    // 2. 状態遷移の判断（入力がなければIdleへ）
     if (moveDirection.x == 0.0f && moveDirection.z == 0.0f) {
         player->ChangeState(std::make_unique<PlayerStateIdle>());
-
         return;
     }
 
-    // 移動中にSPACEを押して発射状態に遷移
+    // 3. ベクトルの正規化（方向を綺麗に整える）
+    float length = std::sqrtf(moveDirection.x * moveDirection.x + moveDirection.z * moveDirection.z);
+    if (length > 0.0f) {
+        moveDirection.x /= length;
+        moveDirection.z /= length;
+    }
+
+    // 4. 【肉体への指示】計算した方向ベクトルを渡して移動してもらう
+    player->Move(moveDirection);
+
+    // 5. 状態遷移の判断（SPACEでShootへ）
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) && player->CanFireThread()) {
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
     }
-
 }
 
 // ======================================
