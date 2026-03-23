@@ -180,40 +180,8 @@ void Player::Draw() {
 /// <summary>
 /// 移動処理
 /// </summary>
-void Player::UpdateMove(Vector3& moveDirection) {
-    moveDirection = {0.0f, 0.0f, 0.0f};
-
-    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.x += 0.7f;
-        moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.x += 0.7f;
-        moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.x -= 0.7f;
-        moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.x -= 0.7f;
-        moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
-        moveDirection.x += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
-        moveDirection.x -= 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.z += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.z -= 1.0f;
-    } else {
-        return;
-    }
-
-    float length = std::sqrtf(moveDirection.x * moveDirection.x +
-        moveDirection.z * moveDirection.z);
-
-    if (length > 0.0f) {
-        moveDirection.x /= length;
-        moveDirection.z /= length;
-    }
+void Player::Move(const Vector3& moveDirection) {
+    //  moveDirectionは既にState側で計算・正規化されている前提
 
     // 先にThread移動を試す
     if (TryMoveOnThread(moveDirection)) {
