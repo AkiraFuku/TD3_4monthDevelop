@@ -19,61 +19,6 @@ void DebugCamera::Update(EulerTransform originCamera)
 
 	EulerTransform camera = { 0.0f, 0.0f, 0.0f };
 
-	/*if (input_->PushKey(DIK_RIGHT))
-	{
-		debugCamera_.rotate.y += 0.5f / 180.0f * pi;
-	}
-	else if (input_->PushKey(DIK_LEFT))
-	{
-		debugCamera_.rotate.y -= 0.5f / 180.0f * pi;
-	}
-
-	if (input_->PushKey(DIK_UP))
-	{
-		debugCamera_.rotate.x += 0.5f / 180.0f * pi;
-	}
-	else if (input_->PushKey(DIK_DOWN))
-	{
-		debugCamera_.rotate.x -= 0.5f / 180.0f * pi;
-	}
-
-	camera.rotate.x = debugCamera_.rotate.x + originCamera.rotate.x;
-	camera.rotate.y = debugCamera_.rotate.y + originCamera.rotate.y;
-	camera.rotate.z = debugCamera_.rotate.z + originCamera.rotate.z;
-
-	if (input_->PushKey(DIK_W))
-	{
-		const float speed = 0.5f;
-		move.z = speed;
-	}
-	else if (input_->PushKey(DIK_S))
-	{
-		const float speed = -0.5f;
-		move.z = speed;
-	}
-
-	if (input_->PushKey(DIK_A))
-	{
-		const float speed = 0.5f;
-		move.x = speed;
-	}
-	else if (input_->PushKey(DIK_D))
-	{
-		const float speed = -0.5f;
-		move.x = speed;
-	}
-
-	if (input_->PushKey(DIK_R))
-	{
-		const float speed = 0.5f;
-		move.y = speed;
-	}
-	else if (input_->PushKey(DIK_F))
-	{
-		const float speed = -0.5f;
-		move.y = speed;
-	}*/
-
 	ImGui::Begin("DebugCameraWindow");
 
 	if (input_->PushMouseDown(Input::MouseButton::Middle) && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
@@ -82,8 +27,8 @@ void DebugCamera::Update(EulerTransform originCamera)
 		ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Middle, 0.0f);
 
 		// カメラ角度に反映
-		phi += delta.x * rotationSpeed;
-		theta += delta.y * rotationSpeed;
+		phi -= delta.x * rotationSpeed;
+		theta -= delta.y * rotationSpeed;
 
 		if (phi > pi)
 		{
@@ -107,39 +52,25 @@ void DebugCamera::Update(EulerTransform originCamera)
 	radius -= wheel * 0.005f;              // 感度は 0.1f などで調整
 	radius = max(1.0f, min(radius, 100.0f)); // クランプして近づきすぎ防止
 
-	camera.rotate.x = phi;
-	camera.rotate.y = theta;
+	camera.rotate.x = theta;
+	camera.rotate.y = phi;
 
-	camera.translate.x = -radius * std::cos(theta) * std::sin(phi);
-	camera.translate.y = radius * std::sin(theta);
-	camera.translate.z = -radius * std::cos(theta) * std::cos(phi);
+    camera.translate.x = radius * std::sin(phi) * std::cos(theta);
+    camera.translate.y = -radius * std::sin(theta); 
+    camera.translate.z = -radius * std::cos(phi) * std::cos(theta);
 
-	/*Matrix4x4 rotMat = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camera.rotate, { 0.0f, 0.0f, 0.0f });
+	worldMatrix_ = Inverse(MakeLookAtMatrix(camera.translate, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
 
-	Vector3 rotatedMove =
-	{
-		move.x * rotMat.m[0][0] + move.y * rotMat.m[1][0] + move.z * rotMat.m[2][0],
-		move.x * rotMat.m[0][1] + move.y * rotMat.m[1][1] + move.z * rotMat.m[2][1],
-		move.x * rotMat.m[0][2] + move.y * rotMat.m[1][2] + move.z * rotMat.m[2][2]
-	};
-
-	debugCamera_.translate.x += rotatedMove.x;
-	debugCamera_.translate.y += rotatedMove.y;
-	debugCamera_.translate.z += rotatedMove.z;*/
-
-	/*camera.translate.x = debugCamera_.translate.x + originCamera.translate.x;
-	camera.translate.y = debugCamera_.translate.y + originCamera.translate.y;
-	camera.translate.z = debugCamera_.translate.z + originCamera.translate.z;*/
-
-	/*worldMatrix_ = MakeAffineMatrix(originCamera.scale, camera.rotate, camera.translate);*/
-
-	viewMatrix_ = MakeLookAtMatrix(camera.translate, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+    // 位置 (Translate)
+    debugCamera_.translate = camera.translate;
 
 	ImGui::End();
 
     ImGui::Begin("DebugCamera Info");
 
     ImGui::InputFloat3("translate", &camera.translate.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+    ImGui::InputFloat("radius", &radius, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
     ImGui::End();
 

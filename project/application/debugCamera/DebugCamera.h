@@ -29,6 +29,12 @@ public:
 	/// </summary>
 	void Update(EulerTransform camera);
 
+    Vector3 GetTranslate() { return debugCamera_.translate; }
+
+    Vector3 GetRotate() { return debugCamera_.rotate; }
+
+    Matrix4x4 GetWorldMatrix() { return worldMatrix_; }
+
 	Matrix4x4 GetViewMatrix() { return viewMatrix_; }
 
 
@@ -37,6 +43,7 @@ private:
 	// カメラ
 	EulerTransform debugCamera_;
 
+    Matrix4x4 worldMatrix_ = MakeIdentity4x4();
 	// ビュー行列
 	Matrix4x4 viewMatrix_ = MakeIdentity4x4();
 	// 射影行列
