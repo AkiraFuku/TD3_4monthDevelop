@@ -66,7 +66,7 @@ void CollisionMask::Initialize()
         maskDatas_[i]->min_ = model->GetModelData().vertices[2].position;
     }
     
-    currentMaskMap_ = CollisionMask::MaskMap::Map1;
+    currentMaskMap_ = CollisionMask::MaskMap::Map2;
 
     maskMapRequest_ = CollisionMask::MaskMap::Unknown;
 
@@ -430,52 +430,134 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
     return false;
 }
 
-CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector3 direction, float maxDist)
-{
-    RayResult result;
+CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector3 direction, float maxDist) {
+    RayResult result {};
+
+    // XZ平面のみ使う
+    direction.y = 0.0f;
+
+    const float len = std::sqrt(direction.x * direction.x + direction.z * direction.z);
+    if (len < 0.001f) {
+        return result;
+    }
+
+    direction.x /= len;
+    direction.z /= len;
+
+    constexpr float kMinStep = 0.05f;
+    constexpr int kBinaryIter = 12;
+
+    auto SamplePos = [&](float t) -> Vector3 {
+        return {
+            start.x + direction.x * t,
+            start.y,
+            start.z + direction.z * t
+        };
+        };
+
+    auto IsWallAt = [&](float t) -> bool {
+        Vector3 p = SamplePos(t);
+        return IsWall(p.x, p.z);
+        };
+
+    // outside -> inside の境界を「外側ギリギリ」まで詰める
+    auto RefineEntry = [&](float outsideT, float insideT) -> float {
+        float low = outsideT;
+        float high = insideT;
+
+        for (int i = 0; i < kBinaryIter; ++i) {
+            float mid = (low + high) * 0.5f;
+            if (IsWallAt(mid)) {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+
+        return low; // 壁の外側ギリギリ
+        };
+
+    // inside -> outside の境界を「外側ギリギリ」まで詰める
+    auto RefineExit = [&](float insideT, float outsideT) -> float {
+        float low = insideT;
+        float high = outsideT;
+
+        for (int i = 0; i < kBinaryIter; ++i) {
+            float mid = (low + high) * 0.5f;
+            if (IsWallAt(mid)) {
+                low = mid;
+            } else {
+                high = mid;
+            }
+        }
+
+        return high; // 壁の外側ギリギリ
+        };
+
+    // -------------------------
+    // 入口を探す
+    // -------------------------
     float traveled = 0.0f;
+    float prevTraveled = 0.0f;
 
-    // 進行方向をXZ平面（水平）に限定して正規化
-    float len = std::sqrt(direction.x * direction.x + direction.z * direction.z);
-    if (len < 0.001f) return result;
-    Vector2 dirH = { direction.x / len, direction.z / len };
-
-    // ステップ1: 壁の入り口を探す
     while (traveled < maxDist) {
-        Vector3 currentPos; 
-        currentPos.x = start.x + direction.x * traveled;
-        currentPos.z = start.z + direction.z * traveled;
-        float dist = GetSDFValue(currentPos.x, currentPos.z);
+        Vector3 currentPos = SamplePos(traveled);
+        const float dist = GetSDFValue(currentPos.x, currentPos.z);
 
-        // 距離がほぼ0（壁の表面）に到達
-        if (dist <= 0.1f) {
+        if (IsWall(currentPos.x, currentPos.z)) {
+            const float entryT = RefineEntry(prevTraveled, traveled);
+            Vector3 p = SamplePos(entryT);
+
             result.hit = true;
-            result.hitPos = {currentPos.x, currentPos.z};
+            result.hitPos = {p.x, p.z};
+
+            traveled = entryT;
             break;
         }
-        // 安全な距離分だけ進む
-        traveled += std::max(dist, 0.1f);
+
+        prevTraveled = traveled;
+        traveled += std::max(dist, kMinStep);
     }
 
-    if (!result.hit) return result;
+    if (!result.hit) {
+        return result;
+    }
 
-    // ステップ2: そのまま突き進んで「出口」を探す
-    // 壁の中では SDF 値が 0 になるように FindNearestWallDist で作ったので、
-    // ここでは一定間隔（1ピクセル分など）で少しずつ進みます
-    float exitTraveled = traveled + 0.5f;
+    // -------------------------
+    // 出口を探す
+    // -------------------------
+    float insideT = traveled + kMinStep;
+    while (insideT < maxDist && !IsWallAt(insideT)) {
+        insideT += kMinStep;
+    }
+
+    if (insideT >= maxDist) {
+        result.hit = false;
+        return result;
+    }
+
+    float exitTraveled = insideT;
+    float prevInsideT = insideT;
+
     while (exitTraveled < maxDist) {
-        Vector3 currentPos;
-        currentPos.x = start.x + direction.x * exitTraveled;
-        currentPos.z = start.z + direction.z * exitTraveled;
-        float dist = GetSDFValue(currentPos.x, currentPos.z);
+        exitTraveled += kMinStep;
 
-        // 距離が再びプラス（空白）になったらそこが出口
-        if (dist > 0.1f) {
-            result.exitPos = { currentPos.x, currentPos.z };
+        if (exitTraveled >= maxDist) {
             break;
         }
-        exitTraveled += 0.5f; // 壁の中は慎重に進む
+
+        if (!IsWallAt(exitTraveled)) {
+            const float exitT = RefineExit(prevInsideT, exitTraveled);
+            Vector3 p = SamplePos(exitT);
+
+            result.exitPos = {p.x, p.z};
+            return result;
+        }
+
+        prevInsideT = exitTraveled;
     }
 
+    // 出口が見つからなかったら失敗扱い
+    result.hit = false;
     return result;
 }

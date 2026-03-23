@@ -92,7 +92,7 @@ public:
 
     RayResult CastRayThroughWall(Vector3 start, Vector3 direction, float maxDist);
 
-   
+    const Vector3& GetTranslate() const { return translate_; }
 
 
 public:
@@ -123,7 +123,7 @@ private:
 
     std::vector<std::unique_ptr<MaskData>> maskDatas_;
 
-    Vector3 translate_ = { 0.0f, 0.0f, 0.0f };
+    Vector3 translate_ = { 0.0f, -0.5f, 0.0f };
 
     MaskMap currentMaskMap_ = MaskMap::Map1;
 

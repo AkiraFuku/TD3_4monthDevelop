@@ -19,14 +19,16 @@
 /// <param name="pos">初期位置</param>
 /// <param name="threadManager">ThreadManagerのポインタ</param>
 void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
-
-    //ThreadManagerを借りる
     thread_ = thread;
 
-    // モデルの初期化
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
+
     translate_ = pos;
+    groundY_ = pos.y;
+    verticalVelocity_ = 0.0f;
+    threadRideOffsetY_ = 0.0f;
+
     object_->SetTranslate(translate_);
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
     object_->SetModel("player/player.obj");
@@ -34,7 +36,6 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     PsoConfig config {};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
     config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
-
 
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
@@ -44,64 +45,51 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
         staticSamplers.push_back(sampler);
         D3D12_DESCRIPTOR_RANGE descRangeTexture[1] {};
-        descRangeTexture[0].BaseShaderRegister = 0; // t0
+        descRangeTexture[0].BaseShaderRegister = 0;
         descRangeTexture[0].NumDescriptors = 1;
         descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-
-
         rootParameters.resize(8);
 
-
-
-        // Enum定義 (可読性のため)
         enum {
             kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
         };
 
-        // 0. Material (CBV b0, Pixel)
         rootParameters[kMaterial].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         rootParameters[kMaterial].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         rootParameters[kMaterial].Descriptor.ShaderRegister = 0;
 
-        // 1. Transform (CBV b0, Vertex)
         rootParameters[kTransform].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         rootParameters[kTransform].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
         rootParameters[kTransform].Descriptor.ShaderRegister = 0;
 
-        // 2. Texture (Table t0, Pixel)
         rootParameters[kTexture].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         rootParameters[kTexture].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         rootParameters[kTexture].DescriptorTable.pDescriptorRanges = descRangeTexture;
         rootParameters[kTexture].DescriptorTable.NumDescriptorRanges = 1;
 
-        // ★変更: 3. DirectionalLight (SRV t1)
         rootParameters[DirLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
         rootParameters[DirLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[DirLight].Descriptor.ShaderRegister = 1; // t1
+        rootParameters[DirLight].Descriptor.ShaderRegister = 1;
 
-        // ★追加: 4. PointLight (SRV t2)
         rootParameters[PointLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
         rootParameters[PointLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[PointLight].Descriptor.ShaderRegister = 2; // t2
+        rootParameters[PointLight].Descriptor.ShaderRegister = 2;
 
-        // ★追加: 5. SpotLight (SRV t3)
         rootParameters[SpotLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
         rootParameters[SpotLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[SpotLight].Descriptor.ShaderRegister = 3; // t3
+        rootParameters[SpotLight].Descriptor.ShaderRegister = 3;
 
-        // ★追加: 6. LightCounts (CBV b3)
         rootParameters[Count].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         rootParameters[Count].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[Count].Descriptor.ShaderRegister = 3; // b3 (b0,b1,b2は使用済みと仮定、あるいは空いている番号)
-        //カメラ
-        rootParameters[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 定数バッファビュー
-        rootParameters[kCamera].Descriptor.ShaderRegister = 2; // レジスタ番号 2 (b2)
-        rootParameters[kCamera].Descriptor.RegisterSpace = 0;
-        rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
+        rootParameters[Count].Descriptor.ShaderRegister = 3;
 
-        // シリアライズ
+        rootParameters[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[kCamera].Descriptor.ShaderRegister = 2;
+        rootParameters[kCamera].Descriptor.RegisterSpace = 0;
+        rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
         D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature {};
         descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         descriptionRootSignature.pParameters = rootParameters.data();
@@ -109,40 +97,45 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
         descriptionRootSignature.pStaticSamplers = staticSamplers.data();
         descriptionRootSignature.NumStaticSamplers = (UINT) staticSamplers.size();
 
-
         Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
         Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
 
-        HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+        HRESULT hr = D3D12SerializeRootSignature(
+            &descriptionRootSignature,
+            D3D_ROOT_SIGNATURE_VERSION_1,
+            &signatureBlob,
+            &errorBlob);
+
         if (FAILED(hr)) {
             Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
             assert(false);
         }
 
         Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(
+            0,
+            signatureBlob->GetBufferPointer(),
+            signatureBlob->GetBufferSize(),
+            IID_PPV_ARGS(&rootSignature));
         assert(SUCCEEDED(hr));
-
-
 
         return rootSignature;
         };
+
     config.inputLayoutGenerator = []() {
         return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
             {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
             {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         };
         };
-    // 深度設定
+
     config.depthEnable = true;
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 
-    // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("PLayer", config);
     object_->SetPsoName("PLayer");
 
-    // 待機状態で初期化
     ChangeState(std::make_unique<PlayerStateIdle>());
 }
 /// <summary>
@@ -180,6 +173,7 @@ void Player::Draw() {
 /// <summary>
 /// 移動処理
 /// </summary>
+/// <param name="moveDirection">移動したい方向</param>
 void Player::Move(const Vector3& moveDirection) {
     //  moveDirectionは既にState側で計算・正規化されている前提
 
@@ -195,11 +189,35 @@ void Player::Move(const Vector3& moveDirection) {
     moveVel_.z += moveDirection.z * velocity_.z;
 }
 
+/// <summary>
+/// 移動距離確定処理
+/// </summary>
 void Player::ResultMove() {
-    translate_ += moveVel_;
+    translate_.x += moveVel_.x;
+    translate_.z += moveVel_.z;
+
+    if (!onThread_) {
+        verticalVelocity_ += kGravityAcceleration;
+        if (verticalVelocity_ < kMaxFallSpeed) {
+            verticalVelocity_ = kMaxFallSpeed;
+        }
+
+        translate_.y += verticalVelocity_;
+
+        if (translate_.y < groundY_) {
+            translate_.y = groundY_;
+            if (verticalVelocity_ < 0.0f) {
+                verticalVelocity_ = 0.0f;
+            }
+        }
+    }
+
     object_->SetTranslate(translate_);
 }
 
+/// <summary>
+/// CollisionMaskとの当たり判定
+/// </summary>
 void Player::IsCollisionSDF() {
     Vector3 nextPos = {};
     nextPos.x = translate_.x + moveVel_.x;
@@ -257,16 +275,17 @@ void Player::IsCollisionSDF() {
 }
 
 /// <summary>
-/// 状態遷移
+/// PlayerStateの切り替え処理
 /// </summary>
-/// <param name="newState">次の状態</param>
+/// <param name="newState"></param>
 void Player::ChangeState(std::unique_ptr<IPlayerState> newState) {
     state_ = std::move(newState);
     state_->Initialize(this);
 }
 
 /// <summary>
-/// 糸を発射する処理
+/// Threadの生成処理
+/// </summary>
 void Player::FireThread() {
     if (!thread_) {
         return;
@@ -276,8 +295,8 @@ void Player::FireThread() {
         return;
     }
 
-    Vector3 forward = GetForward();
-    Vector3 playerPos = GetPosition();
+    const Vector3 forward = GetForward();
+    const Vector3 playerPos = GetPosition();
 
     rayResult_ = CollisionMask::GetInstance()->CastRayThroughWall(playerPos, forward, 50.0f);
 
@@ -285,27 +304,39 @@ void Player::FireThread() {
         return;
     }
 
-    Vector3 start = {rayResult_.hitPos.x, 0.0f, rayResult_.hitPos.y};
-    Vector3 end = {rayResult_.exitPos.x, 0.0f, rayResult_.exitPos.y};
+    const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
+
+    Vector3 start = {rayResult_.hitPos.x, targetY, rayResult_.hitPos.y};
+    Vector3 end = {rayResult_.exitPos.x, targetY, rayResult_.exitPos.y};
 
     Vector3 dir = end - start;
-    float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
-    if (len > 0.0001f) {
-        dir.x /= len;
-        dir.z /= len;
+    dir.y = 0.0f;
 
-        const float extend = 0.4f;
-        start.x -= dir.x * extend;
-        start.z -= dir.z * extend;
-        end.x += dir.x * extend;
-        end.z += dir.z * extend;
+    const float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
+    if (len <= 0.0001f) {
+        return;
     }
+
+    dir.x /= len;
+    dir.z /= len;
+
+    // 壁面ジャストだと見た目や判定で少し埋まって見えることがあるので、
+    // ごく微小だけ外側へ逃がす
+    const float kSurfaceBias = 1.0f;
+    start.x -= dir.x * kSurfaceBias;
+    start.z -= dir.z * kSurfaceBias;
+    end.x += dir.x * kSurfaceBias;
+    end.z += dir.z * kSurfaceBias;
 
     thread_->AddThread(start, end);
 }
 
 void Player::SetPosition(const Vector3& pos) {
     translate_ = pos;
+    if (!onThread_) {
+        groundY_ = pos.y;
+    }
+    verticalVelocity_ = 0.0f;
     object_->SetTranslate(translate_);
 }
 
@@ -342,6 +373,10 @@ bool Player::CanFireThread() const {
     return true;
 }
 
+/// <summary>
+/// 指定した方向にPlayerを振り向かせる処理
+/// </summary>
+/// <param name="direction"></param>
 void Player::TurnToDirection(const Vector3& direction) {
     if (std::abs(direction.x) < 0.0001f && std::abs(direction.z) < 0.0001f) {
         return;
@@ -363,6 +398,11 @@ void Player::TurnToDirection(const Vector3& direction) {
     object_->SetRotate(rotate_);
 }
 
+/// <summary>
+/// 糸の上に移動できるか？
+/// </summary>
+/// <param name="moveDirection">移動したい方向</param>
+/// <returns></returns>
 bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     if (!thread_) {
         return false;
@@ -375,17 +415,23 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     probePos.x += moveDirection.x * probeDistance;
     probePos.z += moveDirection.z * probeDistance;
 
+    const bool wasOnThread = onThread_;
     bool found = false;
 
-    if (onThread_) {
-        // 乗っている最中は現在位置優先で見る
+    if (wasOnThread) {
         found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
         if (!found) {
             found = thread_->FindNearestThread(probePos, kThreadStickRadius, query);
         }
     } else {
-        // 降りた直後の再吸着を防ぐため、off中は probePos のみで判定する
         found = thread_->FindNearestThread(probePos, kThreadEnterRadius, query);
+
+        if (found) {
+            const float enterDeltaY = translate_.y - query.closestPoint.y;
+            if (std::abs(enterDeltaY) > kThreadEnterHeightTolerance) {
+                return false;
+            }
+        }
     }
 
     if (!found) {
@@ -393,7 +439,6 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         return false;
     }
 
-    // 今いる線分の接線方向
     Vector3 tangent = query.segmentEnd - query.segmentStart;
     tangent.y = 0.0f;
 
@@ -412,11 +457,9 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     tangent.x /= tangentLength;
     tangent.z /= tangentLength;
 
-    // 入力をThread方向へ射影
     float along = moveDirection.x * tangent.x + moveDirection.z * tangent.z;
 
-    // 端から外向きに行くなら降りる
-    if (onThread_) {
+    if (wasOnThread) {
         bool atStart = query.t <= kThreadExitThreshold;
         bool atEnd = query.t >= (1.0f - kThreadExitThreshold);
 
@@ -425,8 +468,14 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
 
         if (leavingFromStart || leavingFromEnd) {
             onThread_ = false;
-            return false; // 通常移動へ
+            return false;
         }
+    }
+
+    if (!wasOnThread) {
+        // 乗った瞬間の「Playerと糸のY差」を保存する
+        // これを保持することで、糸にピタッと瞬間移動しなくなる
+        threadRideOffsetY_ = translate_.y - query.closestPoint.y;
     }
 
     onThread_ = true;
@@ -448,6 +497,9 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     return true;
 }
 
+/// <summary>
+/// 糸の上の移動結果を実際の座標に反映する処理
+/// </summary>
 void Player::ResolveThreadMove() {
     if (!thread_) {
         onThread_ = false;
@@ -455,9 +507,8 @@ void Player::ResolveThreadMove() {
         return;
     }
 
-    ThreadManager::ThreadQueryResult query{};
+    ThreadManager::ThreadQueryResult query {};
 
-    // 今フレームの予定移動先
     Vector3 nextPos = translate_;
     nextPos.x += moveVel_.x;
     nextPos.z += moveVel_.z;
@@ -477,7 +528,6 @@ void Player::ResolveThreadMove() {
     threadStart_ = query.startPoint;
     threadEnd_ = query.endPoint;
 
-    // 今いる線分の接線方向
     Vector3 tangent = query.segmentEnd - query.segmentStart;
     tangent.y = 0.0f;
 
@@ -495,14 +545,12 @@ void Player::ResolveThreadMove() {
     tangent.x /= tangentLength;
     tangent.z /= tangentLength;
 
-    // 最近点との差
     Vector3 toClosest = {
         query.closestPoint.x - nextPos.x,
         0.0f,
         query.closestPoint.z - nextPos.z
     };
 
-    // 最近点との差を「接線方向成分」と「横方向成分」に分解
     float alongError = toClosest.x * tangent.x + toClosest.z * tangent.z;
 
     Vector3 lateral = {
@@ -511,23 +559,40 @@ void Player::ResolveThreadMove() {
         toClosest.z - tangent.z * alongError
     };
 
-    // 端に近いほど横補正を弱める
     float edgeFade = 1.0f;
-
     if (query.t < kThreadEndSnapFadeRange) {
         edgeFade = query.t / kThreadEndSnapFadeRange;
     } else if (query.t > (1.0f - kThreadEndSnapFadeRange)) {
         edgeFade = (1.0f - query.t) / kThreadEndSnapFadeRange;
     }
-
     edgeFade = std::clamp(edgeFade, 0.0f, 1.0f);
 
-    // 横方向だけ補正する
     moveVel_.x += lateral.x * kThreadLateralFollowStrength * edgeFade;
     moveVel_.z += lateral.z * kThreadLateralFollowStrength * edgeFade;
 
-    // Yだけは糸に合わせる
-    translate_.y = query.closestPoint.y;
+    // ===== ここが今回の本体 =====
+    // 糸の高さに直接合わせるのではなく、Player自身も重力で落とす
+    verticalVelocity_ += kGravityAcceleration;
+    if (verticalVelocity_ < kMaxFallSpeed) {
+        verticalVelocity_ = kMaxFallSpeed;
+    }
 
-    thread_->ApplyPlayerWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
+    translate_.y += verticalVelocity_;
+
+    // 乗った瞬間のY差分を保った「支持高さ」
+    const float supportY = query.closestPoint.y + threadRideOffsetY_;
+
+    // 支持高さまで落ちたらそこで止まる
+    if (translate_.y <= supportY) {
+        translate_.y = supportY;
+        if (verticalVelocity_ < 0.0f) {
+            verticalVelocity_ = 0.0f;
+        }
+    }
+
+    // Playerの重さで糸をたわませる
+    thread_->ApplyPlayerWeight(
+        query.closestPoint,
+        kThreadWeightRadius,
+        mass_ * kThreadWeightPerMass);
 }
