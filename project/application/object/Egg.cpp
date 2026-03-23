@@ -12,8 +12,8 @@ void Egg::Initialize()
     object_->Initialize();
     
 
-    ModelManager::GetInstance()->LoadModel("resources","axis.obj");
-    object_->SetModel("axis.obj");
+    ModelManager::GetInstance()->LoadModel("resources","egg.obj");
+    object_->SetModel("egg.obj");
 }
 
 void Egg::Finalize()
@@ -90,20 +90,20 @@ void Egg::Update()
                 translate.y += 2.0f;
             }
         }
-        else
-        {
-            // ゴール判定確認用の移動処理
-            if (Input::GetInstance()->PushedKeyDown(DIK_UP))
-            {
-                // 奥に進む
-                translate.z += 0.1f;
-            }
-            else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
-            {
-                // 手前に進む
-                translate.z -= 0.1f;
-            }
-        }
+        //else
+        //{
+        //    // ゴール判定確認用の移動処理
+        //    if (Input::GetInstance()->PushedKeyDown(DIK_UP))
+        //    {
+        //        // 奥に進む
+        //        translate.z += 0.1f;
+        //    }
+        //    else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
+        //    {
+        //        // 手前に進む
+        //        translate.z -= 0.1f;
+        //    }
+        //}
     }
 
     object_->SetTranslate(translate);

@@ -7,7 +7,7 @@
 void Enemy::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-    object_->SetModel("player/player.obj"); // 敵のモデル
+    object_->SetModel("enemy.obj"); // 敵のモデル
     object_->SetTranslate(pos);
 }
 
