@@ -211,6 +211,9 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
             expectedPos.x += (diff.x / distance) * moveSpeed_;
             expectedPos.z += (diff.z / distance) * moveSpeed_;
             isMoving = true;
+            // 2. 【追加】移動方向を向く
+            float angle = std::atan2(diff.x, diff.z);
+            object_->SetRotate({ 0.0f, angle, 0.0f });
         }
     }
 
