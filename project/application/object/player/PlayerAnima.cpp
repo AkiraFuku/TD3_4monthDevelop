@@ -32,6 +32,13 @@ void PlayerAnima::InitializeAnimations()
             if (instance.name == "Body") {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
             }
+            if (instance.name == "Arm_R") {
+                instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
+            }
+            if (instance.name == "Arm_L") {
+               instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
+            }
+
         }
     };
 
@@ -40,6 +47,8 @@ void PlayerAnima::InitializeAnimations()
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Walk);
             float t = std::sin(anima_->GetTimer() * 10.0f * speed);
+
+
             if (instance.name == "Arm_R") {
                 Quaternion start = MakeRotateAxisAngleQuaternion({1, 0, 0}, -0.5f);
                 Quaternion end = MakeRotateAxisAngleQuaternion({1, 0, 0}, 0.5f);
