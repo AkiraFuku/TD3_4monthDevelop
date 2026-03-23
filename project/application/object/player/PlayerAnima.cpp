@@ -131,6 +131,7 @@ void PlayerAnima::Update()
      ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
      // アニメーション速度の調整
 
+     ImGui::End();
 
 #endif //  USE_IMGUI
 
