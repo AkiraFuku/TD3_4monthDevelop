@@ -193,81 +193,19 @@ void Player::Draw() {
 /// <summary>
 /// 移動処理
 /// </summary>
-void Player::UpdateMove(Vector3& moveDirection) {
-    moveDirection = {0.0f, 0.0f, 0.0f};
-    
-    // 入力を判定
-    bool isMoving = false;
-    
-    if (Input::GetInstance()) {
-        // 斜め移動の判定
-        if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-            moveDirection.x += 0.7f;
-            moveDirection.z += 0.7f;
-            isMoving = true;
-        } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-            moveDirection.x += 0.7f;
-            moveDirection.z -= 0.7f;
-            isMoving = true;
-        } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-            moveDirection.x -= 0.7f;
-            moveDirection.z -= 0.7f;
-            isMoving = true;
-        } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-            moveDirection.x -= 0.7f;
-            moveDirection.z += 0.7f;
-            isMoving = true;
-        }
-        // 縦横方向の移動判定
-        else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
-            moveDirection.x += 1.0f;
-            isMoving = true;
-        } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
-            moveDirection.x -= 1.0f;
-            isMoving = true;
-        } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
-            moveDirection.z += 1.0f;
-            isMoving = true;
-        } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
-            moveDirection.z -= 1.0f;
-            isMoving = true;
-        }
-    }
-    
-    // アニメーション状態を入力結果に基づいて更新
-    if (isMoving) {
-        if (onThread_)
-        {
-              anima_->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
-        }else{
-           anima_->ChangeAnimation(PlayerAnima::AnimationState::Walk);
-     
-        }
-        // 移動中は歩きアニメーション
-        
-        float length = std::sqrtf(moveDirection.x * moveDirection.x +
-            moveDirection.z * moveDirection.z);
-        
-        if (length > 0.0f) {
-            moveDirection.x /= length;
-            moveDirection.z /= length;
-        }
-        
-        // 先にThread移動を試す
-        if (TryMoveOnThread(moveDirection)) {
-            return;
-        }
-        
-        // 通常移動
-        TurnToDirection(moveDirection);
-        
-        moveVel_.x += moveDirection.x * velocity_.x;
-        moveVel_.z += moveDirection.z * velocity_.z;
-    } else {
-        // 静止状態はアイドルアニメーション
-        anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
+void Player::Move(const Vector3& moveDirection) {
+    //  moveDirectionは既にState側で計算・正規化されている前提
+
+    // 先にThread移動を試す
+    if (TryMoveOnThread(moveDirection)) {
         return;
     }
+
+    // 通常移動
+    TurnToDirection(moveDirection);
+
+    moveVel_.x += moveDirection.x * velocity_.x;
+    moveVel_.z += moveDirection.z * velocity_.z;
 }
 
 void Player::ResultMove() {

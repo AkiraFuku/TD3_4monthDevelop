@@ -96,13 +96,13 @@ void GameScene::Initialize() {
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
-    egg_->Initialize();
+    egg_->Initialize(eggPos);
     player_->SetEgg(egg_.get());
     egg_->SetPlayer(player_.get());
 
     // ゴールの初期化
     goal_ = std::make_unique<Goal>();
-    goal_->Initialize();
+    goal_->Initialize(goalPos);
 
     goal_->SetEgg(egg_.get());
 

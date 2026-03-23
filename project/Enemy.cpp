@@ -7,7 +7,7 @@
 void Enemy::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-    object_->SetModel("player/player.obj"); // 敵のモデル
+    object_->SetModel("enemy.obj"); // 敵のモデル
     object_->SetTranslate(pos);
 }
 
@@ -85,20 +85,20 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
         float checkX = start.x + unitDiff.x * (i * 0.5f);
         float checkZ = start.z + unitDiff.z * (i * 0.5f);
 
-        if (tm) {
-            bool hitIntersection = false;
-            for (const auto& intersection : tm->GetIntersections()) {
-                float dx = intersection.position.x - checkX;
-                float dz = intersection.position.z - checkZ;
-                if ((dx * dx + dz * dz) < (intersection.radius * intersection.radius)) {
-                    hitIntersection = true;
-                    break;
-                }
-            }
-            if (hitIntersection) {
-                return false; // 交差点があるので直進不可
-            }
-        }
+        //if (tm) {
+        //    bool hitIntersection = false;
+        //    for (const auto& intersection : tm->GetIntersections()) {
+        //        float dx = intersection.position.x - checkX;
+        //        float dz = intersection.position.z - checkZ;
+        //        if ((dx * dx + dz * dz) < (intersection.radius * intersection.radius)) {
+        //            hitIntersection = true;
+        //            break;
+        //        }
+        //    }
+        //    if (hitIntersection) {
+        //        return false; // 交差点があるので直進不可
+        //    }
+        //}
 
         // --- ここを PathFinder と同じロジックにする ---
         bool isWall = CollisionMask::GetInstance()->IsWall(checkX, checkZ);
