@@ -300,7 +300,7 @@ void Player::FireThread() {
         dir.x /= len;
         dir.z /= len;
 
-        const float extend = 0.4f;
+        const float extend = 1.5f;
         start.x -= dir.x * extend;
         start.z -= dir.z * extend;
         end.x += dir.x * extend;
@@ -308,6 +308,7 @@ void Player::FireThread() {
     }
 
     thread_->AddThread(start, end);
+    didFireThread_ = true;
 }
 
 void Player::SetPosition(const Vector3& pos) {

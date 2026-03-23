@@ -102,6 +102,15 @@ public: // 外部入出力
     void SetEgg(Egg* egg) { egg_ = egg; }
     bool CanFireThread() const;
 
+    // 糸を撃ったかどうかを確認し、確認したらフラグを折る関数
+    bool GetAndResetDidFireThread() {
+        if (didFireThread_) {
+            didFireThread_ = false;
+            return true;
+        }
+        return false;
+    }
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
@@ -167,5 +176,7 @@ private:
         // アニメーション制御
         std::unique_ptr<PlayerAnima> anima_;
         void InitializeModel();
+
+    bool didFireThread_ = false; // 糸発射フラグ
 
 };
