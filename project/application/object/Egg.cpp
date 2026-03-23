@@ -45,7 +45,6 @@ void Egg::Update()
 
     ImGui::DragFloat("HP", &HP_, 0.1f, 0.1f, 10.0f);
 
-
     ImGui::End();
 
     // プレイヤーに持ち上げられていたら
@@ -68,6 +67,8 @@ void Egg::Update()
             }
 
             onPlayer_ = false;
+            // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
+            player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
             object_->SetTranslate(translate);
             return;
         }
@@ -86,6 +87,8 @@ void Egg::Update()
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
             {
                 onPlayer_ = true;
+                // キャリーアニメーションを再生
+                player_->ChangeAnimation(PlayerAnima::AnimationState::Carry);
                 translate = player_->GetPosition();
                 translate.y += 2.0f;
             }
@@ -105,7 +108,7 @@ void Egg::Update()
             }
         }
     }
-
+    
     object_->SetTranslate(translate);
 
     object_->Update();

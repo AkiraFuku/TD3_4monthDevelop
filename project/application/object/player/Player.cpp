@@ -236,8 +236,14 @@ void Player::UpdateMove(Vector3& moveDirection) {
     
     // アニメーション状態を入力結果に基づいて更新
     if (isMoving) {
+        if (onThread_)
+        {
+              anima_->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+        }else{
+           anima_->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+     
+        }
         // 移動中は歩きアニメーション
-        anima_->ChangeAnimation(PlayerAnima::AnimationState::Walk);
         
         float length = std::sqrtf(moveDirection.x * moveDirection.x +
             moveDirection.z * moveDirection.z);
@@ -447,6 +453,9 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     bool found = false;
 
     if (onThread_) {
+
+       // anima_->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+
         // 乗っている最中は現在位置優先で見る
         found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
         if (!found) {

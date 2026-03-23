@@ -62,6 +62,23 @@ public:
     /// </summary>
     void FireThread();
 
+
+    //アニメーションを変更する処理
+    void ChangeAnimation(PlayerAnima::AnimationState newState) {
+        if (anima_) {
+            anima_->ChangeAnimation(newState);
+        }
+    }
+
+    // 一回きりアニメーション終了後のリセット処理を行い、指定した状態に遷移する
+    void ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState newState) {
+        if (anima_) {
+            anima_->ResetOneShotAnimation();
+            anima_->ChangeAnimation(newState);
+        }
+    }
+
+
 public: // 外部入出力
     // ----- Getter -----
 
