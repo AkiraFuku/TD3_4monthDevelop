@@ -30,8 +30,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     object_->Initialize();
     translate_ = pos;
     object_->SetTranslate(translate_);
-    ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
-    object_->AddModel("player/player.obj", "Body");
+    InitializeModel();
 
     PsoConfig config{};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
@@ -170,29 +169,6 @@ void Player::Update() {
     if (state_) {
         state_->Update(this);
     }
-
-    //if (Input::GetInstance())
-    //{  // スレッド上の移動判定と場合分けしてアニメーション制御
-    //    bool wasOnThread = onThread_;
-
-    //    if (onThread_) {
-    //        ResolveThreadMove();
-    //    } else {
-    //        IsCollisionSDF();
-    //    }
-
-    //    // スレッド状態が変わった場合のアニメーション切り替え
-    //    if (!wasOnThread && onThread_) {
-    //        // 地面 → スレッド上
-    //        ChangeAnimation(PlayerAnima::AnimationState::OnThread);
-    //    } else if (wasOnThread && !onThread_) {
-    //        // スレッド上 → 地面
-    //        ChangeAnimation(PlayerAnima::AnimationState::Walk);
-    //    }
-
-    //}
-
-
     ResultMove();
 
     anima_->Update();
@@ -391,6 +367,18 @@ void Player::TurnToDirection(const Vector3& direction) {
 
     rotate_ = { 0.0f, rotationY_, 0.0f };
     object_->SetRotate(rotate_);
+}
+
+void Player::InitializeModel()
+{
+
+    ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
+    if (object_)
+    {
+        object_->AddModel("player/player.obj", "Body");
+
+    }
+
 }
 
 bool Player::TryMoveOnThread(const Vector3& moveDirection) {

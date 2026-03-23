@@ -166,5 +166,6 @@ private:
     private :
         // アニメーション制御
         std::unique_ptr<PlayerAnima> anima_;
+        void InitializeModel();
 
 };
