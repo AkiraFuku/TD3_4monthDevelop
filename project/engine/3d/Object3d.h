@@ -38,7 +38,13 @@ public:
     struct ModelInstance {
         std::string name; // 識別用
         std::shared_ptr<Model> model;
-        QuaternionTransform transform = { {1.0f,1.0f,1.0f}, {0.0f,0.0f,0.0f,0.0f}, {0.0f,0.0f,0.0f} }; // そのパーツ独自のローカル座標
+    //    EulerTransform transform = { {1.0f,1.0f,1.0f}, {0.0f,0.0f,0.0f}, {0.0f,0.0f,0.0f} }; // そのパーツ独自のローカル座標
+           // ★従来のEulerTransformに加えてQuaternionTransformを追加
+    QuaternionTransform transform = {
+        {1.0f, 1.0f, 1.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},  // 単位クォータニオン (x, y, z, w)
+        {0.0f, 0.0f, 0.0f}
+    };
         Matrix4x4 localMatrix;     // 計算後のローカル行列
         Matrix4x4 worldMatrix;     // 親を含めた最終的なワールド行列
 

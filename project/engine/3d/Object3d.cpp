@@ -22,26 +22,18 @@ void Object3d::Initialize()
 }
 void Object3d::Update()
 {
-    Matrix4x4 worldMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+    Matrix4x4 objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 
     if (model_)
     {
         model_->Update();
-        //  WVP行列の作成
-        Matrix4x4 worldViewProjectionMatrix = {};
-        //ワールド行列とビュー行列とプロジェクション行列を掛け算
-        if (camera_)
-        {
-            cameraData_->worldPosition = camera_->GetTranslate();
-            worldViewProjectionMatrix = Multiply(Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix), camera_->GetViewProtectionMatrix());
-            //   worldViewProjectionMatrix = Multiply( worldMatrix, camera_->GetViewProtectionMatrix());
+        wvpResource_->World = objectBaseMatrix;
+        if (camera_) {
+            wvpResource_->WVP = Multiply(objectBaseMatrix, camera_->GetViewProtectionMatrix());
         } else {
-            worldViewProjectionMatrix = Multiply(model_->GetModelData().rootNode.localMatrix, worldMatrix);
+            wvpResource_->WVP = objectBaseMatrix;
         }
-        //行列をGPUに転送
-        wvpResource_->WVP = worldViewProjectionMatrix;
-        wvpResource_->World = worldMatrix;
-        wvpResource_->WorldInverseTranspose = Transpose(Inverse(worldMatrix));
+        wvpResource_->WorldInverseTranspose = Transpose(Inverse(objectBaseMatrix));
 
     }
 
@@ -53,42 +45,32 @@ void Object3d::Update()
     // これが「Object3d全体の中心点」になります
    // Matrix4x4 objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 
-    // --- 2. 各パーツ（モデルインスタンス）の更新 ---
-    if (!models_.empty())
-    {
+    for (auto& instance : models_) {
+        if (instance->model) {
+            instance->model->Update();
+        }
 
+        instance->localMatrix = MakeAfineMatrix(
+            instance->transform.scale,
+            instance->transform.rotate,
+            instance->transform.translate
+        );
 
-        for (auto& instance : models_) {
-            // モデル内のボーンアニメーション等の更新（必要なら）
-            if (instance->model) {
-                instance->model->Update();
-            }
+        // 親子関係の解決
+        if (instance->parent) {
+            instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
+        } else {
+            // ここが重要！ objectBaseMatrix を親とする
+            instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
+        }
 
-            // 自身のトランスフォームからローカル行列を作成
-            instance->localMatrix = MakeAfineMatrix(
-                instance->transform.scale,
-                instance->transform.rotate,
-                instance->transform.translate
-            );
-
-            // 親子関係を解決してワールド行列を決定
-            if (instance->parent) {
-                // 親があるなら：親のワールド行列 × 自分のローカル行列
-                instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
-            } else {
-                // 親がないなら：Object3d全体の行列 × 自分のローカル行列
-                instance->worldMatrix = Multiply(instance->localMatrix, worldMatrix);
-            }
-
-            // --- 3. ★重要：計算結果をそのインスタンス専用のGPUバッファへ転送 ---
-            if (instance->mappedData && camera_) {
-                instance->mappedData->World = instance->worldMatrix;
-                instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
-                instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
-            }
+        // GPUへの転送
+        if (instance->mappedData && camera_) {
+            instance->mappedData->World = instance->worldMatrix;
+            instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+            instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
         }
     }
-
     if (camera_ && cameraData_)
     {
         cameraData_->worldPosition = camera_->GetTranslate();
@@ -105,16 +87,16 @@ void Object3d::Update()
 void Object3d::Draw()
 {
     if (!camera_) return;
-    
+
     Object3dCommon::GetInstance()->Object3dCommonDraw();
-    
+
     auto commandList = DXCommon::GetInstance()->GetCommandList();
-    
+
     // ★重要: PSO の設定は全体で一度だけ
     auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
     commandList->SetGraphicsRootSignature(psoSet.rootSignature.Get());
     commandList->SetPipelineState(psoSet.pipelineState.Get());
-    
+
     // ライトとカメラ設定
     LightManager::GetInstance()->Draw(3);
     commandList->SetGraphicsRootConstantBufferView(7, cameraResource_->GetGPUVirtualAddress());

@@ -9,7 +9,7 @@ void PlayerAnima::Initialize(Object3d* targetObject)
 {
     anima_ = std::make_unique<Anima>();
     anima_->Initialize(targetObject);
-    
+
     InitializeAnimations();
     InitializeAnimationSpeeds();
     ChangeAnimation(AnimationState::Idle);
@@ -25,7 +25,7 @@ void PlayerAnima::InitializeAnimationSpeeds()
 void PlayerAnima::InitializeAnimations()
 {
     // --- 1. アイドルモーション ---
-    animationMap_[AnimationState::Idle] = Anima::AnimeMove{ 
+    animationMap_[AnimationState::Idle] = Anima::AnimeMove{
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Idle);
             float t = std::sin(anima_->GetTimer() * 2.0f * speed) * 0.5f + 0.5f;
@@ -36,7 +36,7 @@ void PlayerAnima::InitializeAnimations()
     };
 
     // --- 2. 歩きモーション ---
-    animationMap_[AnimationState::Walk] = Anima::AnimeMove{ 
+    animationMap_[AnimationState::Walk] = Anima::AnimeMove{
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Walk);
             float t = std::sin(anima_->GetTimer() * 10.0f * speed);
@@ -49,7 +49,7 @@ void PlayerAnima::InitializeAnimations()
     };
 
     // --- 3. キャリーモーション ---
-    animationMap_[AnimationState::Carry] = Anima::AnimeMove{ 
+    animationMap_[AnimationState::Carry] = Anima::AnimeMove{
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Carry);
             if (instance.name == "Arm_L") {
@@ -70,9 +70,9 @@ void PlayerAnima::ChangeAnimation(AnimationState newState)
     if (currentState_ == newState) {
         return;
     }
-    
+
     currentState_ = newState;
-    
+
     auto it = animationMap_.find(currentState_);
     if (it != animationMap_.end()) {
         anima_->SetCurrentMove(it->second);
