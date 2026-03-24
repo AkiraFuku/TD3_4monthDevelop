@@ -38,6 +38,9 @@ public:
 
     void SetPosition(const Vector3& pos);
 
+    // 外部から強制的に再計算させる
+    void RequestPathReplan() { shouldReplanNextUpdate_ = true; }
+
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);
@@ -57,5 +60,7 @@ private:
 
     // 当たり判定フラグ
     bool isHit_ = false;
+
+    bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
 
 };

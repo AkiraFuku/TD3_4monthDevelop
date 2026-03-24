@@ -115,9 +115,12 @@ void PlayerAnima::Update()
         (currentState_ == AnimationState::Walk) ? "Walk" :
         (currentState_ == AnimationState::Carry) ? "Carry" :
         (currentState_ == AnimationState::OnThread) ? "OnThread" : "Default");
-    ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
-    ImGui::End();
-#endif
+     ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
+     // アニメーション速度の調整
+
+     ImGui::End();
+
+#endif //  USE_IMGUI
 
     anima_->Update();
 

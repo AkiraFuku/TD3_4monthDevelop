@@ -19,11 +19,13 @@ public:
 private:
     struct Node {
         Point pos;
-        int g, h, f;
+        int g, h;
+        float f;
         Node* parent;
         Node(Point p, int _g, int _h, Node* _parent)
             : pos(p), g(_g), h(_h), parent(_parent) {
-            f = g + h;
+            // h（予測値）を 1.5倍 程度に強調する
+            f = (float)g + (float)h * 1.5f;
         }
     };
 
