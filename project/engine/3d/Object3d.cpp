@@ -22,7 +22,17 @@ void Object3d::Initialize()
 }
 void Object3d::Update()
 {
-    Matrix4x4 objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+    // ★パフォーマンス最適化: ベース行列の変更チェック
+    bool baseMatrixChanged = memcmp(&transform_, &cachedBaseTransform_, sizeof(EulerTransform)) != 0;
+
+    Matrix4x4 objectBaseMatrix;
+    if (baseMatrixChanged || isBaseMatrixDirty_) {
+        objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+        cachedBaseTransform_ = transform_;
+        isBaseMatrixDirty_ = false;
+    } else {
+        objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);
+    }
 
     if (model_)
     {
@@ -50,25 +60,33 @@ void Object3d::Update()
             instance->model->Update();
         }
 
-        instance->localMatrix = MakeAfineMatrix(
-            instance->transform.scale,
-            instance->transform.rotate,
-            instance->transform.translate
-        );
+        // ★パフォーマンス最適化: トランスフォーム変更チェック
+        bool transformChanged = memcmp(&instance->transform, &instance->cachedTransform, sizeof(QuaternionTransform)) != 0;
 
-        // 親子関係の解決
-        if (instance->parent) {
-            instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
-        } else {
-            // ここが重要！ objectBaseMatrix を親とする
-            instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
-        }
+        if (transformChanged || instance->isDirty) {
+            instance->localMatrix = MakeAfineMatrix(
+                instance->transform.scale,
+                instance->transform.rotate,
+                instance->transform.translate
+            );
 
-        // GPUへの転送
-        if (instance->mappedData && camera_) {
-            instance->mappedData->World = instance->worldMatrix;
-            instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
-            instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
+            // 親子関係の解決
+            if (instance->parent) {
+                instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
+            } else {
+                // ここが重要！ objectBaseMatrix を親とする
+                instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
+            }
+
+            // GPUへの転送
+            if (instance->mappedData && camera_) {
+                instance->mappedData->World = instance->worldMatrix;
+                instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+                instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
+            }
+
+            instance->cachedTransform = instance->transform;
+            instance->isDirty = false;
         }
     }
     if (camera_ && cameraData_)
@@ -170,11 +188,14 @@ Object3d::ModelInstance* Object3d::FindInstance(const std::string& name)
 void Object3d::ImguiInstances()
 {
 #ifdef USE_IMGUI
+    // ★パフォーマンス最適化: IMGUI の更新を条件付きで実行
     for (auto& instance : models_) {
         if (ImGui::TreeNode(instance->name.c_str())) {
             ImGui::DragFloat3("Scale", &instance->transform.scale.x, 0.01f);
             ImGui::DragFloat3("Rotate", &instance->transform.rotate.x, 0.5f);
             ImGui::DragFloat3("Translate", &instance->transform.translate.x, 0.1f);
+            // ★マーク: ダーティフラグを設定して次フレームの更新を促す
+            instance->isDirty = true;
             ImGui::TreePop();
         }
     }

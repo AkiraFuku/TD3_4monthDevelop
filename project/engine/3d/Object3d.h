@@ -52,6 +52,10 @@ public:
         Microsoft::WRL::ComPtr<ID3D12Resource> resource;
         TransformationMatrix* mappedData = nullptr;
 
+        // ★パフォーマンス最適化: ダーティフラグの追加
+        bool isDirty = true; // 初期状態は更新が必要
+        QuaternionTransform cachedTransform; // キャッシュされたトランスフォーム
+
     };
     void Initialize();
     void Update();
@@ -136,6 +140,10 @@ private:
     BlendMode blendMode_ = BlendMode::None;
 
     std::string psoName_ = "Object3d";
+
+    // ★パフォーマンス最適化: ベース行列のダーティフラグ
+    bool isBaseMatrixDirty_ = true;
+    EulerTransform cachedBaseTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 };
 

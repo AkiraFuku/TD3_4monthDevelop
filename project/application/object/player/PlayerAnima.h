@@ -64,5 +64,8 @@ private:
     
     // 一回きりアニメーション終了後の遷移先
     AnimationState oneShotFinishState_ = AnimationState::Idle;  // 終了後の遷移先状態
+
+    // アニメーションマップのイテレータ（現在のアニメーションを指す）
+    std::map<AnimationState, Anima::AnimeMove>::iterator currentAnimationIt_;
 };
 

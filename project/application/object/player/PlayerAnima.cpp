@@ -3,9 +3,23 @@
 #include "RotateFunction.h"
 #include "Quanternion.h"
 #include <cmath>
-#include <algorithm> // 追加
+#include <algorithm>
 
 #include <imgui.h>
+
+// キャッシュ用の定数
+constexpr uint32_t PART_BODY = 0;
+constexpr uint32_t PART_ARM_R = 1;
+constexpr uint32_t PART_ARM_L = 2;
+
+// インスタンス名からパーツIDへの高速変換
+inline uint32_t GetPartId(const std::string& name)
+{
+    if (name == "Body") return PART_BODY;
+    if (name == "Arm_R") return PART_ARM_R;
+    if (name == "Arm_L") return PART_ARM_L;
+    return UINT32_MAX;
+}
 
 void PlayerAnima::Initialize(Object3d* targetObject)
 {
@@ -14,6 +28,9 @@ void PlayerAnima::Initialize(Object3d* targetObject)
 
     InitializeAnimations();
     InitializeAnimationSpeeds();
+    
+    // 現在のアニメーションをキャッシュ
+    currentAnimationIt_ = animationMap_.find(AnimationState::Idle);
     ChangeAnimation(AnimationState::Idle);
 }
 
@@ -29,39 +46,28 @@ void PlayerAnima::InitializeAnimations()
 {
     animationMap_.clear();
 
-
     animationMap_[AnimationState::Default] = Anima::AnimeMove{
         [this](Object3d::ModelInstance& instance) {
             instance.transform = {
-        {1.0f, 1.0f, 1.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},  // 単位クォータニオン (x, y, z, w)
-        {0.0f, 0.0f, 0.0f}
+                {1.0f, 1.0f, 1.0f},
+                {0.0f, 0.0f, 0.0f, 1.0f},
+                {0.0f, 0.0f, 0.0f}
             };
-            // デフォルトのアニメーションは何もしない
         }
     };
-
 
     // --- 1. アイドルモーション ---
     animationMap_[AnimationState::Idle] = Anima::AnimeMove{
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Idle);
             float t = std::sin(anima_->GetTimer() * 2.0f * speed) * 0.5f + 0.5f;
-            if (instance.name == "Body") {
+            
+            uint32_t partId = GetPartId(instance.name);
+            if (partId == PART_BODY || partId == PART_ARM_R || partId == PART_ARM_L) {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
             }
-            if (instance.name == "Arm_R") {
-                instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
-            }
-            if (instance.name == "Arm_L") {
-               instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
-            }
-
         },
-        true,    // isLoop
-        false,   // sTransitioning
-        false,   // isFinished
-        -1.0f    // duration（無制限）
+        true, false, false, -1.0f
     };
 
     // --- 2. 歩きモーション ---
@@ -69,99 +75,73 @@ void PlayerAnima::InitializeAnimations()
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Walk);
             float t = std::sin(anima_->GetTimer() * 10.0f * speed);
-             if (instance.name == "Body") {
+            
+            if (GetPartId(instance.name) == PART_BODY) {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
             }
-
-             /*  if (instance.name == "Arm_R") {
-                   Quaternion start = MakeRotateAxisAngleQuaternion({1, 0, 0}, -0.5f);
-                   Quaternion end = MakeRotateAxisAngleQuaternion({1, 0, 0}, 0.5f);
-                   instance.transform.rotate = Slerp(start, end, t * 0.5f + 0.5f);
-               }*/
-           }
+        }
     };
 
-    // --- 3. キャリーモーション ---
-    animationMap_[AnimationState::Carry] = Anima::AnimeMove{
-        [this](Object3d::ModelInstance& instance) {
-            float speed = animationSpeeds_.at(AnimationState::Carry);
-                float t =anima_->GetTimer() * 10.0f * speed;
-           if (instance.name == "Body") {
-                   Quaternion start = MakeRotateAxisAngleQuaternion({1, 0, 0}, -0.5f);
-                   Quaternion end = MakeRotateAxisAngleQuaternion({1, 0, 0}, 0.5f);
-                   instance.transform.rotate = Slerp(start, end, t * 0.5f + 0.5f);
-            }
-        },
-        false,   // isLoop（一回きり）
-        false,   // sTransitioning （遷移中フラグは外部で管理するため、ここではfalse）
-        false,   // isFinished （アニメーション終了フラグも外部で管理するため、ここではfalse）
-        2.0f     // duration（2秒で終了）
-    };
-    animationMap_[AnimationState::OnThread] = Anima::AnimeMove{
-        [this](Object3d::ModelInstance& instance) {
-            float speed = animationSpeeds_.at(AnimationState::OnThread);
-                float t = std::sin(anima_->GetTimer() * 10.0f * speed);
-           if (instance.name == "Body") {
-                   Quaternion start = MakeRotateAxisAngleQuaternion({1, 0, 0}, -0.5f);
-                   Quaternion end = MakeRotateAxisAngleQuaternion({1, 0, 0}, 0.5f);
-                   instance.transform.rotate = Slerp(start, end, t * 0.5f + 0.5f);
-            }
-        },
-        true,   // isLoop（一回きり）
-        false,   // sTransitioning
-        false,   // isFinished
-        2.0f     // duration（2秒で終了）
+    // --- 3. キャリーモーション & OnThread（共通化） ---
+    auto CreateRotationAnimation = [this](AnimationState state, bool isLoop) {
+        // ★パフォーマンス最適化: クォータニオン計算のキャッシュ
+        Quaternion cachedStart = MakeRotateAxisAngleQuaternion({1, 0, 0}, -0.5f);
+        Quaternion cachedEnd = MakeRotateAxisAngleQuaternion({1, 0, 0}, 0.5f);
+
+        return Anima::AnimeMove{
+            [this, cachedStart, cachedEnd](Object3d::ModelInstance& instance) {
+                float speed = animationSpeeds_.at(AnimationState::Carry);
+                float t = std::sin(anima_->GetTimer() * 10.0f * speed) * 0.5f + 0.5f;
+
+                if (GetPartId(instance.name) == PART_BODY) {
+                    // キャッシュされたクォータニオンを使用
+                    instance.transform.rotate = Slerp(cachedStart, cachedEnd, t);
+                }
+            },
+            isLoop, false, false, 2.0f
+        };
     };
 
-
+    animationMap_[AnimationState::Carry] = CreateRotationAnimation(AnimationState::Carry, false);
+    animationMap_[AnimationState::OnThread] = CreateRotationAnimation(AnimationState::OnThread, true);
 }
 
 void PlayerAnima::Update()
 {
-
-#ifdef  USE_IMGUI
-
-    // ImGuiでアニメーションの状態を表示
+#ifdef USE_IMGUI
     ImGui::Begin("Animation State");
     ImGui::Text("Current State: %s", 
         (currentState_ == AnimationState::Idle) ? "Idle" :
         (currentState_ == AnimationState::Walk) ? "Walk" :
         (currentState_ == AnimationState::Carry) ? "Carry" :
         (currentState_ == AnimationState::OnThread) ? "OnThread" : "Default");
-     ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
-     // アニメーション速度の調整
-
-
-#endif //  USE_IMGUI
+    ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
+    ImGui::End();
+#endif
 
     anima_->Update();
 
-    // デフォルト遷移中の場合、1フレーム待ってから次の状態に遷移
+    // デフォルト遷移中の場合
     if (isInDefaultTransition_) {
         isInDefaultTransition_ = false;
         currentState_ = pendingState_;
         
-        auto it = animationMap_.find(currentState_);
-        if (it != animationMap_.end()) {
-            anima_->SetCurrentMove(it->second);
+        currentAnimationIt_ = animationMap_.find(currentState_);
+        if (currentAnimationIt_ != animationMap_.end()) {
+            anima_->SetCurrentMove(currentAnimationIt_->second);
             anima_->Play();
-        }
-        
-        // 遷移後のアニメーションがループ以外なら、切り替え不可にする
-        if (it != animationMap_.end() && !it->second.isLoop) {
-            canChangeAnimation_ = false;
-            // 一回きりアニメーション終了後、Idleに遷移するように設定
-            oneShotFinishState_ = AnimationState::Idle;
+            
+            if (!currentAnimationIt_->second.isLoop) {
+                canChangeAnimation_ = false;
+                oneShotFinishState_ = AnimationState::Idle;
+            }
         }
         return;
     }
     
-    // 一回きりアニメーションが終了したら、タイマーと終了フラグをリセット
+    // 一回きりアニメーション終了判定
     if (!anima_->IsAnimationPlaying() && !canChangeAnimation_) {
-        // 終了フラグとタイマーをリセット（再度再生可能にする）
         ResetOneShotAnimation();
-        
-        // 自動的にoneShotFinishState_に遷移
         ChangeAnimation(oneShotFinishState_);
     }
 }
@@ -172,25 +152,19 @@ void PlayerAnima::ChangeAnimation(AnimationState newState)
         return;
     }
 
-    // 新しいアニメーション情報を取得
     auto it = animationMap_.find(newState);
     if (it == animationMap_.end()) {
         return;
     }
 
-    const Anima::AnimeMove& newAnimation = it->second;
-
-    // ループアニメーションは常に切り替え可能
-    if (newAnimation.isLoop) {
+    if (it->second.isLoop) {
         canChangeAnimation_ = true;
     }
 
-    // 一回きりアニメーション再生中は切り替え禁止
     if (!canChangeAnimation_) {
         return;
     }
 
-    // デフォルト状態を経由して遷移
     pendingState_ = newState;
     isInDefaultTransition_ = true;
     currentState_ = AnimationState::Default;
@@ -204,7 +178,8 @@ void PlayerAnima::ChangeAnimation(AnimationState newState)
 
 void PlayerAnima::SetAnimationSpeed(AnimationState state, float speed)
 {
-    if (animationSpeeds_.find(state) != animationSpeeds_.end()) {
-        animationSpeeds_[state] = (std::max)(0.1f, speed); // 最小値は 0.1f
+    auto it = animationSpeeds_.find(state);
+    if (it != animationSpeeds_.end()) {
+        it->second = (speed < 0.1f) ? 0.1f : speed;
     }
 }
