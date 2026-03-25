@@ -1,6 +1,7 @@
 #include "DebugCamera.h"
 #include "Input.h"
 #include "ImGuiManager.h"
+#include <imgui_internal.h>
 
 void DebugCamera::Initialize()
 {
@@ -11,7 +12,7 @@ void DebugCamera::Initialize()
 
 void DebugCamera::Update(EulerTransform originCamera)
 {
-#ifdef _DEBUG
+#ifdef USE_DEBUGCAM
 
 	input_ = Input::GetInstance();
 
@@ -68,7 +69,7 @@ void DebugCamera::Update(EulerTransform originCamera)
 
     ImGui::Begin("DebugCamera Info");
 
-    ImGui::InputFloat3("translate", &camera.translate.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::DragFloat3("translate", &camera.translate.x, 0.01f, 0.0f, 0.0f, "%.3f", ImGuiSliderFlags_ReadOnly);
 
     ImGui::InputFloat("radius", &radius, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
