@@ -54,12 +54,12 @@ private:
     // 卵
     std::unique_ptr<Egg> egg_;
     // 卵の位置
-    Vector3 eggPos = { -11.0f,0.0f,-1.0f };
+    Vector3 eggPos = { -14.0f,0.0f,-1.0f };
 
     // ゴール
     std::unique_ptr<Goal> goal_;
     // ゴールの位置
-    Vector3 goalPos = { 10.0f,0.0f,0.0f };
+    Vector3 goalPos = { 14.0f,0.0f,0.0f };
 
     /*Player* player_;
     Terrain* terrain_;*/
@@ -71,7 +71,7 @@ private:
   std::unique_ptr<Player> player_;
 
   // プレイヤーの位置
-  Vector3 playerPos_ = {-10.0f, -0.4f, 0.0f};
+  Vector3 playerPos_ = {-13.0f, -0.4f, 0.0f};
 
   // ----- Thread -----
   std::unique_ptr<ThreadManager> thread_;
@@ -88,6 +88,6 @@ private:
   // 巣の素材
   std::unique_ptr<NestMaterial> nestMaterial_;
   // 素材の位置
-  Vector3 nestMaterialPos_ = { 3.0f,0.0f,6.0f };
+  Vector3 nestMaterialPos_ = { 3.0f,0.0f,8.0f };
 
 };
