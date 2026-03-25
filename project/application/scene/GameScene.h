@@ -4,6 +4,7 @@
 #include "DebugCamera.h"
 #include "Egg.h"
 #include "Goal.h"
+#include "NestMaterial.h"
 #include "MathFunction.h"
 #include "Model.h"
 #include "Object3D.h"
@@ -80,5 +81,10 @@ private:
   std::unique_ptr<Enemy> enemy_;
   // 敵の位置
   Vector3 enemyPos_ = { 10.0f,0.0f,4.0f };
+
+  // 巣の素材
+  std::unique_ptr<NestMaterial> nestMaterial_;
+  // 素材の位置
+  Vector3 nestMaterialPos_ = { 10.0f,0.0f,0.0f };
 
 };

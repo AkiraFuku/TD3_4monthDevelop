@@ -2,6 +2,7 @@
 #include "ModelManager.h"
 #include "imgui.h"
 #include "Egg.h"
+#include "Player.h"
 #include "SceneManager.h"
 
 void Goal::Initialize(const Vector3& pos)
@@ -55,6 +56,12 @@ void Goal::Draw()
 
 void Goal::Clear()
 {
+    // プレイヤーの素材の回収数が必要数を下回っていたら無効
+    if (player_->GetNestMaterial() < needNestMaterialCount_)
+    {
+        return;
+    }
+
     // 卵とゴールの当たり判定
     Vector3 goalPos = object_->GetTranslate();
     Vector3 eggPos = egg_->GetWorldPosition();
