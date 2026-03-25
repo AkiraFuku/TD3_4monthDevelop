@@ -476,6 +476,8 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
     // 壁の中では SDF 値が 0 になるように FindNearestWallDist で作ったので、
     // ここでは一定間隔（1ピクセル分など）で少しずつ進みます
     float exitTraveled = traveled + 0.5f;
+    bool foundExit = false; // ★ 出口を見つけたかどうかのフラグを追加
+
     while (exitTraveled < maxDist) {
         Vector3 currentPos;
         currentPos.x = start.x + direction.x * exitTraveled;
@@ -484,10 +486,17 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
 
         // 距離が再びプラス（空白）になったらそこが出口
         if (dist > 0.1f) {
-            result.exitPos = { currentPos.x, currentPos.z };
+            result.exitPos = {currentPos.x, currentPos.z};
+            foundExit = true; // ★ 出口を発見！
             break;
         }
         exitTraveled += 0.5f; // 壁の中は慎重に進む
+    }
+
+    // ★ 追加：出口が見つからずに maxDist まで到達してしまった場合
+    if (!foundExit) {
+        // 「貫通できる壁ではなかった（虚空に繋がっていた）」として、ヒット判定自体を取り消す
+        result.hit = false;
     }
 
     return result;
