@@ -190,6 +190,7 @@ void Audio::PlayAudio(SoundHandle soundHandle, bool loop, float volume)
 }
 void Audio::StopAudio(SoundHandle voiceHandle)
 {
+    //有効なハンドルではなければ早期リターン
     auto it = std::find_if(
         activeVoices_.begin(), activeVoices_.end(),
         [voiceHandle](const Voice& v) { return v.sourceHandle == voiceHandle; }

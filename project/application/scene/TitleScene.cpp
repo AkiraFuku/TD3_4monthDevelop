@@ -19,7 +19,7 @@ void TitleScene::Initialize() {
 
     handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-    Audio::GetInstance()->PlayAudio(handle_, true);
+    //Audio::GetInstance()->PlayAudio(handle_, true);
 
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 
@@ -149,6 +149,8 @@ void TitleScene::Update() {
     // Aボタンを押していたら
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
+
+        Audio::GetInstance()->StopAudio(handle_);
 
         // ゲームシーンに戻る
         SceneManager::GetInstance()->ChangeScene("GameScene");
