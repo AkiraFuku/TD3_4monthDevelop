@@ -229,16 +229,22 @@ bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textu
 
     TextureManager::GetInstance()->LoadTexture(filePath);
 
-    // 2. 判定しやすいように強制変換 (RGBA 8bit)
+    // WICで強制デコードして直接convertedに
     DirectX::ScratchImage converted{};
-    hr = DirectX::Convert(
-        *scrachImage.GetImage(0, 0, 0),
-        DXGI_FORMAT_R8G8B8A8_UNORM,
-        DirectX::TEX_FILTER_DEFAULT, 0,
-        converted
-    );
+    hr = DirectX::LoadFromWICFile(filePathW.c_str(),
+        DirectX::WIC_FLAGS_FORCE_RGB,
+        nullptr,
+        converted);
+    assert(SUCCEEDED(hr));
 
-    if (FAILED(hr)) return false;
+    // DXGI_FORMAT_R8G8B8A8_UNORM に変換
+    const DirectX::Image* img = converted.GetImage(0, 0, 0);
+    if (img && img->format != DXGI_FORMAT_R8G8B8A8_UNORM) {
+        DirectX::ScratchImage tmp;
+        hr = DirectX::Convert(*img, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, 0, tmp);
+        assert(SUCCEEDED(hr));
+        converted = std::move(tmp);
+    }
 
     const DirectX::Image* image = converted.GetImage(0, 0, 0);
     textureData.widthX = static_cast<int>(image->width);
