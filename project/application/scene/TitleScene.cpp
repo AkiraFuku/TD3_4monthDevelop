@@ -150,7 +150,10 @@ void TitleScene::Update() {
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
 
-        if (isDebugCamera_)
+        // ゲームシーンに戻る
+        SceneManager::GetInstance()->ChangeScene("GameScene");
+
+        /*if (isDebugCamera_)
         {
             isDebugCamera_=false;
 
@@ -158,7 +161,7 @@ void TitleScene::Update() {
         {
             isDebugCamera_=true;
 
-        }
+        }*/
 
         // Aボタンを押したときの処理
 
