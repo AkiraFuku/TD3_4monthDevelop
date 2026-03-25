@@ -150,7 +150,7 @@ void TitleScene::Update() {
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
 
-        if (isDebugCamera_)
+        /*if (isDebugCamera_)
         {
             isDebugCamera_=false;
 
@@ -158,7 +158,7 @@ void TitleScene::Update() {
         {
             isDebugCamera_=true;
 
-        }
+        }*/
 
         // Aボタンを押したときの処理
 
@@ -168,7 +168,7 @@ void TitleScene::Update() {
        //     Audio::GetInstance()->StopAudio(handle_);
        // }
 
-    //    GetSceneManager()->ChangeScene("GameScene");
+        GetSceneManager()->ChangeScene("GameScene");
 
     //}
     //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B))

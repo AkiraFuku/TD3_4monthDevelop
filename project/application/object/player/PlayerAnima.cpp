@@ -109,7 +109,7 @@ void PlayerAnima::InitializeAnimations()
 void PlayerAnima::Update()
 {
 #ifdef USE_IMGUI
-    ImGui::Begin("Animation State");
+    ImGui::Begin("Animation State Player");
     ImGui::Text("Current State: %s", 
         (currentState_ == AnimationState::Idle) ? "Idle" :
         (currentState_ == AnimationState::Walk) ? "Walk" :

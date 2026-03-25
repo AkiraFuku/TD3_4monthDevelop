@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "DrawFunction.h"
+#include "EggAnima.h"
 
 class Player;
 
@@ -71,5 +72,7 @@ private:
 
     // HP
     float HP_ = 10.0f;
+
+  //   std::unique_ptr<EggAnima> anima_;
 };
 

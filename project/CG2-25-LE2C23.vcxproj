@@ -21,8 +21,9 @@
     <ClCompile Include="application\object\player\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
-    <ClCompile Include="application\object\Egg.cpp" />
-    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="application\object\Egg\Egg.cpp" />
+    <ClCompile Include="application\object\Enemy\Enemy.cpp" />
+    <ClCompile Include="application\object\Egg\EggAnima.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
@@ -87,8 +88,9 @@
     <ClInclude Include="application\object\player\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
-    <ClInclude Include="application\object\Egg.h" />
-    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="application\object\Egg\Egg.h" />
+    <ClInclude Include="application\object\Enemy\Enemy.h" />
+    <ClInclude Include="application\object\Egg\EggAnima.h" />
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
@@ -282,14 +284,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;USE_IMGUI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;USE_IMGUI;USE_DebugCamera;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\Enemy</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -320,7 +322,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\Enemy</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -345,7 +347,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;USE_IMGUI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;USE_IMGUI;USE_DebugCamera;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
@@ -354,7 +356,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\Enemy</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

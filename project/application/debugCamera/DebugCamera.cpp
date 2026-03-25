@@ -11,7 +11,7 @@ void DebugCamera::Initialize()
 
 void DebugCamera::Update(EulerTransform originCamera)
 {
-#ifdef _DEBUG
+#ifdef USE_DebugCamera
 
 	input_ = Input::GetInstance();
 
@@ -61,7 +61,10 @@ void DebugCamera::Update(EulerTransform originCamera)
 
 	worldMatrix_ = Inverse(MakeLookAtMatrix(camera.translate, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
 
-    // 位置 (Translate)
+	// ★修正: viewMatrix_ を正しく計算
+	viewMatrix_ = MakeLookAtMatrix(camera.translate, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+
+	// 位置 (Translate)
     debugCamera_.translate = camera.translate;
 
 	ImGui::End();
