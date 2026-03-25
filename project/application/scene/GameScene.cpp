@@ -419,6 +419,13 @@ void GameScene::Update()
 
 #endif // USE_IMGUI
 
+    // Rキーを押したらリセット
+    if (Input::GetInstance()->PushedKeyDown(DIK_R))
+    {
+        // シーン遷移
+        SceneManager::GetInstance()->ChangeScene("GameScene");
+    }
+
     // sprite->SetRotation(sprite->GetRotation() + 0.1f);
     sprite->Update();
 
