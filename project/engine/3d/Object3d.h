@@ -145,5 +145,7 @@ private:
     bool isBaseMatrixDirty_ = true;
     EulerTransform cachedBaseTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
+    void UpdateModelInstances();
+
 };
 

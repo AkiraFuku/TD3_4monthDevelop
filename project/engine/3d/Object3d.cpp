@@ -22,17 +22,10 @@ void Object3d::Initialize()
 }
 void Object3d::Update()
 {
-    // ★パフォーマンス最適化: ベース行列の変更チェック
-    bool baseMatrixChanged = memcmp(&transform_, &cachedBaseTransform_, sizeof(EulerTransform)) != 0;
 
-    Matrix4x4 objectBaseMatrix;
-    if (baseMatrixChanged || isBaseMatrixDirty_) {
-        objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
-        cachedBaseTransform_ = transform_;
-        isBaseMatrixDirty_ = false;
-    } else {
-        objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);
-    }
+
+    Matrix4x4 objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);;
+
 
     if (model_)
     {
@@ -51,44 +44,9 @@ void Object3d::Update()
 
     ImguiInstances();
 
-    // --- 1. 全体のベースとなる行列を計算 ---
-    // これが「Object3d全体の中心点」になります
-   // Matrix4x4 objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+    UpdateModelInstances();
+    
 
-    for (auto& instance : models_) {
-        if (instance->model) {
-            instance->model->Update();
-        }
-
-        // ★パフォーマンス最適化: トランスフォーム変更チェック
-        bool transformChanged = memcmp(&instance->transform, &instance->cachedTransform, sizeof(QuaternionTransform)) != 0;
-
-        if (transformChanged || instance->isDirty) {
-            instance->localMatrix = MakeAfineMatrix(
-                instance->transform.scale,
-                instance->transform.rotate,
-                instance->transform.translate
-            );
-
-            // 親子関係の解決
-            if (instance->parent) {
-                instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
-            } else {
-                // ここが重要！ objectBaseMatrix を親とする
-                instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
-            }
-
-            // GPUへの転送
-            if (instance->mappedData && camera_) {
-                instance->mappedData->World = instance->worldMatrix;
-                instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
-                instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
-            }
-
-            instance->cachedTransform = instance->transform;
-            instance->isDirty = false;
-        }
-    }
     if (camera_ && cameraData_)
     {
         cameraData_->worldPosition = camera_->GetTranslate();
@@ -249,4 +207,62 @@ void Object3d::CreateCameraResource()
 
     }
 
+}
+
+void Object3d::UpdateModelInstances()
+{
+  // 1. ベース行列（Object3d自身のトランスフォーム）の更新チェック
+    bool baseMatrixChanged = memcmp(&transform_, &cachedBaseTransform_, sizeof(EulerTransform)) != 0;
+    Matrix4x4 objectBaseMatrix;
+    if (baseMatrixChanged || isBaseMatrixDirty_) {
+        objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+        cachedBaseTransform_ = transform_;
+        isBaseMatrixDirty_ = false;
+    } else {
+        // 変更がない場合も計算用に現在のベース行列を再構築（または保持）
+        objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);
+    }
+
+    // ★追加: カメラの行列が更新されたかどうかの判定
+    // 厳密にやるならCameraクラスに前回からの変更フラグを持たせるべきですが、
+    // 常に最新を反映させるため、ここでは「カメラが存在するなら毎フレーム計算」の安全策をとります。
+    bool cameraUpdated = (camera_ != nullptr); 
+
+    for (auto& instance : models_) {
+        if (instance->model) {
+            instance->model->Update();
+        }
+
+        // 2. インスタンス自体のトランスフォーム変更チェック
+        bool transformChanged = memcmp(&instance->transform, &instance->cachedTransform, sizeof(QuaternionTransform)) != 0;
+
+        // ★修正: 「トランスフォーム変更」か「ダーティフラグ」か「カメラ更新」があれば行列を再計算
+        if (transformChanged || instance->isDirty || cameraUpdated) {
+            
+            // ローカル行列の作成（自身のトランスフォームが変更された時のみでも良いが、シンプルにするため再計算）
+            instance->localMatrix = MakeAfineMatrix(
+                instance->transform.scale,
+                instance->transform.rotate,
+                instance->transform.translate
+            );
+
+            // 親子関係の解決
+            if (instance->parent) {
+                instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
+            } else {
+                instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
+            }
+
+            // GPUへの転送 (ここで最新の ViewProjection を掛ける)
+            if (instance->mappedData && camera_) {
+                instance->mappedData->World = instance->worldMatrix;
+                // ★ここでカメラの最新行列を反映
+                instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+                instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
+            }
+
+            instance->cachedTransform = instance->transform;
+            instance->isDirty = false;
+        }
+    }
 }
