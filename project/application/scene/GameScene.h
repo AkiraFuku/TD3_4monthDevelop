@@ -70,7 +70,7 @@ private:
   std::unique_ptr<Player> player_;
 
   // プレイヤーの位置
-  Vector3 playerPos_ = {-10.0f, 0.0f, 0.0f};
+  Vector3 playerPos_ = {-10.0f, -0.4f, 0.0f};
 
   // ----- Thread -----
   std::unique_ptr<ThreadManager> thread_;
