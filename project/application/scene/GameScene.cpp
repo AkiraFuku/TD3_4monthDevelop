@@ -106,12 +106,15 @@ void GameScene::Initialize() {
     goal_->Initialize(goalPos);
 
     goal_->SetEgg(egg_.get());
+    goal_->SetPlayer(player_.get());
+    goal_->SetNeedNestCount(1);
 
 
     collisionMask_ = CollisionMask::GetInstance();
     collisionMask_->Initialize();
 
     // 敵の初期化
+
     /*enemy_ = std::make_unique<Enemy>();
     enemy_->Initialize(enemyPos_);*/
 
@@ -125,6 +128,12 @@ void GameScene::Initialize() {
 		enemy->Initialize(pos);
 		enemies_.push_back(std::move(enemy)); // リストに追加
 	}
+
+
+    // 巣の素材の初期化
+    nestMaterial_ = std::make_unique<NestMaterial>();
+    nestMaterial_->Initialize(nestMaterialPos_);
+
 }
 void GameScene::Finalize() {
 
@@ -427,6 +436,7 @@ void GameScene::Update()
     // ゴールの更新処理
     goal_->Update();
 
+
     //// 敵の目的地を決定する
     //Vector3 targetPos;
     //if (egg_->IsOnPlayer()) {
@@ -437,6 +447,7 @@ void GameScene::Update()
     //    // 置いてあるなら卵自身の座標を使う
     //    targetPos = egg_->GetWorldPosition();
     //}
+
 
     //// プレイヤーが糸を撃った瞬間を検知
     //if (player_->GetAndResetDidFireThread()) {
@@ -471,6 +482,9 @@ void GameScene::Update()
 	for (auto& enemy : enemies_) {
 		enemy->Update(targetPos, thread_.get());
 	}
+  
+   // 巣の素材の更新処理
+    nestMaterial_->Update();
 
 
     collisionMask_->Update();
@@ -502,6 +516,9 @@ void GameScene::Draw() {
 	for (auto& enemy : enemies_) {
 		enemy->Draw();
 	}
+
+    // 巣の素材の描画処理
+    nestMaterial_->Draw();
 
     // ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画
@@ -542,6 +559,22 @@ void GameScene::CheckAllCollisions() {
 			enemy->SetHitFlag(false);
 		}
 	}
+  
+  // 巣の素材の座標
+    AABB nestAABB = nestMaterial_->GetAABB();
+
+    if (isCollision(nestAABB, playerAABB))
+    {
+        //　巣の素材がなかったらリターン
+        if (nestMaterial_->IsDead())
+        {
+            return;
+        }
+
+        // プレイヤーが素材に接触していたら
+        nestMaterial_->OnCollision();
+        player_->SetNestMaterial(1);
+    }
 }
 
 bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)

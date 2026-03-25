@@ -112,6 +112,10 @@ public:
     void SetMaxThreadCount(int count) { remainingThreadCount_ = count; }
     int  GetRemainingThreadCount() const { return remainingThreadCount_; }
 
+    // 巣の素材の回収数のgetter/setter
+    void SetNestMaterial(int num) { nestMaterialNum_ += num; }
+    int GetNestMaterial() const { return nestMaterialNum_; }
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
@@ -194,5 +198,8 @@ private:
         void InitializeModel();
 
     bool didFireThread_ = false; // 糸発射フラグ
+
+    // 巣の素材の回収数
+    int nestMaterialNum_ = 0;
 
 };
