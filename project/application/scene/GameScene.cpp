@@ -12,8 +12,8 @@
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
-    camera->SetRotate({0.1f, 0.0f, 0.0f});
-    camera->SetTranslate({0.0f, 4.0f, -30.0f});
+    camera->SetRotate({0.80f, 0.0f, 0.0f});
+    camera->SetTranslate({0.0f, 30.0f, -30.0f});
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
@@ -93,6 +93,7 @@ void GameScene::Initialize() {
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
     player_->Initialize(playerPos_, thread_.get());
+    player_->SetMaxThreadCount(5);
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
@@ -105,14 +106,34 @@ void GameScene::Initialize() {
     goal_->Initialize(goalPos);
 
     goal_->SetEgg(egg_.get());
+    goal_->SetPlayer(player_.get());
+    goal_->SetNeedNestCount(1);
 
 
     collisionMask_ = CollisionMask::GetInstance();
     collisionMask_->Initialize();
 
     // 敵の初期化
-    enemy_ = std::make_unique<Enemy>();
-    enemy_->Initialize(enemyPos_);
+
+    /*enemy_ = std::make_unique<Enemy>();
+    enemy_->Initialize(enemyPos_);*/
+
+	enemyPositions_ = {
+		{3.0f, 0.0f, 10.0f},
+		{8.0f, 0.0f, -5.0f}
+	};
+
+	for (const auto& pos : enemyPositions_) {
+		auto enemy = std::make_unique<Enemy>();
+		enemy->Initialize(pos);
+		enemies_.push_back(std::move(enemy)); // リストに追加
+	}
+
+
+    // 巣の素材の初期化
+    nestMaterial_ = std::make_unique<NestMaterial>();
+    nestMaterial_->Initialize(nestMaterialPos_);
+
 }
 void GameScene::Finalize() {
 
@@ -415,28 +436,55 @@ void GameScene::Update()
     // ゴールの更新処理
     goal_->Update();
 
-    // 敵の目的地を決定する
-    Vector3 targetPos;
-    if (egg_->IsOnPlayer()) {
-        // 持ち上げ中ならプレイヤーの足元の座標を使う
-        targetPos = player_->GetPosition();
-    }
-    else {
-        // 置いてあるなら卵自身の座標を使う
-        targetPos = egg_->GetWorldPosition();
-    }
 
-    // プレイヤーが糸を撃った瞬間を検知
-    if (player_->GetAndResetDidFireThread()) {
-        // 敵に「道が変わったぞ！」と教える
-        enemy_->RequestPathReplan();
+    //// 敵の目的地を決定する
+    //Vector3 targetPos;
+    //if (egg_->IsOnPlayer()) {
+    //    // 持ち上げ中ならプレイヤーの足元の座標を使う
+    //    targetPos = player_->GetPosition();
+    //}
+    //else {
+    //    // 置いてあるなら卵自身の座標を使う
+    //    targetPos = egg_->GetWorldPosition();
+    //}
 
-        // デバッグ用ログ
-        OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
-    }
 
-    // 決定した目的地を敵に渡す
-    enemy_->Update(targetPos, thread_.get());
+    //// プレイヤーが糸を撃った瞬間を検知
+    //if (player_->GetAndResetDidFireThread()) {
+    //    // 敵に「道が変わったぞ！」と教える
+    //    enemy_->RequestPathReplan();
+
+    //    // デバッグ用ログ
+    //    OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+    //}
+
+    //// 決定した目的地を敵に渡す
+    //enemy_->Update(targetPos, thread_.get());
+
+	// 敵の目的地を決定する
+	Vector3 targetPos;
+	if (egg_->IsOnPlayer()) {
+		targetPos = player_->GetPosition();
+	} else {
+		targetPos = egg_->GetWorldPosition();
+	}
+
+	// プレイヤーが糸を撃った瞬間を検知
+	if (player_->GetAndResetDidFireThread()) {
+		OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+		// 【変更】すべての敵に経路再計算をリクエスト
+		for (auto& enemy : enemies_) {
+			enemy->RequestPathReplan();
+		}
+	}
+
+	// 【変更】すべての敵のUpdateを呼ぶ
+	for (auto& enemy : enemies_) {
+		enemy->Update(targetPos, thread_.get());
+	}
+  
+   // 巣の素材の更新処理
+    nestMaterial_->Update();
 
 
     collisionMask_->Update();
@@ -447,7 +495,7 @@ void GameScene::Update()
 
     // ゴールクリアの判定
     goal_->Clear();
-    // egg_->Death();
+    egg_->Death();
 
 }
 
@@ -463,7 +511,14 @@ void GameScene::Draw() {
     goal_->Draw();
 
     // 敵の描画処理
-    enemy_->Draw();
+    //enemy_->Draw();
+
+	for (auto& enemy : enemies_) {
+		enemy->Draw();
+	}
+
+    // 巣の素材の描画処理
+    nestMaterial_->Draw();
 
     // ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画
@@ -481,39 +536,44 @@ void GameScene::Draw() {
     }
 }
 
-void GameScene::CheckAllCollisions()
-{
-    // 判定対象1と2の座標
-    AABB playerAABB = player_->GetAABB();
-    AABB eggAABB = egg_->GetAABB();
+void GameScene::CheckAllCollisions() {
+	// プレイヤーと卵の判定（ここはそのまま）
+	AABB playerAABB = player_->GetAABB();
+	AABB eggAABB = egg_->GetAABB();
 
-    if (isCollision(playerAABB, eggAABB)) {
-        // プレイヤーと卵が衝突している場合の処理
-        egg_->OnCollision(player_.get());
+	if (isCollision(playerAABB, eggAABB)) {
+		egg_->OnCollision(player_.get());
+		ResolveCollision(player_.get(), playerAABB, eggAABB);
+	} else {
+		egg_->SetHitFlag(false);
+	}
 
-        // めり込み防止（位置補正）
-        ResolveCollision(player_.get(), playerAABB, eggAABB);
-    }
-    else
+	// 【変更】すべての敵と卵の判定
+	for (auto& enemy : enemies_) {
+		AABB enemyAABB = enemy->GetAABB();
+
+		if (isCollision(enemyAABB, eggAABB)) {
+			enemy->OnCollision(egg_.get());
+			ResolveCollision(enemy.get(), enemyAABB, eggAABB);
+		} else {
+			enemy->SetHitFlag(false);
+		}
+	}
+  
+  // 巣の素材の座標
+    AABB nestAABB = nestMaterial_->GetAABB();
+
+    if (isCollision(nestAABB, playerAABB))
     {
-        // 衝突していない場合はヒットフラグをリセット
-        egg_->SetHitFlag(false);
-    }
-    // 敵の座標
-    AABB enemyAABB = enemy_->GetAABB();
+        //　巣の素材がなかったらリターン
+        if (nestMaterial_->IsDead())
+        {
+            return;
+        }
 
-    if (isCollision(enemyAABB, eggAABB))
-    {
-        // 敵と卵が衝突している場合の処理
-        enemy_->OnCollision(egg_.get());
-
-        // めり込み防止
-        ResolveCollision(enemy_.get(), enemyAABB, eggAABB);
-    }
-    else
-    {
-        // 衝突していない場合はヒットフラグをリセット
-        enemy_->SetHitFlag(false);
+        // プレイヤーが素材に接触していたら
+        nestMaterial_->OnCollision();
+        player_->SetNestMaterial(1);
     }
 }
 

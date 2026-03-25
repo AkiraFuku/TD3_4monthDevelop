@@ -164,15 +164,25 @@ void Player::Finalize() {
 /// </summary>
 void Player::Update() {
 
-    moveVel_ = { 0.0f, 0.0f, 0.0f };
+    moveVel_ = {0.0f, 0.0f, 0.0f};
 
     if (state_) {
         state_->Update(this);
     }
+
+    // ★これを追加！！
+    if (onThread_) {
+        // 【Threadに乗っている場合】
+        // 糸の上では自由落下しないため落下速度をリセット
+        fallSpeed_ = 0.0f;
+
+        // 糸に沿った移動補正、Y座標の追従、糸への重さ適用
+        ResolveThreadMove();
+    }
+
     ResultMove();
 
     anima_->Update();
-
     object_->Update();
 }
 /// <summary>
@@ -274,7 +284,12 @@ void Player::ChangeState(std::unique_ptr<IPlayerState> newState) {
 /// <summary>
 /// 糸を発射する処理
 void Player::FireThread() {
-    if (!thread_) {
+    // ★追加：残り回数が0なら張れずにリターンする
+    if (remainingThreadCount_ <= 0) {
+        return;
+    }
+
+    if (!thread_ || onThread_) {
         return;
     }
 
@@ -291,8 +306,10 @@ void Player::FireThread() {
         return;
     }
 
-    Vector3 start = { rayResult_.hitPos.x, 0.0f, rayResult_.hitPos.y };
-    Vector3 end = { rayResult_.exitPos.x, 0.0f, rayResult_.exitPos.y };
+    const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
+
+    Vector3 start = {rayResult_.hitPos.x, targetY, rayResult_.hitPos.y};
+    Vector3 end = {rayResult_.exitPos.x, targetY, rayResult_.exitPos.y};
 
     Vector3 dir = end - start;
     float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
@@ -300,15 +317,17 @@ void Player::FireThread() {
         dir.x /= len;
         dir.z /= len;
 
-        const float extend = 1.5f;
+        const float extend = 0.2f;
         start.x -= dir.x * extend;
         start.z -= dir.z * extend;
-        end.x += dir.x * extend;
-        end.z += dir.z * extend;
+        //end.x += dir.x * extend;
+        //end.z += dir.z * extend;
     }
 
     thread_->AddThread(start, end);
     didFireThread_ = true;
+
+    remainingThreadCount_--;
 }
 
 void Player::SetPosition(const Vector3& pos) {
@@ -411,6 +430,10 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     }
 
     if (!found) {
+        // ★追加: 糸から降りる時にY座標を戻す
+        if (onThread_) {
+            translate_.y = threadBaseY_;
+        }
         onThread_ = false;
         return false;
     }
@@ -450,6 +473,16 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
             return false; // 通常移動へ
         }
     }
+
+    if (!onThread_) {
+        // 新しく糸に乗る瞬間、その時のY座標を記録する
+        threadBaseY_ = translate_.y;
+
+        // ★追加: PlayerのY座標と、Threadの最寄り点のY座標の差分（オフセット）を保持する
+        threadOffsetY_ = translate_.y - query.closestPoint.y;
+    }
+
+    onThread_ = true;
 
     onThread_ = true;
     threadStart_ = query.startPoint;
@@ -544,12 +577,20 @@ void Player::ResolveThreadMove() {
 
     edgeFade = std::clamp(edgeFade, 0.0f, 1.0f);
 
-    // 横方向だけ補正する
+    // 横方向だけ補正する (edgeFadeをかける)
     moveVel_.x += lateral.x * kThreadLateralFollowStrength * edgeFade;
     moveVel_.z += lateral.z * kThreadLateralFollowStrength * edgeFade;
 
-    // Yだけは糸に合わせる
-    translate_.y = query.closestPoint.y;
+    // 変更後 (Player.cpp : ResolveThreadMove内)
+    // ============== 修正箇所 ==============
+    // 糸の沈み込みを考慮した本来の目標Y座標
+    float targetY = query.closestPoint.y + threadOffsetY_;
 
+    // edgeFade(端で0.0、中央で1.0)を利用してY座標をブレンドする。
+    // 端にいる時は threadBaseY_ に完全に一致し、中央にいる時は targetY になる。
+    translate_.y = threadBaseY_ + (targetY - threadBaseY_) * edgeFade;
+    // ======================================
+
+    // 糸への重さの適用
     thread_->ApplyPlayerWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
 }

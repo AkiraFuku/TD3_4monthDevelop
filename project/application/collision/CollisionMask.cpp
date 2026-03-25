@@ -26,9 +26,9 @@ void CollisionMask::Finalize()
 void CollisionMask::Initialize() 
 {
    
-    maskDatas_.resize(3);
+    maskDatas_.resize(4);
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 4; i++)
     {
 
         std::unique_ptr<MaskData> maskData{};
@@ -53,8 +53,11 @@ void CollisionMask::Initialize()
     LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[2]->textureData);
     maskDatas_[2]->name = "mapMaskData2";
     ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[2]->name, "resources/Mask/Mask(2).png");
+    LoadFromFile("resources/Mask/Mask(3).png", maskDatas_[3]->textureData);
+    maskDatas_[3]->name = "mapMaskData3";
+    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[3]->name, "resources/Mask/Mask(3).png");
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         GenerateSDF(maskDatas_[i].get());
 
@@ -66,7 +69,7 @@ void CollisionMask::Initialize()
         maskDatas_[i]->min_ = model->GetModelData().vertices[2].position;
     }
     
-    currentMaskMap_ = CollisionMask::MaskMap::Map2;
+    currentMaskMap_ = CollisionMask::MaskMap::Map4;
 
     maskMapRequest_ = CollisionMask::MaskMap::Unknown;
 
@@ -180,7 +183,7 @@ void CollisionMask::Initialize()
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         maskDatas_[i].get()->object->SetPsoName("MaskMap");
     }
@@ -199,7 +202,7 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentMaskMap_);
-    const char* items[] = { "Map1", "Map2", "Map3" };
+    const char* items[] = { "Map1", "Map2", "Map3","Map4"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
@@ -229,16 +232,22 @@ bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textu
 
     TextureManager::GetInstance()->LoadTexture(filePath);
 
-    // 2. 判定しやすいように強制変換 (RGBA 8bit)
+    // WICで強制デコードして直接convertedに
     DirectX::ScratchImage converted{};
-    hr = DirectX::Convert(
-        *scrachImage.GetImage(0, 0, 0),
-        DXGI_FORMAT_R8G8B8A8_UNORM,
-        DirectX::TEX_FILTER_DEFAULT, 0,
-        converted
-    );
+    hr = DirectX::LoadFromWICFile(filePathW.c_str(),
+        DirectX::WIC_FLAGS_FORCE_RGB,
+        nullptr,
+        converted);
+    assert(SUCCEEDED(hr));
 
-    if (FAILED(hr)) return false;
+    // DXGI_FORMAT_R8G8B8A8_UNORM に変換
+    const DirectX::Image* img = converted.GetImage(0, 0, 0);
+    if (img && img->format != DXGI_FORMAT_R8G8B8A8_UNORM) {
+        DirectX::ScratchImage tmp;
+        hr = DirectX::Convert(*img, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, 0, tmp);
+        assert(SUCCEEDED(hr));
+        converted = std::move(tmp);
+    }
 
     const DirectX::Image* image = converted.GetImage(0, 0, 0);
     textureData.widthX = static_cast<int>(image->width);
@@ -473,6 +482,8 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
     // 壁の中では SDF 値が 0 になるように FindNearestWallDist で作ったので、
     // ここでは一定間隔（1ピクセル分など）で少しずつ進みます
     float exitTraveled = traveled + 0.5f;
+    bool foundExit = false; // ★ 出口を見つけたかどうかのフラグを追加
+
     while (exitTraveled < maxDist) {
         Vector3 currentPos;
         currentPos.x = start.x + direction.x * exitTraveled;
@@ -481,10 +492,17 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
 
         // 距離が再びプラス（空白）になったらそこが出口
         if (dist > 0.1f) {
-            result.exitPos = { currentPos.x, currentPos.z };
+            result.exitPos = {currentPos.x, currentPos.z};
+            foundExit = true; // ★ 出口を発見！
             break;
         }
         exitTraveled += 0.5f; // 壁の中は慎重に進む
+    }
+
+    // ★ 追加：出口が見つからずに maxDist まで到達してしまった場合
+    if (!foundExit) {
+        // 「貫通できる壁ではなかった（虚空に繋がっていた）」として、ヒット判定自体を取り消す
+        result.hit = false;
     }
 
     return result;

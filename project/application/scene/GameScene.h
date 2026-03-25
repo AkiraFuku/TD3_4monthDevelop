@@ -4,6 +4,7 @@
 #include "DebugCamera.h"
 #include "Egg.h"
 #include "Goal.h"
+#include "NestMaterial.h"
 #include "MathFunction.h"
 #include "Model.h"
 #include "Object3D.h"
@@ -53,12 +54,12 @@ private:
     // 卵
     std::unique_ptr<Egg> egg_;
     // 卵の位置
-    Vector3 eggPos = { -10.0f,0.0f,1.0f };
+    Vector3 eggPos = { -11.0f,0.0f,-1.0f };
 
     // ゴール
     std::unique_ptr<Goal> goal_;
     // ゴールの位置
-    Vector3 goalPos = { 10.0f,0.0f,10.0f };
+    Vector3 goalPos = { 10.0f,0.0f,0.0f };
 
     /*Player* player_;
     Terrain* terrain_;*/
@@ -70,15 +71,23 @@ private:
   std::unique_ptr<Player> player_;
 
   // プレイヤーの位置
-  Vector3 playerPos_ = {-10.0f, 0.0f, 0.0f};
+  Vector3 playerPos_ = {-10.0f, -0.4f, 0.0f};
 
   // ----- Thread -----
   std::unique_ptr<ThreadManager> thread_;
   std::unique_ptr<SpiderWebManager> spiderWeb_;
 
   // 敵
-  std::unique_ptr<Enemy> enemy_;
-  // 敵の位置
-  Vector3 enemyPos_ = { 10.0f,0.0f,4.0f };
+  //std::unique_ptr<Enemy> enemy_;
+  //// 敵の位置
+  //Vector3 enemyPos_ = { 3.0f,0.0f,10.0f };
+
+  std::vector<std::unique_ptr<Enemy>> enemies_; // 敵のリスト
+  std::vector<Vector3> enemyPositions_;         // 複数体の初期位置リスト
+
+  // 巣の素材
+  std::unique_ptr<NestMaterial> nestMaterial_;
+  // 素材の位置
+  Vector3 nestMaterialPos_ = { 3.0f,0.0f,6.0f };
 
 };

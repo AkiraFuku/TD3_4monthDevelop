@@ -71,6 +71,7 @@
     <ClCompile Include="engine\scene\SceneManager.cpp" />
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
+    <ClCompile Include="NestMaterial.cpp" />
     <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="application\object\player\PlayerState.cpp" />
     <ClCompile Include="application\object\thread\ThreadManager.cpp" />
@@ -137,6 +138,7 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
+    <ClInclude Include="NestMaterial.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\player\PlayerState.h" />
