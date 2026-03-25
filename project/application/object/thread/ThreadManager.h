@@ -12,7 +12,7 @@ class ThreadManager {
 public:
     struct ThreadIntersection {
         Vector3 position = {};
-        float radius = 1.0f;
+        float radius = 3.0f;
 
         size_t threadIndexA = 0;
         size_t threadIndexB = 0;

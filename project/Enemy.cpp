@@ -240,6 +240,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
             // 交差点の中に足を踏み入れた！
             if (distSq <= trapRadius * trapRadius) {
                 isTrapped = true;
+                canMove_ = false;
                 break; // 1つでも捕まっていればOK
             }
         }
@@ -247,6 +248,8 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
         // 罠に捕まっている場合は移動をキャンセル（その場から動けなくなる）
         if (isTrapped) {
             expectedPos = currentPos;
+
+
 
             // ※もし「捕まった瞬間に交差点のド真ん中に引きずり込みたい」場合は
             // ここで expectedPos = intersection.position; などにすることもできます

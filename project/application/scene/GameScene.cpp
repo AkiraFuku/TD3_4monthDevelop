@@ -487,7 +487,10 @@ void GameScene::Update()
 
 	// 【変更】すべての敵のUpdateを呼ぶ
 	for (auto& enemy : enemies_) {
-		enemy->Update(targetPos, thread_.get());
+        if(enemy->GetCanMove())
+        {
+            enemy->Update(targetPos, thread_.get());
+        }
 	}
   
    // 巣の素材の更新処理
