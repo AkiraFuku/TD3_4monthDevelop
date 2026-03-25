@@ -88,6 +88,6 @@ private:
   // 巣の素材
   std::unique_ptr<NestMaterial> nestMaterial_;
   // 素材の位置
-  Vector3 nestMaterialPos_ = { 10.0f,0.0f,0.0f };
+  Vector3 nestMaterialPos_ = { 3.0f,0.0f,6.0f };
 
 };
