@@ -12,8 +12,8 @@
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
-    camera->SetRotate({0.1f, 0.0f, 0.0f});
-    camera->SetTranslate({0.0f, 4.0f, -30.0f});
+    camera->SetRotate({0.80f, 0.0f, 0.0f});
+    camera->SetTranslate({0.0f, 30.0f, -30.0f});
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
