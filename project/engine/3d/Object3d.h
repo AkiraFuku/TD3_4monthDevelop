@@ -54,7 +54,11 @@ public:
 
         // ★パフォーマンス最適化: ダーティフラグの追加
         bool isDirty = true; // 初期状態は更新が必要
-        QuaternionTransform cachedTransform; // キャッシュされたトランスフォーム
+        QuaternionTransform cachedTransform = {
+            {1.0f, 1.0f, 1.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},  // 単位クォータニオン (x, y, z, w)
+            {0.0f, 0.0f, 0.0f}
+        }; // キャッシュされたトランスフォーム（初期化必須）
 
     };
     void Initialize();

@@ -87,6 +87,25 @@ void Object3d::Update()
 
             instance->cachedTransform = instance->transform;
             instance->isDirty = false;
+        } else if (instance->mappedData && camera_) {
+            // ★修正: transformが変更されていなくても、ベース行列が変わった場合はworldMatrixを再計算
+            if (baseMatrixChanged || isBaseMatrixDirty_) {
+                if (instance->parent) {
+                    instance->worldMatrix = Multiply(Multiply(instance->localMatrix, objectBaseMatrix), instance->parent->worldMatrix);
+                } else {
+                    instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
+                }
+                instance->mappedData->World = instance->worldMatrix;
+                // instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+                instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
+                // キャッシュ更新
+                instance->cachedTransform = instance->transform;
+                instance->isDirty = false;
+            }
+            if (instance->mappedData && camera_) {
+                // 単体モデルの処理と同様、ViewProjectionは毎フレーム最新を反映させる
+                instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
+            }
         }
     }
     if (camera_ && cameraData_)
@@ -97,8 +116,7 @@ void Object3d::Update()
         // 一般的な行優先(Row-Major)の4x4行列の場合、3行目(m[2])がZ軸(Forward)です
         const Matrix4x4& mat = camera_->GetWorldMatrix();
         // 正規化されているはずですが、念のため正規化して送ると安全です
-        Vector3 forward = { mat.m[2][0], mat.m[2][1], mat.m[2][2] };
-        cameraData_->cameraForward = Normalize(forward);
+        Vector3 forward = { mat.m[2][0], mat.m[2][1], mat.m[2][2] };        cameraData_->cameraForward = Normalize(forward);
     }
 }
 
@@ -168,6 +186,7 @@ void Object3d::AddModel(const std::string& modelPath, const std::string& name, c
     // 行列の初期化
     newInst->mappedData->World = Makeidetity4x4();
     newInst->mappedData->WVP = Makeidetity4x4();
+    newInst->mappedData->WorldInverseTranspose = Makeidetity4x4();
 
     // Object3dが管理するリストに追加
     models_.push_back(std::move(newInst));
