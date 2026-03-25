@@ -93,6 +93,7 @@ void GameScene::Initialize() {
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
     player_->Initialize(playerPos_, thread_.get());
+    player_->SetMaxThreadCount(5);
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();

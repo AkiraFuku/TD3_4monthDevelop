@@ -111,6 +111,9 @@ public: // 外部入出力
         return false;
     }
 
+    void SetMaxThreadCount(int count) { remainingThreadCount_ = count; }
+    int  GetRemainingThreadCount() const { return remainingThreadCount_; }
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
@@ -169,6 +172,21 @@ private:
 
     static inline const float kThreadLateralFollowStrength = 0.65f; // 横ズレ補正の強さ
     static inline const float kThreadEndSnapFadeRange = 0.18f;      // 端で補正を弱める範囲
+
+    // Threadを生成できる回数
+    int remainingThreadCount_ = 0;
+
+    // 重力の強さ
+    float gravity_ = 0.008f;
+    // 現在の落下速度
+    float fallSpeed_ = 0.0f;
+    // 糸をたわませるPlayerの「重さ」
+    float weight_ = 0.1f;
+    // 重さを適用する範囲（半径）
+    float weightRadius_ = 0.8f;
+
+    float threadBaseY_ = 0.0f;
+    float threadOffsetY_ = 0.0f;
 
     CollisionMask::RayResult rayResult_;
 
