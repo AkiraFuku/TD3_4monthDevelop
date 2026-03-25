@@ -69,7 +69,7 @@ void CollisionMask::Initialize()
         maskDatas_[i]->min_ = model->GetModelData().vertices[2].position;
     }
     
-    currentMaskMap_ = CollisionMask::MaskMap::Map1;
+    currentMaskMap_ = CollisionMask::MaskMap::Map4;
 
     maskMapRequest_ = CollisionMask::MaskMap::Unknown;
 

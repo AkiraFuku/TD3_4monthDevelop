@@ -6,24 +6,23 @@
 #include "CollisionMask.h"
 #include "SceneManager.h"
 
-void Egg::Initialize(const Vector3& pos)
-{
+void Egg::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-    
 
-    ModelManager::GetInstance()->LoadModel("resources","egg.obj");
+
+    ModelManager::GetInstance()->LoadModel("resources", "egg.obj");
     object_->SetModel("egg.obj");
     object_->SetTranslate(pos);
 }
 
-void Egg::Finalize()
-{
+void Egg::Finalize() {
 
 }
 
-void Egg::Update()
-{
+void Egg::Update() {
+
+#ifdef USE_IMGUI
     ImGui::Begin("Egg Window");
 
     Vector3 scale = object_->GetScale();
@@ -47,6 +46,9 @@ void Egg::Update()
     ImGui::DragFloat("HP", &HP_, 0.1f, 0.1f, 10.0f);
 
     ImGui::End();
+#endif
+
+    //Vector3 translate = object_->GetTranslate();
 
     // プレイヤーに持ち上げられていたら
     if (onPlayer_)
@@ -56,12 +58,12 @@ void Egg::Update()
         {
             // プレイヤーのワールド行列を取得
             Matrix4x4 worldMatrix = player_->GetWorldMatrix();
-            Vector3 velocity_ = { 0.0f,-2.0f,1.0f };
+            Vector3 velocity_ = {0.0f, -2.0f, 1.0f};
             velocity_ = TransformNormal(velocity_, worldMatrix);
             translate += velocity_;
 
             // 置いた先が壁だったら
-            if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z,kWidth))
+            if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z, kWidth))
             {
                 // プレイヤーと同じ場所に置く
                 translate = player_->GetPosition();
@@ -78,8 +80,7 @@ void Egg::Update()
         translate = player_->GetPosition();
         translate.y += 2.0f;
 
-    }
-    else
+    } else
     {
         // プレイヤーと接触していたら
         if (isHit_)
@@ -109,20 +110,18 @@ void Egg::Update()
         //    }
         //}
     }
-    
+
     object_->SetTranslate(translate);
 
     object_->Update();
 
 }
 
-void Egg::Draw()
-{
+void Egg::Draw() {
     object_->Draw();
 }
 
-Vector3 Egg::GetWorldPosition() const
-{
+Vector3 Egg::GetWorldPosition() const {
     // ワールド座標を入れる変数
     Vector3 worldPos;
     // ワールド行列の平行移動成分を取得
@@ -130,25 +129,22 @@ Vector3 Egg::GetWorldPosition() const
     return worldPos;
 }
 
-AABB Egg::GetAABB() const
-{
+AABB Egg::GetAABB() const {
     Vector3 worldPos = GetWorldPosition();
     AABB aabb;
 
-    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
-    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+    aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+    aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
 
     return aabb;
 }
 
-void Egg::OnCollision(const Player* player_)
-{
-    (void)player_;
+void Egg::OnCollision(const Player* player_) {
+    (void) player_;
     isHit_ = true;
 }
 
-void Egg::Death()
-{
+void Egg::Death() {
     // HPがなくなったら
     if (HP_ <= 0.0f)
     {

@@ -80,9 +80,7 @@ public:
    
 
 
-public: // 外部入出力
-    // ----- Getter -----
-
+public: 
     // 位置
     Vector3 GetPosition() const { return object_->GetTranslate(); }
     void SetPosition(const Vector3& pos);
@@ -185,9 +183,9 @@ private:
     // 現在の落下速度
     float fallSpeed_ = 0.0f;
     // 糸をたわませるPlayerの「重さ」
-    float weight_ = 0.1f;
+    float weight_ = 0.3f;
     // 重さを適用する範囲（半径）
-    float weightRadius_ = 0.8f;
+    float weightRadius_ = 1.0f;
 
     float threadBaseY_ = 0.0f;
     float threadOffsetY_ = 0.0f;

@@ -581,9 +581,14 @@ void Player::ResolveThreadMove() {
     moveVel_.x += lateral.x * kThreadLateralFollowStrength * edgeFade;
     moveVel_.z += lateral.z * kThreadLateralFollowStrength * edgeFade;
 
+    // 変更後 (Player.cpp : ResolveThreadMove内)
     // ============== 修正箇所 ==============
-    // ★変更: Y座標は「糸の現在の高さ」に「乗った瞬間の高さの差分」を足したものを常に維持する
-    translate_.y = query.closestPoint.y + threadOffsetY_;
+    // 糸の沈み込みを考慮した本来の目標Y座標
+    float targetY = query.closestPoint.y + threadOffsetY_;
+
+    // edgeFade(端で0.0、中央で1.0)を利用してY座標をブレンドする。
+    // 端にいる時は threadBaseY_ に完全に一致し、中央にいる時は targetY になる。
+    translate_.y = threadBaseY_ + (targetY - threadBaseY_) * edgeFade;
     // ======================================
 
     // 糸への重さの適用

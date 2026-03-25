@@ -23,6 +23,7 @@ void Goal::Finalize()
 
 void Goal::Update()
 {
+#ifdef USE_IMGUI
     ImGui::Begin("Goal Window");
 
     Vector3 scale = object_->GetScale();
@@ -45,6 +46,7 @@ void Goal::Update()
 
 
     ImGui::End();
+#endif
 
     object_->Update();
 }
