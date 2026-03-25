@@ -26,9 +26,9 @@ void CollisionMask::Finalize()
 void CollisionMask::Initialize() 
 {
    
-    maskDatas_.resize(3);
+    maskDatas_.resize(4);
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 4; i++)
     {
 
         std::unique_ptr<MaskData> maskData{};
@@ -53,8 +53,11 @@ void CollisionMask::Initialize()
     LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[2]->textureData);
     maskDatas_[2]->name = "mapMaskData2";
     ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[2]->name, "resources/Mask/Mask(2).png");
+    LoadFromFile("resources/Mask/Mask(3).png", maskDatas_[3]->textureData);
+    maskDatas_[3]->name = "mapMaskData3";
+    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[3]->name, "resources/Mask/Mask(3).png");
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         GenerateSDF(maskDatas_[i].get());
 
@@ -180,7 +183,7 @@ void CollisionMask::Initialize()
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         maskDatas_[i].get()->object->SetPsoName("MaskMap");
     }
@@ -199,7 +202,7 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentMaskMap_);
-    const char* items[] = { "Map1", "Map2", "Map3" };
+    const char* items[] = { "Map1", "Map2", "Map3","Map4"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
