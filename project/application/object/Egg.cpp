@@ -22,33 +22,7 @@ void Egg::Finalize() {
 
 void Egg::Update() {
 
-#ifdef USE_IMGUI
-    ImGui::Begin("Egg Window");
-
-    Vector3 scale = object_->GetScale();
-    if (ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.1f, 10.0f))
-    {
-        object_->SetScale(scale);
-    }
-
-    Vector3 rotate = object_->GetRotate();
-    if (ImGui::DragFloat3("Rotate", &rotate.x, 0.1f, -360.0f, 360.0f))
-    {
-        object_->SetRotate(rotate);
-    }
-
     Vector3 translate = object_->GetTranslate();
-    if (ImGui::DragFloat3("Translate", &translate.x, 0.1f, -100.0f, 100.0f))
-    {
-        object_->SetTranslate(translate);
-    }
-
-    ImGui::DragFloat("HP", &HP_, 0.1f, 0.1f, 10.0f);
-
-    ImGui::End();
-#endif
-
-    //Vector3 translate = object_->GetTranslate();
 
     // プレイヤーに持ち上げられていたら
     if (onPlayer_)

@@ -20,6 +20,7 @@ void NestMaterial::Finalize()
 
 void NestMaterial::Update()
 {
+#ifdef USE_IMGUI
     ImGui::Begin("Goal Window");
 
     Vector3 scale = object_->GetScale();
@@ -42,6 +43,8 @@ void NestMaterial::Update()
 
 
     ImGui::End();
+
+#endif
 
     object_->Update();
 }
