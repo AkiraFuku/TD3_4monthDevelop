@@ -17,9 +17,9 @@ void GameScene::Initialize() {
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-    handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+   /* handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-    Audio::GetInstance()->PlayAudio(handle_, true);
+    Audio::GetInstance()->PlayAudio(handle_, true);*/
     // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
     // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
     // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
@@ -179,10 +179,10 @@ void GameScene::Update()
 
         // Aボタンを押したときの処理
 
-        if (Audio::GetInstance()->IsPlaying(handle_)) {
+       /* if (Audio::GetInstance()->IsPlaying(handle_)) {
 
             Audio::GetInstance()->StopAudio(handle_);
-        }
+        }*/
 
         GetSceneManager()->ChangeScene("TitleScene");
     }
@@ -208,14 +208,14 @@ void GameScene::Update()
         }
 
     }*/
-    if (Input::GetInstance()->TriggerMouseDown(0)) {
+    /*if (Input::GetInstance()->TriggerMouseDown(0)) {
         if (Audio::GetInstance()->IsPlaying(handle_)) {
             Audio::GetInstance()->PauseAudio(handle_);
         }
         else {
             Audio::GetInstance()->ResumeAudio(handle_);
         }
-    }
+    }*/
     if (Input::GetInstance()->GetJoyStick(0, state)) {
         {
             // 左スティックの値を取得
