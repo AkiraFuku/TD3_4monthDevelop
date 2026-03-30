@@ -175,19 +175,19 @@ void GameScene::Update()
 
     // Aボタンを押していたら
 
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
 
-        // Aボタンを押したときの処理
+    //    // Aボタンを押したときの処理
 
-        if (Audio::GetInstance()->IsPlaying(handle_)) {
+    //    if (Audio::GetInstance()->IsPlaying(handle_)) {
 
-            Audio::GetInstance()->StopAudio(handle_);
-        }
+    //        Audio::GetInstance()->StopAudio(handle_);
+    //    }
 
-        GetSceneManager()->ChangeScene("TitleScene");
-    }
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
-    }
+    //    GetSceneManager()->ChangeScene("TitleScene");
+    //}
+    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
+    //}
 
     // マウスホイールの入力取得
 
@@ -216,35 +216,35 @@ void GameScene::Update()
             Audio::GetInstance()->ResumeAudio(handle_);
         }
     }
-    if (Input::GetInstance()->GetJoyStick(0, state)) {
-        {
-            // 左スティックの値を取得
-            float x = (float) state.Gamepad.sThumbLX;
-            float y = (float) state.Gamepad.sThumbLY;
+    //if (Input::GetInstance()->GetJoyStick(0, state)) {
+    //    {
+    //        // 左スティックの値を取得
+    //        float x = (float) state.Gamepad.sThumbLX;
+    //        float y = (float) state.Gamepad.sThumbLY;
 
-            // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-            float normalizedX = x / 32767.0f;
-            float normalizedY = y / 32767.0f;
-            Vector3 cameraTranslate = camera->GetTranslate();
-            cameraTranslate =
-                Add(cameraTranslate,
-                    Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-            camera->SetTranslate(cameraTranslate);
-        }
-        {
-            //// 左スティックの値を取得
-            float x = (float) state.Gamepad.sThumbRX;
-            float y = (float) state.Gamepad.sThumbRY;
-            //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-            float normalizedX = x / 32767.0f;
-            float normalizedY = y / 32767.0f;
+    //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+    //        float normalizedX = x / 32767.0f;
+    //        float normalizedY = y / 32767.0f;
+    //        Vector3 cameraTranslate = camera->GetTranslate();
+    //        cameraTranslate =
+    //            Add(cameraTranslate,
+    //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+    //        camera->SetTranslate(cameraTranslate);
+    //    }
+    //    {
+    //        //// 左スティックの値を取得
+    //        float x = (float) state.Gamepad.sThumbRX;
+    //        float y = (float) state.Gamepad.sThumbRY;
+    //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+    //        float normalizedX = x / 32767.0f;
+    //        float normalizedY = y / 32767.0f;
 
-            Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-            point =
-                Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-            LightManager::GetInstance()->SetSpotLightDirection(0, point);
-        }
-    }
+    //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
+    //        point =
+    //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+    //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
+    //    }
+    //}
 
     if (isDebugCamera_)
     {
