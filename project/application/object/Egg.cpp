@@ -28,7 +28,7 @@ void Egg::Update() {
     if (onPlayer_)
     {
         // スペースキーで卵を置く
-        if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+        if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
             // プレイヤーのワールド行列を取得
             Matrix4x4 worldMatrix = player_->GetWorldMatrix();
@@ -60,7 +60,7 @@ void Egg::Update() {
         if (isHit_)
         {
             // スペースキーで卵を持ち上げる
-            if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+            if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
                 onPlayer_ = true;
                 // キャリーアニメーションを再生

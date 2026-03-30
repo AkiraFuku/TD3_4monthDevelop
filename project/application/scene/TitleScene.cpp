@@ -188,19 +188,19 @@ void TitleScene::Update() {
         camera->SetTranslate(camreaTranslate);
 
     }
-    if (Input::GetInstance()->GetJoyStick(0, state))
-    {
-        // 左スティックの値を取得
-        float x = (float)state.Gamepad.sThumbLX;
-        float y = (float)state.Gamepad.sThumbLY;
+    //if (Input::GetInstance()->GetJoyStick(0, state))
+    //{
+    //    // 左スティックの値を取得
+    //    float x = (float)state.Gamepad.sThumbLX;
+    //    float y = (float)state.Gamepad.sThumbLY;
 
-        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-        float normalizedX = x / 32767.0f;
-        float normalizedY = y / 32767.0f;
-        Vector3 camreaTranslate = camera->GetTranslate();
-        camreaTranslate = Add(camreaTranslate, Vector3{ normalizedX / 60.0f,normalizedY / 60.0f,0.0f });
-        camera->SetTranslate(camreaTranslate);
-    }
+    //    // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+    //    float normalizedX = x / 32767.0f;
+    //    float normalizedY = y / 32767.0f;
+    //    Vector3 camreaTranslate = camera->GetTranslate();
+    //    camreaTranslate = Add(camreaTranslate, Vector3{ normalizedX / 60.0f,normalizedY / 60.0f,0.0f });
+    //    camera->SetTranslate(camreaTranslate);
+    //}
 
     camera->Update();
     if (isDebugCamera_)
