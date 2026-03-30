@@ -3,71 +3,74 @@
 #include <vector>
 
 #include "PhysicsNode.h"
-#include "Vector4.h" // ※ Vector4.h から修正（環境に合わせて変更してください）
+#include "Vector3.h" 
 
 class ThreadPhysics {
 public:
-    /// <summary>
-    /// 糸の初期化
-    /// </summary>
-    /// <param name="startPos">糸の始点</param>
-    /// <param name="endPos">糸の終点</param>
-    /// <param name="nodeCount">節の数</param>
-    void Initialize(const Vector3& startPos, const Vector3& endPos, int nodeCount);
+    // ---------------------------------------------------------
+    // 初期化・更新
+    // ---------------------------------------------------------
 
     /// <summary>
-    /// 物理シミュレーションの更新
+    /// 初期化
+    /// </summary>
+    /// <param name="startPos">Threadの始点</param>
+    /// <param name="endPos">Threadの終点</param>
+    /// <param name="nodeCount">Threadのノード数</param>
+    void Initialize(const Vector3& startPos, const Vector3& endPos, int nodeCount);
+    /// <summary>
+    /// 更新
     /// </summary>
     void Update();
 
+    // ---------------------------------------------------------
+    // アクション
+    // ---------------------------------------------------------
+
     /// <summary>
-    /// 指定範囲内のノードに力を加える（Verlet積分における位置へのインパルス付与）
+    /// 指定した範囲内にあるノードに力を加える
     /// </summary>
-    /// <param name="pos">力を加える中心（プレイヤーや敵の座標）</param>
-    /// <param name="radius">影響範囲の半径</param>
-    /// <param name="force">加える力のベクトル（重み）</param>
+    /// <param name="pos">力を加える中心座標</param>
+    /// <param name="radius">力が及ぶ影響範囲の半径</param>
+    /// <param name="force">加える力のベクトル</param>
     void ApplyForce(const Vector3& pos, float radius, const Vector3& force);
 
-public:
-    // ======================================
-    // Getter
-    // ======================================
+    // ---------------------------------------------------------
+    // ゲッター・セッター
+    // ---------------------------------------------------------
 
-    // ノード
+    // ノード数
     const std::vector<PhysicsNode>& GetNodes() const { return nodes_; }
-
-public:
-    // ======================================
-    // Setter
-    // ======================================
 
     // 重力
     void SetGravity(const Vector3& gravity) { gravity_ = gravity; }
     // 空気抵抗
     void SetDamping(float damping) { damping_ = damping; }
-    // 制約を解く回数
+    // Threadの硬さ
     void SetIterations(int iterations) { iterations_ = iterations; }
 
 private:
-    // ======================================
-    // ヘルパーメソッド
-    // ======================================
+    // ---------------------------------------------------------
+    // 内部処理
+    // ---------------------------------------------------------
 
     /// <summary>
-    /// Verlet積分による各ノードの位置更新
+    /// Verlet積分を用いて各ノードの速度と位置を更新する
     /// </summary>
-    void Integrate();
+    void Integrate();        // 位置の更新（Verlet積分）
     /// <summary>
-    /// ノード間の距離制約の解決（長さの維持）
+    /// ノード間の距離制約を解決し、糸の長さを一定に保つ
     /// </summary>
-    void SolveConstraints();
+    void SolveConstraints(); // 距離の制約解決（糸の長さを保つ）
 
 private:
-    std::vector<PhysicsNode> nodes_; // 糸を構成する節の配列
-    float segmentLength_ = 0.0f;     // 節と節の間の理想的な距離
+    // ---------------------------------------------------------
+    // 状態・パラメーター
+    // ---------------------------------------------------------
+    std::vector<PhysicsNode> nodes_; // ノード配列
+    float segmentLength_ = 0.0f;     // ノード間の自然長
 
-    // シミュレーションの調整パラメーター
-    int iterations_ = 100;           // 制約を解く回数（多いほど硬く伸びない糸になる）
-    float damping_ = 0.99f;          // 空気抵抗（1.0で抵抗なし）
+    int iterations_ = 100;           // 制約解決の反復回数（糸の硬さ）
+    float damping_ = 0.99f;          // 減衰率（空気抵抗）
     Vector3 gravity_ = {0.0f, -0.0005f, 0.0f}; // 重力
 };
