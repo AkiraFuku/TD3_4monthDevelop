@@ -17,9 +17,9 @@ void TitleScene::Initialize() {
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-    handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+   /* handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");*/
 
-    Audio::GetInstance()->PlayAudio(handle_, true);
+   /* Audio::GetInstance()->PlayAudio(handle_, true);*/
 
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 
@@ -133,14 +133,14 @@ void TitleScene::Update() {
     // 現在のジョイスティックを取得
     if (Input::GetInstance()->TriggerMouseDown(0))
     {
-        if (Audio::GetInstance()->IsPlaying(handle_))
+       /* if (Audio::GetInstance()->IsPlaying(handle_))
         {
             Audio::GetInstance()->PauseAudio(handle_);
         } else
         {
             Audio::GetInstance()->ResumeAudio(handle_);
 
-        }
+        }*/
     }
 
 
