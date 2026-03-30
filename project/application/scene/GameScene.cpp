@@ -17,12 +17,12 @@ void GameScene::Initialize() {
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-    handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+    /* handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-    Audio::GetInstance()->PlayAudio(handle_, true);
-    // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
-    // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
-    // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
+     Audio::GetInstance()->PlayAudio(handle_, true);*/
+     // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
+     // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
+     // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
     LightManager::GetInstance()->AddSpotLight(
         {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
         Normalize(Vector3 {-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
@@ -118,16 +118,16 @@ void GameScene::Initialize() {
     /*enemy_ = std::make_unique<Enemy>();
     enemy_->Initialize(enemyPos_);*/
 
-	enemyPositions_ = {
-		{3.0f, 0.0f, 10.0f},
-		{8.0f, 0.0f, -5.0f}
-	};
+    enemyPositions_ = {
+        {3.0f, 0.0f, 10.0f},
+        {8.0f, 0.0f, -5.0f}
+    };
 
-	for (const auto& pos : enemyPositions_) {
-		auto enemy = std::make_unique<Enemy>();
-		enemy->Initialize(pos);
-		enemies_.push_back(std::move(enemy)); // リストに追加
-	}
+    for (const auto& pos : enemyPositions_) {
+        auto enemy = std::make_unique<Enemy>();
+        enemy->Initialize(pos);
+        enemies_.push_back(std::move(enemy)); // リストに追加
+    }
 
 
     // 巣の素材の初期化
@@ -163,8 +163,7 @@ void GameScene::Finalize() {
 
 }
 
-void GameScene::Update()
-{
+void GameScene::Update() {
     emitter->Update();
 
     XINPUT_STATE state;
@@ -179,17 +178,18 @@ void GameScene::Update()
 
     //    // Aボタンを押したときの処理
 
-    //    if (Audio::GetInstance()->IsPlaying(handle_)) {
 
-    //        Audio::GetInstance()->StopAudio(handle_);
-    //    }
+       /* if (Audio::GetInstance()->IsPlaying(handle_)) {
 
-    //    GetSceneManager()->ChangeScene("TitleScene");
-    //}
-    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
-    //}
+            Audio::GetInstance()->StopAudio(handle_);
+        }*/
 
-    // マウスホイールの入力取得
+        //    GetSceneManager()->ChangeScene("TitleScene");
+        //}
+        //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
+        //}
+
+        // マウスホイールの入力取得
 
     if (Input::GetInstance()->GetMouseMove().z) {
         Vector3 cameraTranslate = camera->GetTranslate();
@@ -208,51 +208,52 @@ void GameScene::Update()
         }
 
     }*/
-    if (Input::GetInstance()->TriggerMouseDown(0)) {
+    /*if (Input::GetInstance()->TriggerMouseDown(0)) {
         if (Audio::GetInstance()->IsPlaying(handle_)) {
             Audio::GetInstance()->PauseAudio(handle_);
         }
         else {
             Audio::GetInstance()->ResumeAudio(handle_);
         }
-    }
-    //if (Input::GetInstance()->GetJoyStick(0, state)) {
-    //    {
-    //        // 左スティックの値を取得
-    //        float x = (float) state.Gamepad.sThumbLX;
-    //        float y = (float) state.Gamepad.sThumbLY;
+            }*/
 
-    //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-    //        float normalizedX = x / 32767.0f;
-    //        float normalizedY = y / 32767.0f;
-    //        Vector3 cameraTranslate = camera->GetTranslate();
-    //        cameraTranslate =
-    //            Add(cameraTranslate,
-    //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-    //        camera->SetTranslate(cameraTranslate);
-    //    }
-    //    {
-    //        //// 左スティックの値を取得
-    //        float x = (float) state.Gamepad.sThumbRX;
-    //        float y = (float) state.Gamepad.sThumbRY;
-    //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-    //        float normalizedX = x / 32767.0f;
-    //        float normalizedY = y / 32767.0f;
+            //if (Input::GetInstance()->GetJoyStick(0, state)) {
+            //    {
+            //        // 左スティックの値を取得
+            //        float x = (float) state.Gamepad.sThumbLX;
+            //        float y = (float) state.Gamepad.sThumbLY;
 
-    //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-    //        point =
-    //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-    //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
-    //    }
-    //}
+            //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+            //        float normalizedX = x / 32767.0f;
+            //        float normalizedY = y / 32767.0f;
+            //        Vector3 cameraTranslate = camera->GetTranslate();
+            //        cameraTranslate =
+            //            Add(cameraTranslate,
+            //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+            //        camera->SetTranslate(cameraTranslate);
+            //    }
+            //    {
+            //        //// 左スティックの値を取得
+            //        float x = (float) state.Gamepad.sThumbRX;
+            //        float y = (float) state.Gamepad.sThumbRY;
+            //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+            //        float normalizedX = x / 32767.0f;
+            //        float normalizedY = y / 32767.0f;
+
+            //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
+            //        point =
+            //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+            //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
+            //    }
+            //}
+
 
     if (isDebugCamera_)
     {
         debugCamera_.Update(camera->GetTransform());
         camera->SetTranslate(debugCamera_.GetTranslate());
         camera->SetWorldMatrix(debugCamera_.GetWorldMatrix());
-    }
-    else
+    } else
     {
         camera->Update();
     }
@@ -410,8 +411,7 @@ void GameScene::Update()
     if (player_->OnThread()) {
         // 糸の上なら 緑色 で表示
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON THREAD: YES");
-    }
-    else {
+    } else {
         // 地面なら 赤色 で表示
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
     }
@@ -468,32 +468,32 @@ void GameScene::Update()
     //// 決定した目的地を敵に渡す
     //enemy_->Update(targetPos, thread_.get());
 
-	// 敵の目的地を決定する
-	Vector3 targetPos;
-	if (egg_->IsOnPlayer()) {
-		targetPos = player_->GetPosition();
-	} else {
-		targetPos = egg_->GetWorldPosition();
-	}
+    // 敵の目的地を決定する
+    Vector3 targetPos;
+    if (egg_->IsOnPlayer()) {
+        targetPos = player_->GetPosition();
+    } else {
+        targetPos = egg_->GetWorldPosition();
+    }
 
-	// プレイヤーが糸を撃った瞬間を検知
-	if (player_->GetAndResetDidFireThread()) {
-		OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
-		// 【変更】すべての敵に経路再計算をリクエスト
-		for (auto& enemy : enemies_) {
-			enemy->RequestPathReplan();
-		}
-	}
+    // プレイヤーが糸を撃った瞬間を検知
+    if (player_->GetAndResetDidFireThread()) {
+        OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+        // 【変更】すべての敵に経路再計算をリクエスト
+        for (auto& enemy : enemies_) {
+            enemy->RequestPathReplan();
+        }
+    }
 
-	// 【変更】すべての敵のUpdateを呼ぶ
-	for (auto& enemy : enemies_) {
-        if(enemy->GetCanMove())
+    // 【変更】すべての敵のUpdateを呼ぶ
+    for (auto& enemy : enemies_) {
+        if (enemy->GetCanMove())
         {
             enemy->Update(targetPos, thread_.get());
         }
-	}
-  
-   // 巣の素材の更新処理
+    }
+
+    // 巣の素材の更新処理
     nestMaterial_->Update();
 
 
@@ -523,9 +523,9 @@ void GameScene::Draw() {
     // 敵の描画処理
     //enemy_->Draw();
 
-	for (auto& enemy : enemies_) {
-		enemy->Draw();
-	}
+    for (auto& enemy : enemies_) {
+        enemy->Draw();
+    }
 
     // 巣の素材の描画処理
     nestMaterial_->Draw();
@@ -540,37 +540,37 @@ void GameScene::Draw() {
 
     spiderWeb_->Draw();
 
-    if(isVisibleCollisionMask_)
+    if (isVisibleCollisionMask_)
     {
         collisionMask_->Draw();
     }
 }
 
 void GameScene::CheckAllCollisions() {
-	// プレイヤーと卵の判定（ここはそのまま）
-	AABB playerAABB = player_->GetAABB();
-	AABB eggAABB = egg_->GetAABB();
+    // プレイヤーと卵の判定（ここはそのまま）
+    AABB playerAABB = player_->GetAABB();
+    AABB eggAABB = egg_->GetAABB();
 
-	if (isCollision(playerAABB, eggAABB)) {
-		egg_->OnCollision(player_.get());
-		ResolveCollision(player_.get(), playerAABB, eggAABB);
-	} else {
-		egg_->SetHitFlag(false);
-	}
+    if (isCollision(playerAABB, eggAABB)) {
+        egg_->OnCollision(player_.get());
+        ResolveCollision(player_.get(), playerAABB, eggAABB);
+    } else {
+        egg_->SetHitFlag(false);
+    }
 
-	// 【変更】すべての敵と卵の判定
-	for (auto& enemy : enemies_) {
-		AABB enemyAABB = enemy->GetAABB();
+    // 【変更】すべての敵と卵の判定
+    for (auto& enemy : enemies_) {
+        AABB enemyAABB = enemy->GetAABB();
 
-		if (isCollision(enemyAABB, eggAABB)) {
-			enemy->OnCollision(egg_.get());
-			ResolveCollision(enemy.get(), enemyAABB, eggAABB);
-		} else {
-			enemy->SetHitFlag(false);
-		}
-	}
-  
-  // 巣の素材の座標
+        if (isCollision(enemyAABB, eggAABB)) {
+            enemy->OnCollision(egg_.get());
+            ResolveCollision(enemy.get(), enemyAABB, eggAABB);
+        } else {
+            enemy->SetHitFlag(false);
+        }
+    }
+
+    // 巣の素材の座標
     AABB nestAABB = nestMaterial_->GetAABB();
 
     if (isCollision(nestAABB, playerAABB))
@@ -587,16 +587,14 @@ void GameScene::CheckAllCollisions() {
     }
 }
 
-bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
-{
+bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2) {
     if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x && aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y && aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
         return true;
     }
     return false;
 }
 
-void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB)
-{
+void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB) {
 
     // 各軸ごとのめり込み量を計算
     // min(右側のめり込み, 左側のめり込み) をとる
@@ -616,15 +614,13 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
         {
             currentPos.x += overlapX; // 右へ
         }
-    }
-    else
+    } else
     {
         // Z軸方向の押し戻し
         if (playerAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        }
-        else
+        } else
         {
             currentPos.z += overlapZ; // 奥へ
         }
@@ -638,32 +634,28 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             if (playerAABB.min.x < otherAABB.min.x)
             {
                 currentPos.x += (overlapX * 2.0f);
-            }
-            else
+            } else
             {
                 currentPos.x -= (overlapX * 2.0f);
             }
-        }
-        else
+        } else
         {
             // Z軸方向の押し戻し
             if (playerAABB.min.z < otherAABB.min.z)
             {
                 currentPos.z += (overlapZ * 2.0f);
-            }
-            else
+            } else
             {
                 currentPos.z -= (overlapZ * 2.0f);
             }
         }
     }
-   
+
     // 修正した座標を反映
     player->SetPosition(currentPos);
 }
 
-void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB)
-{
+void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB) {
     // 各軸ごとのめり込み量を計算
     // min(右側のめり込み, 左側のめり込み) をとる
     float overlapX = std::min(enemyAABB.max.x - otherAABB.min.x, otherAABB.max.x - enemyAABB.min.x);
@@ -683,25 +675,21 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
         {
             currentPos.x += overlapX; // 右へ
         }
-    }
-    else if (overlapZ < overlapX && overlapZ < overlapY) {
+    } else if (overlapZ < overlapX && overlapZ < overlapY) {
         // Z軸方向の押し戻し
         if (enemyAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        }
-        else
+        } else
         {
             currentPos.z += overlapZ; // 奥へ
         }
-    }
-    else {
+    } else {
         // Y軸方向の押し戻し（床や天井）
         if (enemyAABB.min.y < otherAABB.min.y)
         {
             currentPos.y -= overlapY; // 下へ
-        }
-        else
+        } else
         {
             currentPos.y += overlapY; // 上へ
         }
