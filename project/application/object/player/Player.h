@@ -78,7 +78,7 @@ public:
         }
     }
    
-
+    void CreatePSO();
 
 public: 
     // 位置
@@ -171,9 +171,6 @@ private:
     static inline const float kThreadWeightRadius = 0.90f;
     static inline const float kThreadWeight = 0.06f;
     static inline const float kThreadExitThreshold = 0.05f;
-
-    static inline const float kThreadLateralFollowStrength = 0.65f; // 横ズレ補正の強さ
-    static inline const float kThreadEndSnapFadeRange = 0.18f;      // 端で補正を弱める範囲
 
     // Threadを生成できる回数
     int remainingThreadCount_ = 0;
