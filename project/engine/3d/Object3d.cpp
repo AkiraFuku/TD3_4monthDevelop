@@ -211,7 +211,7 @@ void Object3d::CreateCameraResource()
 
 void Object3d::UpdateModelInstances()
 {
-  // 1. ベース行列（Object3d自身のトランスフォーム）の更新チェック
+    // 1. ベース行列（Object3d自身のトランスフォーム）の更新チェック
     bool baseMatrixChanged = memcmp(&transform_, &cachedBaseTransform_, sizeof(EulerTransform)) != 0;
     Matrix4x4 objectBaseMatrix;
     if (baseMatrixChanged || isBaseMatrixDirty_) {
@@ -219,48 +219,50 @@ void Object3d::UpdateModelInstances()
         cachedBaseTransform_ = transform_;
         isBaseMatrixDirty_ = false;
     } else {
-        // 変更がない場合も計算用に現在のベース行列を再構築（または保持）
         objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);
     }
 
-    // ★追加: カメラの行列が更新されたかどうかの判定
-    // 厳密にやるならCameraクラスに前回からの変更フラグを持たせるべきですが、
-    // 常に最新を反映させるため、ここでは「カメラが存在するなら毎フレーム計算」の安全策をとります。
+    // ★修正: カメラが存在する場合は毎フレーム更新（安全）
     bool cameraUpdated = (camera_ != nullptr); 
 
     for (auto& instance : models_) {
+        // ★修正: モデルのアニメーション更新を最初に実行
         if (instance->model) {
             instance->model->Update();
         }
 
-        // 2. インスタンス自体のトランスフォーム変更チェック
+        // ★追加: アニメーション適用後に transform を比較（重要）
         bool transformChanged = memcmp(&instance->transform, &instance->cachedTransform, sizeof(QuaternionTransform)) != 0;
 
-        // ★修正: 「トランスフォーム変更」か「ダーティフラグ」か「カメラ更新」があれば行列を再計算
+        // ★修正: 以下の条件で行列を再計算
+        // - トランスフォームが変更された
+        // - ダーティフラグが立っている
+        // - カメラが更新された（毎フレーム）
+        // - または常に更新する（最も安全なアプローチ）
         if (transformChanged || instance->isDirty || cameraUpdated) {
             
-            // ローカル行列の作成（自身のトランスフォームが変更された時のみでも良いが、シンプルにするため再計算）
+            // ローカル行列を計算
             instance->localMatrix = MakeAfineMatrix(
                 instance->transform.scale,
                 instance->transform.rotate,
                 instance->transform.translate
             );
 
-            // 親子関係の解決
+            // 親子関係を考慮してワールド行列を計算
             if (instance->parent) {
                 instance->worldMatrix = Multiply(instance->localMatrix, instance->parent->worldMatrix);
             } else {
                 instance->worldMatrix = Multiply(instance->localMatrix, objectBaseMatrix);
             }
 
-            // GPUへの転送 (ここで最新の ViewProjection を掛ける)
+            // GPU に転送
             if (instance->mappedData && camera_) {
                 instance->mappedData->World = instance->worldMatrix;
-                // ★ここでカメラの最新行列を反映
                 instance->mappedData->WVP = Multiply(instance->worldMatrix, camera_->GetViewProtectionMatrix());
                 instance->mappedData->WorldInverseTranspose = Transpose(Inverse(instance->worldMatrix));
             }
 
+            // キャッシュを更新して次フレームの比較に備える
             instance->cachedTransform = instance->transform;
             instance->isDirty = false;
         }
