@@ -32,6 +32,11 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     object_->SetTranslate(translate_);
     InitializeModel();
 
+    // 予測線の初期化
+    predictionLineObj_ = std::make_unique<Object3d>();
+    predictionLineObj_->Initialize();
+    predictionLineObj_->SetModel("cylinder/cylinder.obj");
+
     // PSOを生成
     CreatePSO();
 
@@ -102,16 +107,7 @@ void Player::Update() {
     anima_->Update();
     object_->Update();
 
-    // ★追加: 照準の位置を計算して更新
-    const float kAimDistance = 5.0f; // プレイヤーから照準までの距離
-    Vector3 forward = GetForward();
-
-    Vector3 aimPos = {
-        translate_.x + forward.x * kAimDistance,
-        translate_.y + 1.0f, // 地面に埋まらないように少し浮かせる
-        translate_.z + forward.z * kAimDistance
-    };
-
+    UpdatePredictionLine();
 }
 /// <summary>
 /// 描画
@@ -119,6 +115,10 @@ void Player::Update() {
 void Player::Draw() {
     // モデルの描画
     object_->Draw();
+
+    if (canDrawPrediction_ && predictionLineObj_) {
+        predictionLineObj_->Draw();
+    }
 }
 
 /// <summary>
@@ -428,6 +428,66 @@ void Player::TurnToDirection(const Vector3& direction) {
 
     rotate_ = {0.0f, rotationY_, 0.0f};
     object_->SetRotate(rotate_);
+}
+
+void Player::UpdatePredictionLine() {
+    // ★追加: 照準の位置を計算して更新
+    const float kAimDistance = 5.0f; // プレイヤーから照準までの距離
+    Vector3 forward = GetForward();
+
+    Vector3 aimPos = {
+        translate_.x + forward.x * kAimDistance,
+        translate_.y + 1.0f, // 地面に埋まらないように少し浮かせる
+        translate_.z + forward.z * kAimDistance
+    };
+
+    canDrawPrediction_ = false;
+
+    // 糸を生成可能な条件が揃っているかチェック
+    if (remainingThreadCount_ > 0 && thread_ && !onThread_ && CanFireThread()) {
+        Vector3 playerPos = GetPosition();
+
+        // Rayを飛ばして壁との交差を判定（FireThreadと同じ処理）
+        auto rayResult = CollisionMask::GetInstance()->CastRayThroughWall(playerPos, forward, 50.0f);
+
+        if (rayResult.hit) {
+            const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
+
+            Vector3 start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
+            Vector3 end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
+
+            // 始点から終点へのベクトルと距離
+            Vector3 dir = end - start;
+            float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+
+            if (distance > 0.001f) {
+                // 中間地点
+                Vector3 centerPos = {
+                    (start.x + end.x) * 0.5f,
+                    (start.y + end.y) * 0.5f,
+                    (start.z + end.z) * 0.5f
+                };
+
+                predictedThreadStart_ = start;
+                predictedThreadEnd_ = end;
+                canDrawPrediction_ = true;
+
+                // 向き（回転）
+                float yaw = std::atan2(dir.x, dir.z);
+                float pitch = std::atan2(-dir.y, std::sqrt(dir.x * dir.x + dir.z * dir.z));
+
+                // ★太さと長さを直接指定（まずは掛け算なしで！）
+                float thickness = 0.5f; // もし太すぎたら 0.1f などに下げてください
+                float length = distance; // 倍率を掛けず、そのままの距離を入れる
+
+                // オブジェクトの更新
+                predictionLineObj_->SetTranslate(centerPos);
+                predictionLineObj_->SetScale({thickness, thickness, length});
+                predictionLineObj_->SetRotate({pitch, yaw, 0.0f});
+                predictionLineObj_->Update();
+            }
+        }
+    }
 }
 
 void Player::InitializeModel() {

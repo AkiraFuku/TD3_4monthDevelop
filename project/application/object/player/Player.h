@@ -149,6 +149,13 @@ private:
     // 実際に動く時の速度
     Vector3 moveVel_;
 
+    // --- 予測線描画用 ---
+    Vector3 predictedThreadStart_ = {0.0f, 0.0f, 0.0f};
+    Vector3 predictedThreadEnd_ = {0.0f, 0.0f, 0.0f};
+    bool canDrawPrediction_ = false; // 現在糸を生成可能（予測線を描画可能）か
+
+    std::unique_ptr<Object3d> predictionLineObj_;
+
     // ThreadManager
     ThreadManager* thread_ = nullptr;
 
@@ -156,6 +163,8 @@ private:
     bool TryMoveOnThread(const Vector3& moveDirection);
     void ResolveThreadMove();
     void TurnToDirection(const Vector3& direction);
+
+    void UpdatePredictionLine();
 
 private:
     // Thread上を歩いているか
