@@ -77,10 +77,10 @@ public:
             anima_->ChangeAnimation(newState);
         }
     }
-   
+
     void CreatePSO();
 
-public: 
+public:
     // 位置
     Vector3 GetPosition() const { return object_->GetTranslate(); }
     void SetPosition(const Vector3& pos);
@@ -167,10 +167,10 @@ private:
 
     // Thread判定パラメータ
     static inline const float kThreadEnterRadius = 0.55f;
-    static inline const float kThreadStickRadius = 1.25f;
+    static inline const float kThreadStickRadius = 1.0f;
     static inline const float kThreadWeightRadius = 0.90f;
     static inline const float kThreadWeight = 0.06f;
-    static inline const float kThreadExitThreshold = 0.05f;
+    static inline const float kThreadExitThreshold = 0.00f;
 
     // Threadを生成できる回数
     int remainingThreadCount_ = 0;
@@ -184,15 +184,15 @@ private:
     // 重さを適用する範囲（半径）
     float weightRadius_ = 1.0f;
 
-    float threadBaseY_ = 0.0f;
+    float threadBaseY_ = -0.40f;
     float threadOffsetY_ = 0.0f;
 
     CollisionMask::RayResult rayResult_;
 
-    private :
-        // アニメーション制御
-        std::unique_ptr<PlayerAnima> anima_;
-        void InitializeModel();
+private:
+    // アニメーション制御
+    std::unique_ptr<PlayerAnima> anima_;
+    void InitializeModel();
 
     bool didFireThread_ = false; // 糸発射フラグ
 

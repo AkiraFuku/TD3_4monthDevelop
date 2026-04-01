@@ -83,11 +83,11 @@ namespace {
 // ---------------------------------------------------------
 
 /// <summary>
-    /// 初期化
-    /// </summary>
-    /// <param name="maxThreads">生成可能なThreadの最大数</param>
-    /// <param name="nodesPerThread">Threadのノード数</param>
-    /// <param name="camera">Cameraのポインタ</param>
+/// 初期化
+/// </summary>
+/// <param name="maxThreads">生成可能なThreadの最大数</param>
+/// <param name="nodesPerThread">Threadのノード数</param>
+/// <param name="camera">Cameraのポインタ</param>
 void ThreadManager::Initialize(int maxThreads, int nodesPerThread, Camera* camera) {
     assert(camera);
     camera_ = camera;
@@ -98,24 +98,42 @@ void ThreadManager::Initialize(int maxThreads, int nodesPerThread, Camera* camer
 
     // 描画クラスの初期化
     renderer_ = std::make_unique<ThreadRenderer>();
-    renderer_->Initialize(maxThreads, nodesPerThread, 0.02f, 6);
+    renderer_->Initialize(maxThreads, nodesPerThread, kThreadThickness, kThreadDrawSegments);
 }
 
 /// <summary>
 /// 更新
 /// </summary>
 void ThreadManager::Update() {
-    std::vector<std::vector<PhysicsNode>> allNodes;
-    allNodes.reserve(physicsList_.size());
+    // 1. 交差判定の更新
+    CalculateIntersections();
 
-    // 物理挙動の更新とノード情報の収集
+    // =========================================================
+    // ★ ここで「普段の糸の材質（張り具合）」を設定する！
+    // =========================================================
+    for (auto& physics : physicsList_) {
+        physics->SetIterations(kDefaultIterations);
+        physics->SetStiffness(kDefaultStiffness);
+        physics->SetSlack(kDefaultSlack);
+    }
+
+    // =========================================================
+    // ★ 交差している糸は「より強靭に」設定する
+    // =========================================================
+    for (const auto& inter : intersections_) {
+        physicsList_[inter.threadIndexA]->SetIterations(kIntersectedIterations);
+        physicsList_[inter.threadIndexB]->SetIterations(kIntersectedIterations);
+
+        physicsList_[inter.threadIndexA]->SetStiffness(kIntersectedStiffness);
+        physicsList_[inter.threadIndexB]->SetStiffness(kIntersectedStiffness);
+    }
+
+    // 3. 物理演算の実行
+    std::vector<std::vector<PhysicsNode>> allNodes;
     UpdatePhysics(allNodes);
 
     // 描画用の情報を更新
     renderer_->Update(allNodes, camera_);
-
-    // 糸同士の交差点計算
-    CalculateIntersections();
 }
 
 /// <summary>
@@ -135,7 +153,6 @@ void ThreadManager::Draw() {
 /// <param name="startPos">Threadの始点</param>
 /// <param name="endPos">Threadの終点</param>
 void ThreadManager::AddThread(const Vector3& startPos, const Vector3& endPos) {
-    // 最大数に達していたら追加しない
     if (physicsList_.size() >= maxThreads_) {
         return;
     }
@@ -154,7 +171,6 @@ void ThreadManager::ClearThreads() {
 }
 
 ThreadManager::ConstrainedMoveResult ThreadManager::CalculateConstrainedVelocity(const Vector3& nextPos, const ThreadQueryResult& query) const {
-    // 糸の接線ベクトル（方向）を計算
     Vector3 tangent = {
         query.endPoint.x - query.startPoint.x,
         0.0f,
@@ -167,14 +183,12 @@ ThreadManager::ConstrainedMoveResult ThreadManager::CalculateConstrainedVelocity
         tangent.z /= tangentLength;
     }
 
-    // 次の移動予定位置から、糸の最近点への差分ベクトル
     Vector3 toClosest = {
         query.closestPoint.x - nextPos.x,
         0.0f,
         query.closestPoint.z - nextPos.z
     };
 
-    // 最近点への差を「接線方向成分」と「横方向成分」に分解
     float alongError = toClosest.x * tangent.x + toClosest.z * tangent.z;
 
     Vector3 lateral = {
@@ -183,7 +197,6 @@ ThreadManager::ConstrainedMoveResult ThreadManager::CalculateConstrainedVelocity
         toClosest.z - tangent.z * alongError
     };
 
-    // 端に近いほど横補正を弱める
     float edgeFade = 1.0f;
     if (query.t < kThreadEndSnapFadeRange) {
         edgeFade = query.t / kThreadEndSnapFadeRange;
@@ -192,7 +205,6 @@ ThreadManager::ConstrainedMoveResult ThreadManager::CalculateConstrainedVelocity
     }
     edgeFade = std::clamp(edgeFade, 0.0f, 1.0f);
 
-    // 最終的な補正ベクトルを返す
     Vector3 correction = {
         lateral.x * kThreadLateralFollowStrength * edgeFade,
         0.0f,
@@ -222,13 +234,12 @@ bool ThreadManager::FindNearestThread(const Vector3& pos, float radius, ThreadQu
     const Vector3 flatPos = FlattenXZ(pos);
 
     bool found = false;
-    float bestDistSq = radiusSq + 1.0f; // 判定半径より少し大きい値で初期化
+    float bestDistSq = radiusSq + kDistancePadding;
 
     for (const auto& physics : physicsList_) {
         const auto& nodes = physics->GetNodes();
         if (nodes.size() < 2) continue;
 
-        // 糸を構成する各線分に対して判定
         for (size_t i = 0; i + 1 < nodes.size(); ++i) {
             const Vector3 a = nodes[i].currentPos;
             const Vector3 b = nodes[i + 1].currentPos;
@@ -241,33 +252,27 @@ bool ThreadManager::FindNearestThread(const Vector3& pos, float radius, ThreadQu
 
             const float abLenSq = ab.x * ab.x + ab.z * ab.z;
 
-            // 線分AB上での最近接点の割合(t)を計算
             float localT = 0.0f;
             if (abLenSq > 0.0f) {
                 localT = Clamp01((ap.x * ab.x + ap.z * ab.z) / abLenSq);
             }
 
-            // XZ平面での最も近い座標
             Vector3 closestFlat = {
                 flatA.x + ab.x * localT,
                 0.0f,
                 flatA.z + ab.z * localT
             };
 
-            // 距離の二乗を計算して判定
             const float dx = flatPos.x - closestFlat.x;
             const float dz = flatPos.z - closestFlat.z;
             const float distSq = dx * dx + dz * dz;
 
-            // より近く、かつ半径内であれば結果を更新
             if (distSq <= radiusSq && distSq < bestDistSq) {
                 bestDistSq = distSq;
                 found = true;
 
-                // Y座標(高さ)の計算
                 const float closestY = a.y + (b.y - a.y) * localT;
 
-                // 結果の格納
                 outResult.closestPoint = {closestFlat.x, closestY, closestFlat.z};
                 outResult.startPoint = nodes.front().currentPos;
                 outResult.endPoint = nodes.back().currentPos;
@@ -278,6 +283,99 @@ bool ThreadManager::FindNearestThread(const Vector3& pos, float radius, ThreadQu
         }
     }
 
+    return found;
+}
+
+bool ThreadManager::FindTargetThread(const Vector3& pos, const Vector3& moveDir, float radius, ThreadQueryResult& outResult) const {
+    if (radius <= 0.0f) return false;
+
+    const float radiusSq = radius * radius;
+    const Vector3 flatPos = FlattenXZ(pos);
+
+    Vector3 normMove = {moveDir.x, 0.0f, moveDir.z};
+    float moveLen = std::sqrt(normMove.x * normMove.x + normMove.z * normMove.z);
+    if (moveLen > kMinVectorLength) {
+        normMove.x /= moveLen;
+        normMove.z /= moveLen;
+    } else {
+        return false;
+    }
+
+    bool found = false;
+    float bestScore = kInitialBestScore;
+
+    for (const auto& physics : physicsList_) {
+        const auto& nodes = physics->GetNodes();
+        if (nodes.size() < 2) continue;
+
+        for (size_t i = 0; i + 1 < nodes.size(); ++i) {
+            const Vector3 a = nodes[i].currentPos;
+            const Vector3 b = nodes[i + 1].currentPos;
+            const Vector3 flatA = FlattenXZ(a);
+            const Vector3 flatB = FlattenXZ(b);
+            const Vector3 ab = flatB - flatA;
+            const Vector3 ap = flatPos - flatA;
+
+            const float abLenSq = ab.x * ab.x + ab.z * ab.z;
+            float localT = 0.0f;
+            if (abLenSq > 0.0f) {
+                localT = Clamp01((ap.x * ab.x + ap.z * ab.z) / abLenSq);
+            }
+
+            Vector3 closestFlat = {flatA.x + ab.x * localT, 0.0f, flatA.z + ab.z * localT};
+            const float dx = closestFlat.x - flatPos.x;
+            const float dz = closestFlat.z - flatPos.z;
+            const float distSq = dx * dx + dz * dz;
+
+            if (distSq <= radiusSq) {
+                float dist = std::sqrt(distSq);
+
+                Vector3 toThread = {dx, 0.0f, dz};
+                float posDot = 1.0f;
+                if (dist > kMinDistForDirection) {
+                    toThread.x /= dist;
+                    toThread.z /= dist;
+                    posDot = toThread.x * normMove.x + toThread.z * normMove.z;
+                }
+
+                if (posDot < kTargetFrontAngleThreshold)
+                {
+                    continue;
+                }
+
+                float threadLen = std::sqrt(abLenSq);
+                float dirDot = 0.0f;
+                if (threadLen > kMinVectorLength) {
+                    float tDirX = ab.x / threadLen;
+                    float tDirZ = ab.z / threadLen;
+                    dirDot = std::abs(tDirX * normMove.x + tDirZ * normMove.z);
+                }
+
+                if (dirDot < kTargetParallelAngleThreshold) {
+                    continue;
+                }
+
+                float distScore = 1.0f - (dist / radius);
+                float frontScore = std::max(0.0f, posDot);
+                float parallelScore = dirDot;
+
+                float score = (distScore * kWeightDistance) + (frontScore * kWeightFront) + (parallelScore * kWeightParallel);
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    found = true;
+
+                    const float closestY = a.y + (b.y - a.y) * localT;
+                    outResult.closestPoint = {closestFlat.x, closestY, closestFlat.z};
+                    outResult.startPoint = nodes.front().currentPos;
+                    outResult.endPoint = nodes.back().currentPos;
+                    outResult.segmentStart = a;
+                    outResult.segmentEnd = b;
+                    outResult.t = (static_cast<float>(i) + localT) / static_cast<float>(nodes.size() - 1);
+                }
+            }
+        }
+    }
     return found;
 }
 
@@ -326,12 +424,135 @@ void ThreadManager::ApplyWeight(const Vector3& pos, float radius, float weight) 
     }
 }
 
+/// <summary>
+/// 進行方向を考慮して、最も移動に適した糸を検索する（交差点用）
+/// </summary>
+bool ThreadManager::FindBestThread(const Vector3& pos, const Vector3& moveDir, float radius, ThreadQueryResult& outResult) const {
+    if (radius <= 0.0f) {
+        return false;
+    }
+
+    const float radiusSq = radius * radius;
+    const Vector3 flatPos = FlattenXZ(pos);
+
+    bool found = false;
+    float bestScore = kInitialBestScore;
+    ThreadQueryResult bestQuery {};
+
+    Vector3 normalizedMoveDir = {moveDir.x, 0.0f, moveDir.z};
+    float moveLen = std::sqrt(normalizedMoveDir.x * normalizedMoveDir.x + normalizedMoveDir.z * normalizedMoveDir.z);
+    if (moveLen > 0.0f) {
+        normalizedMoveDir.x /= moveLen;
+        normalizedMoveDir.z /= moveLen;
+    }
+
+    for (const auto& physics : physicsList_) {
+        const auto& nodes = physics->GetNodes();
+        if (nodes.size() < 2) continue;
+
+        for (size_t i = 0; i + 1 < nodes.size(); ++i) {
+            const Vector3 a = nodes[i].currentPos;
+            const Vector3 b = nodes[i + 1].currentPos;
+
+            const Vector3 flatA = FlattenXZ(a);
+            const Vector3 flatB = FlattenXZ(b);
+
+            const Vector3 ab = flatB - flatA;
+            const Vector3 ap = flatPos - flatA;
+
+            const float abLenSq = ab.x * ab.x + ab.z * ab.z;
+
+            float localT = 0.0f;
+            if (abLenSq > 0.0f) {
+                localT = Clamp01((ap.x * ab.x + ap.z * ab.z) / abLenSq);
+            }
+
+            Vector3 closestFlat = {
+                flatA.x + ab.x * localT,
+                0.0f,
+                flatA.z + ab.z * localT
+            };
+
+            const float dx = flatPos.x - closestFlat.x;
+            const float dz = flatPos.z - closestFlat.z;
+            const float distSq = dx * dx + dz * dz;
+
+            if (distSq <= radiusSq) {
+                float dist = std::sqrt(distSq);
+
+                Vector3 threadDir = {b.x - a.x, 0.0f, b.z - a.z};
+                float tLen = std::sqrt(threadDir.x * threadDir.x + threadDir.z * threadDir.z);
+                if (tLen > 0.0f) {
+                    threadDir.x /= tLen;
+                    threadDir.z /= tLen;
+                }
+
+                float distScore = 1.0f - (dist / radius);
+                float score = 0.0f;
+
+                if (moveLen > 0.0f) {
+                    float dot = std::abs(normalizedMoveDir.x * threadDir.x + normalizedMoveDir.z * threadDir.z);
+                    score = distScore + (dot * kMoveDirectionBonus);
+                } else {
+                    score = distScore;
+                }
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    found = true;
+
+                    const float closestY = a.y + (b.y - a.y) * localT;
+
+                    bestQuery.closestPoint = {closestFlat.x, closestY, closestFlat.z};
+                    bestQuery.startPoint = nodes.front().currentPos;
+                    bestQuery.endPoint = nodes.back().currentPos;
+                    bestQuery.segmentStart = a;
+                    bestQuery.segmentEnd = b;
+                    bestQuery.t = (static_cast<float>(i) + localT) / static_cast<float>(nodes.size() - 1);
+                }
+            }
+        }
+    }
+
+    if (found) {
+        outResult = bestQuery;
+    }
+    return found;
+}
+
 // ---------------------------------------------------------
 // 内部処理
 // ---------------------------------------------------------
 void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllNodes) {
+    outAllNodes.clear();
+
+    for (const auto& inter : intersections_) {
+        auto& nodesA = physicsList_[inter.threadIndexA]->GetNodesMutable();
+        auto& nodesB = physicsList_[inter.threadIndexB]->GetNodesMutable();
+
+        PhysicsNode& nA0 = nodesA[inter.segmentIndexA];
+        PhysicsNode& nA1 = nodesA[inter.segmentIndexA + 1];
+
+        PhysicsNode& nB0 = nodesB[inter.segmentIndexB];
+        PhysicsNode& nB1 = nodesB[inter.segmentIndexB + 1];
+
+        Vector3 centerA = (nA0.currentPos + nA1.currentPos) * 0.5f;
+        Vector3 centerB = (nB0.currentPos + nB1.currentPos) * 0.5f;
+
+        Vector3 diff = (centerB - centerA) * 0.5f * kIntersectionPullStiffness;
+
+        if (nA0.mass > 0.0f) nA0.currentPos += diff;
+        if (nA1.mass > 0.0f) nA1.currentPos += diff;
+
+        if (nB0.mass > 0.0f) nB0.currentPos -= diff;
+        if (nB1.mass > 0.0f) nB1.currentPos -= diff;
+    }
+
     for (auto& physics : physicsList_) {
         physics->Update();
+    }
+
+    for (auto& physics : physicsList_) {
         outAllNodes.push_back(physics->GetNodes());
     }
 }
@@ -339,12 +560,10 @@ void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllN
 void ThreadManager::CalculateIntersections() {
     intersections_.clear();
 
-    // 糸が2本未満なら交差しない
     if (physicsList_.size() < 2) {
         return;
     }
 
-    // 全ての糸の組み合わせをチェック
     for (size_t i = 0; i < physicsList_.size(); ++i) {
         const auto& nodesA = physicsList_[i]->GetNodes();
         if (nodesA.size() < 2) continue;
@@ -353,12 +572,10 @@ void ThreadManager::CalculateIntersections() {
             const auto& nodesB = physicsList_[j]->GetNodes();
             if (nodesB.size() < 2) continue;
 
-            // 糸Aと糸Bの全線分同士を判定
             for (size_t a = 0; a + 1 < nodesA.size(); ++a) {
                 for (size_t b = 0; b + 1 < nodesB.size(); ++b) {
 
                     Vector3 intersectPos {};
-                    // XZ平面で交差していなければスキップ
                     if (!SegmentIntersectXZ(
                         nodesA[a].currentPos, nodesA[a + 1].currentPos,
                         nodesB[b].currentPos, nodesB[b + 1].currentPos,
@@ -366,15 +583,12 @@ void ThreadManager::CalculateIntersections() {
                         continue;
                     }
 
-                    // 既に近い位置に交差点が登録されていれば重複を避ける
-                    if (IsNearSameIntersection(intersections_, intersectPos)) {
+                    if (IsNearSameIntersection(intersections_, intersectPos, kSameIntersectionThreshold)) {
                         continue;
                     }
 
-                    // 交差点情報の作成と登録
                     ThreadIntersection intersection {};
                     intersection.position = intersectPos;
-                    // ※ヘッダ側で radius は 0.8f で初期化済み
 
                     intersection.threadIndexA = i;
                     intersection.threadIndexB = j;
