@@ -36,25 +36,25 @@ void Model::Initialize(const std::string& directryPath, const std::string& filen
 
 void Model::Update()
 {
-#ifdef USE_IMGUI
-    ImGui::Begin((std::string("Settings: ") + name_).c_str());
-    int* pEnableLighting = reinterpret_cast<int*>(&materialData_->enableLighting);
-    ImGui::Checkbox("Enable Lighting", (bool*)pEnableLighting);
-    if (materialData_->enableLighting) {
-        ImGui::Text("Diffuse (Base)");
-        const char* diffuseItems[] = { "Lambert", "Half-Lambert" };
-        ImGui::Combo("Diffuse Type", &materialData_->diffuseType, diffuseItems, IM_ARRAYSIZE(diffuseItems));
-
-        ImGui::Text("Specular (Shininess)");
-        const char* specularItems[] = { "None", "Phong", "Blinn-Phong" };
-        ImGui::Combo("Specular Type", &materialData_->specularType, specularItems, IM_ARRAYSIZE(specularItems));
-
-        ImGui::DragFloat("Shininess", &materialData_->shininess, 0.1f, 1.0f, 256.0f);
-    }
-
-    ImGui::End();
-
-#endif // USE_IMGUI
+//#ifdef USE_IMGUI
+//    ImGui::Begin((std::string("Settings: ") + name_).c_str());
+//    int* pEnableLighting = reinterpret_cast<int*>(&materialData_->enableLighting);
+//    ImGui::Checkbox("Enable Lighting", (bool*)pEnableLighting);
+//    if (materialData_->enableLighting) {
+//        ImGui::Text("Diffuse (Base)");
+//        const char* diffuseItems[] = { "Lambert", "Half-Lambert" };
+//        ImGui::Combo("Diffuse Type", &materialData_->diffuseType, diffuseItems, IM_ARRAYSIZE(diffuseItems));
+//
+//        ImGui::Text("Specular (Shininess)");
+//        const char* specularItems[] = { "None", "Phong", "Blinn-Phong" };
+//        ImGui::Combo("Specular Type", &materialData_->specularType, specularItems, IM_ARRAYSIZE(specularItems));
+//
+//        ImGui::DragFloat("Shininess", &materialData_->shininess, 0.1f, 1.0f, 256.0f);
+//    }
+//
+//    ImGui::End();
+//
+//#endif // USE_IMGUI
 
     if (animation_)
     {

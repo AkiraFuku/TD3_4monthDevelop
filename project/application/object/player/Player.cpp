@@ -37,6 +37,11 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     predictionLineObj_->Initialize();
     predictionLineObj_->SetModel("cylinder/cylinder.obj");
 
+    predictionPointObj_ = std::make_unique<Object3d>();
+    predictionPointObj_->Initialize();
+    // もし circle.obj などがあればそれを使用。なければ sphere.obj で代用
+    predictionPointObj_->SetModel("sphere/sphere.obj");
+
     // PSOを生成
     CreatePSO();
 
@@ -81,6 +86,8 @@ void Player::Update() {
 
     ImGui::Begin("Player");
 
+    ImGui::Text("B / RB: FireThread\n\nSPACE / A: EggOnPlayer");
+
     // 座標の表示と編集 (DragFloat3 はドラッグで数値を変更できます)
     if (ImGui::DragFloat3("Position", &translate_.x, 0.1f)) {
         // ImGuiで値を書き換えた場合、即座にオブジェクトに反映する
@@ -116,8 +123,15 @@ void Player::Draw() {
     // モデルの描画
     object_->Draw();
 
-    if (canDrawPrediction_ && predictionLineObj_) {
-        predictionLineObj_->Draw();
+    if (canDrawPrediction_) {
+        // 線の描画
+        if (predictionLineObj_) {
+            predictionLineObj_->Draw();
+        }
+        // ★追加：ポインターの描画
+        if (predictionPointObj_) {
+            predictionPointObj_->Draw();
+        }
     }
 }
 
@@ -402,7 +416,7 @@ bool Player::CanFireThread() const {
     }
 
     // Eggに触れている間も、Eggを持っている間も発射禁止
-    if (egg_->IsHit() || egg_->IsOnPlayer()) {
+    if (egg_->IsOnPlayer()) {
         return false;
     }
 
@@ -456,35 +470,28 @@ void Player::UpdatePredictionLine() {
             Vector3 start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
             Vector3 end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
 
-            // 始点から終点へのベクトルと距離
             Vector3 dir = end - start;
             float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
 
             if (distance > 0.001f) {
-                // 中間地点
-                Vector3 centerPos = {
-                    (start.x + end.x) * 0.5f,
-                    (start.y + end.y) * 0.5f,
-                    (start.z + end.z) * 0.5f
-                };
-
-                predictedThreadStart_ = start;
-                predictedThreadEnd_ = end;
                 canDrawPrediction_ = true;
 
-                // 向き（回転）
+                // --- 予測線の更新 (既存) ---
+                Vector3 centerPos = {(start.x + end.x) * 0.5f, (start.y + end.y) * 0.5f, (start.z + end.z) * 0.5f};
                 float yaw = std::atan2(dir.x, dir.z);
                 float pitch = std::atan2(-dir.y, std::sqrt(dir.x * dir.x + dir.z * dir.z));
 
-                // ★太さと長さを直接指定（まずは掛け算なしで！）
-                float thickness = 0.5f; // もし太すぎたら 0.1f などに下げてください
-                float length = distance; // 倍率を掛けず、そのままの距離を入れる
-
-                // オブジェクトの更新
                 predictionLineObj_->SetTranslate(centerPos);
-                predictionLineObj_->SetScale({thickness, thickness, length});
+                predictionLineObj_->SetScale({0.2f, 0.2f, distance}); // 太さは適宜調整
                 predictionLineObj_->SetRotate({pitch, yaw, 0.0f});
                 predictionLineObj_->Update();
+
+                // ★追加：予測地点（ポインター）の更新
+                // 位置はレイの終点
+                predictionPointObj_->SetTranslate(end);
+                // 球体を平たく潰して「円」に見せる（Y軸を小さくする）
+                predictionPointObj_->SetScale({0.5f, 0.05f, 0.5f});
+                predictionPointObj_->Update();
             }
         }
     }

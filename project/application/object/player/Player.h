@@ -112,7 +112,7 @@ public:
     void SetMaxThreadCount(int count) { remainingThreadCount_ = count; }
     int  GetRemainingThreadCount() const { return remainingThreadCount_; }
 
-    // 巣の素材の回収数のgetter/setter
+    // 巣の素材の回収数の getter/setter
     void SetNestMaterial(int num) { nestMaterialNum_ += num; }
     int GetNestMaterial() const { return nestMaterialNum_; }
 
@@ -155,6 +155,7 @@ private:
     bool canDrawPrediction_ = false; // 現在糸を生成可能（予測線を描画可能）か
 
     std::unique_ptr<Object3d> predictionLineObj_;
+    std::unique_ptr<Object3d> predictionPointObj_;
 
     // ThreadManager
     ThreadManager* thread_ = nullptr;
