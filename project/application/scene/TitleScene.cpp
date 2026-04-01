@@ -150,6 +150,8 @@ void TitleScene::Update() {
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
 
+        Audio::GetInstance()->StopAudio(handle_);
+
         // ゲームシーンに戻る
         SceneManager::GetInstance()->ChangeScene("GameScene");
 

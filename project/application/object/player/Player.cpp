@@ -433,9 +433,11 @@ void Player::TurnToDirection(const Vector3& direction) {
 void Player::InitializeModel() {
 
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "player/Arm/playerArm.obj");
     if (object_)
     {
         object_->AddModel("player/player.obj", "Body");
+        object_->AddModel("player/Arm/playerArm.obj", "Arm", "Body");
 
     }
 

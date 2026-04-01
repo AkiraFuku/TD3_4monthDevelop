@@ -55,7 +55,17 @@ void SceneManager::Draw() {
 void SceneManager::ChangeScene(const std::string& sceneName)
 {
     assert(sceneFactory_);
-   // assert(nextScene_ == nullptr);
+    // assert(nextScene_ == nullptr);
+     //
+    if (scene_&&scene_->GetBGMHandle()!=0)
+    {
+        if (Audio::GetInstance()->IsPlaying(scene_->GetBGMHandle()))
+        {
+            Audio::GetInstance()->StopAudio(scene_->GetBGMHandle());
+
+        }
+    }
+
     nextScene_ = sceneFactory_->CreateScene(sceneName);
 
 

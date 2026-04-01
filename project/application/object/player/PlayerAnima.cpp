@@ -9,15 +9,15 @@
 
 // キャッシュ用の定数
 constexpr uint32_t PART_BODY = 0;
-constexpr uint32_t PART_ARM_R = 1;
-constexpr uint32_t PART_ARM_L = 2;
+constexpr uint32_t PART_ARM= 1;
+//constexpr uint32_t PART_ARM = 2;
 
 // インスタンス名からパーツIDへの高速変換
 inline uint32_t GetPartId(const std::string& name)
 {
     if (name == "Body") return PART_BODY;
-    if (name == "Arm_R") return PART_ARM_R;
-    if (name == "Arm_L") return PART_ARM_L;
+    if (name == "Arm") return PART_ARM;
+  //  if (name == "Arm") return PART_ARM_L;
     return UINT32_MAX;
 }
 
@@ -38,7 +38,7 @@ void PlayerAnima::InitializeAnimationSpeeds()
 {
     animationSpeeds_[AnimationState::Idle] = 1.0f;
     animationSpeeds_[AnimationState::Walk] = 1.0f;
-    animationSpeeds_[AnimationState::Carry] = 1.0f;
+    animationSpeeds_[AnimationState::Carry] = 0.5f;
     animationSpeeds_[AnimationState::OnThread] = 1.0f;
 }
 
@@ -63,7 +63,7 @@ void PlayerAnima::InitializeAnimations()
             float t = std::sin(anima_->GetTimer() * 2.0f * speed) * 0.5f + 0.5f;
             
             uint32_t partId = GetPartId(instance.name);
-            if (partId == PART_BODY || partId == PART_ARM_R || partId == PART_ARM_L) {
+            if (partId == PART_BODY || partId == PART_ARM) {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
             }
         },
@@ -93,7 +93,7 @@ void PlayerAnima::InitializeAnimations()
                 float speed = animationSpeeds_.at(AnimationState::Carry);
                 float t = std::sin(anima_->GetTimer() * 10.0f * speed) * 0.5f + 0.5f;
 
-                if (GetPartId(instance.name) == PART_BODY) {
+                if (GetPartId(instance.name) == PART_ARM) {
                     // キャッシュされたクォータニオンを使用
                     instance.transform.rotate = Slerp(cachedStart, cachedEnd, t);
                 }

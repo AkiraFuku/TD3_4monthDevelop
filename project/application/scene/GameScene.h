@@ -40,7 +40,7 @@ private:
     std::unique_ptr<Object3d> object3d2;
     std::unique_ptr<Object3d> object3d;
     std::unique_ptr<ParicleEmitter> emitter;
-    uint32_t handle_ = 0;
+   
 
     DebugCamera debugCamera_;
     bool isDebugCamera_ = false;
