@@ -48,8 +48,7 @@ void PlayerStateIdle::Update(Player* player) {
     }
 
     // SPACE または コントローラーのAボタンで糸を発射
-    if ((Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
-        && player->CanFireThread()) {
+    if ((Input::GetInstance()->TriggerKeyDown(DIK_B) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))) {
 
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
@@ -156,9 +155,8 @@ void PlayerStateMove::Update(Player* player) {
         player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
     }
 
-    // 6. 状態遷移の判断（SPACE または コントローラーのAボタン でShootへ）
-    if ((Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
-        && player->CanFireThread()) {
+    // 6. 状態遷移の判断（B または コントローラーのRBボタン でShootへ）
+    if ((Input::GetInstance()->TriggerKeyDown(DIK_B) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))) {
 
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
