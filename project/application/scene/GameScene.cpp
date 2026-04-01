@@ -175,19 +175,19 @@ void GameScene::Update()
 
     // Aボタンを押していたら
 
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
 
-        // Aボタンを押したときの処理
+    //    // Aボタンを押したときの処理
 
-       /* if (Audio::GetInstance()->IsPlaying(handle_)) {
+    //   /* if (Audio::GetInstance()->IsPlaying(handle_)) {
 
-            Audio::GetInstance()->StopAudio(handle_);
-        }*/
+    //        Audio::GetInstance()->StopAudio(handle_);
+    //    }*/
 
-        GetSceneManager()->ChangeScene("TitleScene");
-    }
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
-    }
+    //    GetSceneManager()->ChangeScene("TitleScene");
+    //}
+    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
+    //}
 
     // マウスホイールの入力取得
 

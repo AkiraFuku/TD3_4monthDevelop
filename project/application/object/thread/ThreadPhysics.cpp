@@ -116,33 +116,41 @@ void ThreadPhysics::Integrate() {
 void ThreadPhysics::SolveConstraints() {
     if (nodes_.size() < 2) return;
 
-    // 指定回数だけ補正を繰り返し、糸を硬くする
+    // 現在のSlack（たわみ率）を適用した目標の長さを計算
+    float targetLength = segmentLength_ * slack_;
+
     for (int i = 0; i < iterations_; ++i) {
         for (size_t j = 0; j < nodes_.size() - 1; ++j) {
             PhysicsNode& n1 = nodes_[j];
             PhysicsNode& n2 = nodes_[j + 1];
 
-            // 両方固定なら計算不要
+            // 両方固定なら何もしない
             if (n1.mass <= 0.0f && n2.mass <= 0.0f) continue;
 
             Vector3 diff = n1.currentPos - n2.currentPos;
             float currentDist = Length(diff);
 
-            // ゼロ除算防止
+            // ゼロ除算防止と、すでに距離が正しい場合のスキップ
             if (currentDist <= 1e-6f) continue;
 
-            // 理想の長さとの誤差割合
-            float difference = (segmentLength_ - currentDist) / currentDist;
+            // 本来あるべき距離との差分（押し引きする割合）
+            float fraction = (targetLength - currentDist) / currentDist;
 
-            // 動くノードの数をカウント（1 or 2）
-            float weightSum = (n1.mass > 0.0f ? 1.0f : 0.0f) + (n2.mass > 0.0f ? 1.0f : 0.0f);
+            // ★変更箇所：ここで Stiffness（剛性）を掛けて力の伝わり具合を調整する
+            Vector3 push = diff * fraction * stiffness_;
 
-            // 補正ベクトルを計算
-            Vector3 correction = diff * (difference / weightSum);
-
-            // 動くノードに対して補正を適用
-            if (n1.mass > 0.0f) n1.currentPos += correction;
-            if (n2.mass > 0.0f) n2.currentPos -= correction;
+            // ▼ ここが最重要：固定されているノードは動かさない ▼
+            if (n1.mass <= 0.0f) {
+                // n1が固定なら、n2だけを100%動かす
+                n2.currentPos -= push;
+            } else if (n2.mass <= 0.0f) {
+                // n2が固定なら、n1だけを100%動かす
+                n1.currentPos += push;
+            } else {
+                // 両方動くなら、今まで通り半分ずつ動かす
+                n1.currentPos += push * 0.5f;
+                n2.currentPos -= push * 0.5f;
+            }
         }
     }
 }

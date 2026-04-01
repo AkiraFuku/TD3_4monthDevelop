@@ -1,3 +1,4 @@
+#define NOMINMAX
 #pragma once
 
 #include <vector>
@@ -41,6 +42,17 @@ public:
 
     // ノード数
     const std::vector<PhysicsNode>& GetNodes() const { return nodes_; }
+    std::vector<PhysicsNode>& GetNodesMutable() { return nodes_; }
+
+    // 糸の剛性（0.0 ~ 1.0）。1.0で伸びない硬い糸、下げるとゴムのように弾む
+    void SetStiffness(float stiffness) {
+        stiffness_ = (std::max) (0.0f, (std::min) (stiffness, 1.0f));
+    }
+
+    // 糸のたわみ率。1.0がジャスト。0.9などにすると常に引っ張り合い（ピンと張る）、1.2などにするとたるむ
+    void SetSlack(float slack) {
+        slack_ = (std::max) (0.01f, slack);
+    }
 
     // 重力
     void SetGravity(const Vector3& gravity) { gravity_ = gravity; }
@@ -70,7 +82,11 @@ private:
     std::vector<PhysicsNode> nodes_; // ノード配列
     float segmentLength_ = 0.0f;     // ノード間の自然長
 
+    float stiffness_ = 1.0f;         // 剛性（張力の強さ）
+    float slack_ = 1.0f;             // たわみ率（自然長の補正係数）
+
     int iterations_ = 100;           // 制約解決の反復回数（糸の硬さ）
     float damping_ = 0.99f;          // 減衰率（空気抵抗）
     Vector3 gravity_ = {0.0f, -0.0005f, 0.0f}; // 重力
+
 };

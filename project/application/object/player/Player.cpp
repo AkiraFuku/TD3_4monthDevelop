@@ -72,10 +72,46 @@ void Player::Update() {
         ResolveThreadMove();
     }
 
+#ifdef USE_IMGUI
+
+    ImGui::Begin("Player");
+
+    // 座標の表示と編集 (DragFloat3 はドラッグで数値を変更できます)
+    if (ImGui::DragFloat3("Position", &translate_.x, 0.1f)) {
+        // ImGuiで値を書き換えた場合、即座にオブジェクトに反映する
+        object_->SetTranslate(translate_);
+    }
+
+    // 状態の表示
+    ImGui::Text("On Thread: %s", onThread_ ? "Yes" : "No");
+    ImGui::Text("Remaining Threads: %d", remainingThreadCount_);
+
+    // 速度（移動量）の確認
+    ImGui::Text("Move Velocity: (%.2f, %.2f, %.2f)", moveVel_.x, moveVel_.y, moveVel_.z);
+
+    // 回転角の確認
+    float degrees = rotationY_ * 180.0f / std::numbers::pi_v<float>;
+    ImGui::Text("Rotation Y: %.2f deg", degrees);
+
+    ImGui::End();
+
+#endif
+
     ResultMove();
 
     anima_->Update();
     object_->Update();
+
+    // ★追加: 照準の位置を計算して更新
+    const float kAimDistance = 5.0f; // プレイヤーから照準までの距離
+    Vector3 forward = GetForward();
+
+    Vector3 aimPos = {
+        translate_.x + forward.x * kAimDistance,
+        translate_.y + 1.0f, // 地面に埋まらないように少し浮かせる
+        translate_.z + forward.z * kAimDistance
+    };
+
 }
 /// <summary>
 /// 描画
@@ -127,7 +163,7 @@ void Player::IsCollisionSDF() {
 
     // 3. 四隅の中で「最も壁に近い点」を探す
     float minDist = 10000.0f;
-    Vector2 targetCorner = { nextPos.x, nextPos.z };
+    Vector2 targetCorner = {nextPos.x, nextPos.z};
 
 
     for (const auto& corner : corners) {
@@ -342,15 +378,15 @@ void Player::SetPosition(const Vector3& pos) {
 
 // 向いている方向
 Vector3 Player::GetForward() const {
-    return { std::sin(rotationY_), 0.0f, std::cos(rotationY_) };
+    return {std::sin(rotationY_), 0.0f, std::cos(rotationY_)};
 }
 
 AABB Player::GetAABB() const {
     Vector3 worldPos = GetPosition();
     AABB aabb;
 
-    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
-    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+    aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+    aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
 
     return aabb;
 }
@@ -379,23 +415,22 @@ void Player::TurnToDirection(const Vector3& direction) {
     }
 
     float targetAngleY = std::atan2(direction.x, direction.z);
-    float diffrence = targetAngleY - rotationY_;
+    float difference = targetAngleY - rotationY_;
 
-    while (diffrence > std::numbers::pi_v<float>) {
-        diffrence -= 2.0f * std::numbers::pi_v<float>;
+    while (difference > std::numbers::pi_v<float>) {
+        difference -= 2.0f * std::numbers::pi_v<float>;
     }
-    while (diffrence < -std::numbers::pi_v<float>) {
-        diffrence += 2.0f * std::numbers::pi_v<float>;
+    while (difference < -std::numbers::pi_v<float>) {
+        difference += 2.0f * std::numbers::pi_v<float>;
     }
 
-    rotationY_ += diffrence * kTurnSpeed;
+    rotationY_ += difference * kTurnSpeed;
 
-    rotate_ = { 0.0f, rotationY_, 0.0f };
+    rotate_ = {0.0f, rotationY_, 0.0f};
     object_->SetRotate(rotate_);
 }
 
-void Player::InitializeModel()
-{
+void Player::InitializeModel() {
 
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
     if (object_)
@@ -411,7 +446,7 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         return false;
     }
 
-    ThreadManager::ThreadQueryResult query{};
+    ThreadManager::ThreadQueryResult query {};
 
     Vector3 probePos = translate_;
     const float probeDistance = kWidth * 0.5f + kThreadEnterRadius;
@@ -420,18 +455,22 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
 
     bool found = false;
 
+    // ★追加: 検索方向として入力方向を使う。入力が無い場合はキャラクターの向いている方向を使う
+    Vector3 searchDir = moveDirection;
+    if (std::abs(searchDir.x) < 0.0001f && std::abs(searchDir.z) < 0.0001f) {
+        searchDir = GetForward();
+    }
+
     if (onThread_) {
-
-        // anima_->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
-
-         // 乗っている最中は現在位置優先で見る
-        found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
+        // 乗っている最中は現在位置優先で見る
+        found = thread_->FindBestThread(translate_, searchDir, kThreadStickRadius, query);
         if (!found) {
-            found = thread_->FindNearestThread(probePos, kThreadStickRadius, query);
+            found = thread_->FindBestThread(probePos, searchDir, kThreadStickRadius, query);
         }
     } else {
         // 降りた直後の再吸着を防ぐため、off中は probePos のみで判定する
-        found = thread_->FindNearestThread(probePos, kThreadEnterRadius, query);
+        // ★修正: 新規吸着時は、スコア評価式の FindTargetThread を使う！
+        found = thread_->FindTargetThread(probePos, searchDir, kThreadEnterRadius, query);
     }
 
     if (!found) {
@@ -454,13 +493,53 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
 
         if (tangentLength <= 0.0001f) {
-            moveVel_ = { 0.0f, 0.0f, 0.0f };
+            moveVel_ = {0.0f, 0.0f, 0.0f};
             return true;
         }
     }
 
     tangent.x /= tangentLength;
     tangent.z /= tangentLength;
+
+    if (onThread_ && thread_) {
+        // 全ての交差点情報をチェック
+        for (const auto& intersection : thread_->GetIntersections()) {
+            // プレイヤーと交差点の距離（XZ平面）を計算
+            float dx = translate_.x - intersection.position.x;
+            float dz = translate_.z - intersection.position.z;
+            float dist = std::sqrtf(dx * dx + dz * dz);
+
+            // プレイヤーが交差点の判定半径内に入っているか
+            if (dist <= intersection.radius) {
+                // 交差している2本の糸の方向ベクトルを計算
+                Vector3 dirA = {intersection.segmentAEnd.x - intersection.segmentAStart.x, 0.0f, intersection.segmentAEnd.z - intersection.segmentAStart.z};
+                float lenA = std::sqrtf(dirA.x * dirA.x + dirA.z * dirA.z);
+                if (lenA > 0.0001f) { dirA.x /= lenA; dirA.z /= lenA; }
+
+                Vector3 dirB = {intersection.segmentBEnd.x - intersection.segmentBStart.x, 0.0f, intersection.segmentBEnd.z - intersection.segmentBStart.z};
+                float lenB = std::sqrtf(dirB.x * dirB.x + dirB.z * dirB.z);
+                if (lenB > 0.0001f) { dirB.x /= lenB; dirB.z /= lenB; }
+
+                // 今の進行方向(tangent)と、2本の糸の一致度を比較する
+                float diffA = std::abs(tangent.x * dirA.x + tangent.z * dirA.z);
+                float diffB = std::abs(tangent.x * dirB.x + tangent.z * dirB.z);
+
+                // 一致度が低い方 ＝ 「今乗っている糸とは違う、交差している別の糸」
+                Vector3 otherTangent = (diffA < diffB) ? dirA : dirB;
+
+                // プレイヤーのキー入力(moveDirection)が、それぞれの糸の方向とどれくらい一致しているか
+                float dotCurrent = std::abs(moveDirection.x * tangent.x + moveDirection.z * tangent.z);
+                float dotOther = std::abs(moveDirection.x * otherTangent.x + moveDirection.z * otherTangent.z);
+
+                // もし「別の糸」への入力成分が十分あり、かつ「今の糸」と同じかそれ以上に入力されている場合
+                // （キーボードの斜め入力で同点になった場合、曲がる意志があるとみなして乗り換えを優先する）
+                if (dotOther >= dotCurrent - 0.01f && dotOther > 0.1f) {
+                    tangent = otherTangent; // ★移動方向を強制的に「別の糸」へ切り替える！
+                }
+                break; // 交差点の処理は1つ見つかれば終了
+            }
+        }
+    }
 
     // 入力をThread方向へ射影
     float along = moveDirection.x * tangent.x + moveDirection.z * tangent.z;
@@ -474,15 +553,13 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
         bool leavingFromEnd = atEnd && (along > 0.0001f);
 
         if (leavingFromStart || leavingFromEnd) {
+            translate_.y = threadBaseY_;
             onThread_ = false;
             return false; // 通常移動へ
         }
     }
 
     if (!onThread_) {
-        // 新しく糸に乗る瞬間、その時のY座標を記録する
-        threadBaseY_ = translate_.y;
-
         // ★追加: PlayerのY座標と、Threadの最寄り点のY座標の差分（オフセット）を保持する
         threadOffsetY_ = translate_.y - query.closestPoint.y;
     }
@@ -522,9 +599,29 @@ void Player::ResolveThreadMove() {
     nextPos.x += moveVel_.x;
     nextPos.z += moveVel_.z;
 
-    bool found = thread_->FindNearestThread(nextPos, kThreadStickRadius, query);
-    if (!found) {
-        found = thread_->FindNearestThread(translate_, kThreadStickRadius, query);
+    Vector3 currentMoveDir = {moveVel_.x, 0.0f, moveVel_.z};
+
+    // ★追加: 速度がほぼ無い場合は、正面方向を向かせる
+    if (std::abs(currentMoveDir.x) < 0.0001f && std::abs(currentMoveDir.z) < 0.0001f) {
+        currentMoveDir = GetForward();
+    }
+
+    bool found = false;
+
+    // ★ 修正点: 現在の状態によって検索方法を切り替える
+    if (onThread_) {
+        // すでに糸に乗っている場合（交差点でのスムーズな分岐・乗り換え用）
+        found = thread_->FindBestThread(nextPos, currentMoveDir, kThreadStickRadius, query);
+        if (!found) {
+            found = thread_->FindBestThread(translate_, currentMoveDir, kThreadStickRadius, query);
+        }
+    } else {
+        // 糸に乗っていない場合（新規で糸に吸着するため）
+        // ★ 修正：FindForwardThread や FindNearestThread を廃止し、FindTargetThread に変更！
+        found = thread_->FindTargetThread(nextPos, currentMoveDir, kThreadStickRadius, query);
+        if (!found) {
+            found = thread_->FindTargetThread(translate_, currentMoveDir, kThreadStickRadius, query);
+        }
     }
 
     if (!found) {
