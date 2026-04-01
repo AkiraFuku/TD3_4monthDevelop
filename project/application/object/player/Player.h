@@ -8,6 +8,9 @@
 #include "CollisionMask.h"
 
 #include "PlayerAnima.h"
+
+#include "JSONManager.h"
+
 class ThreadManager;
 class Egg;
 
@@ -19,7 +22,7 @@ public:
     /// </summary>
     /// <param name="pos">初期位置</param>
     /// <param name="threadManager">ThreadManagerのポインタ</param>
-    void Initialize(const Vector3& pos, ThreadManager* thread);
+    void Initialize(const Vector3& pos, ThreadManager* thread, const int& MaxThreadCount);
 
     /// <summary>
     /// 終了
@@ -199,4 +202,13 @@ private:
     // 巣の素材の回収数
     int nestMaterialNum_ = 0;
 
+
+public:
+    // jsonにセーブ
+    void SaveJson();
+    // jsonからロード
+    void LoadJson();
+
+private:
+    JSONManager::Group playerGroup_;
 };

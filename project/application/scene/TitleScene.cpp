@@ -8,7 +8,6 @@
 #include "PSOManager.h"
 #include "LightManager.h"
 
-
 void TitleScene::Initialize() {
 
     camera = std::make_unique<Camera>();

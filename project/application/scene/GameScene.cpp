@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include <numbers>
 #include "Transform.h"
+#include "JSONManager.h"
 
 void GameScene::Initialize() {
 
@@ -92,8 +93,7 @@ void GameScene::Initialize() {
 
     // プレイヤーの初期化
     player_ = std::make_unique<Player>();
-    player_->Initialize(playerPos_, thread_.get());
-    player_->SetMaxThreadCount(5);
+    player_->Initialize(playerPos_, thread_.get(), 5);
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
@@ -417,6 +417,8 @@ void GameScene::Update()
     }
     ImGui::End();
 
+  
+    
 #endif // USE_IMGUI
 
     // Rキーを押したらリセット
