@@ -32,116 +32,8 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     object_->SetTranslate(translate_);
     InitializeModel();
 
-    PsoConfig config{};
-    config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
-    config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
-
-
-    config.rootSignatureGenerator = []() {
-        std::vector<D3D12_ROOT_PARAMETER> rootParameters;
-        std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
-        D3D12_STATIC_SAMPLER_DESC sampler{};
-        sampler = PSOManager::GetInstance()->StaticSamplers();
-
-        staticSamplers.push_back(sampler);
-        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
-        descRangeTexture[0].BaseShaderRegister = 0; // t0
-        descRangeTexture[0].NumDescriptors = 1;
-        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-
-
-        rootParameters.resize(8);
-
-
-
-        // Enum定義 (可読性のため)
-        enum {
-            kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
-        };
-
-        // 0. Material (CBV b0, Pixel)
-        rootParameters[kMaterial].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParameters[kMaterial].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[kMaterial].Descriptor.ShaderRegister = 0;
-
-        // 1. Transform (CBV b0, Vertex)
-        rootParameters[kTransform].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParameters[kTransform].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-        rootParameters[kTransform].Descriptor.ShaderRegister = 0;
-
-        // 2. Texture (Table t0, Pixel)
-        rootParameters[kTexture].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        rootParameters[kTexture].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[kTexture].DescriptorTable.pDescriptorRanges = descRangeTexture;
-        rootParameters[kTexture].DescriptorTable.NumDescriptorRanges = 1;
-
-        // ★変更: 3. DirectionalLight (SRV t1)
-        rootParameters[DirLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-        rootParameters[DirLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[DirLight].Descriptor.ShaderRegister = 1; // t1
-
-        // ★追加: 4. PointLight (SRV t2)
-        rootParameters[PointLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-        rootParameters[PointLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[PointLight].Descriptor.ShaderRegister = 2; // t2
-
-        // ★追加: 5. SpotLight (SRV t3)
-        rootParameters[SpotLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-        rootParameters[SpotLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[SpotLight].Descriptor.ShaderRegister = 3; // t3
-
-        // ★追加: 6. LightCounts (CBV b3)
-        rootParameters[Count].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParameters[Count].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-        rootParameters[Count].Descriptor.ShaderRegister = 3; // b3 (b0,b1,b2は使用済みと仮定、あるいは空いている番号)
-        //カメラ
-        rootParameters[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 定数バッファビュー
-        rootParameters[kCamera].Descriptor.ShaderRegister = 2; // レジスタ番号 2 (b2)
-        rootParameters[kCamera].Descriptor.RegisterSpace = 0;
-        rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
-
-        // シリアライズ
-        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
-        descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-        descriptionRootSignature.pParameters = rootParameters.data();
-        descriptionRootSignature.NumParameters = (UINT)rootParameters.size();
-        descriptionRootSignature.pStaticSamplers = staticSamplers.data();
-        descriptionRootSignature.NumStaticSamplers = (UINT)staticSamplers.size();
-
-
-        Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
-        Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
-
-        HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
-        if (FAILED(hr)) {
-            Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
-            assert(false);
-        }
-
-        Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-        assert(SUCCEEDED(hr));
-
-
-
-        return rootSignature;
-        };
-    config.inputLayoutGenerator = []() {
-        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        };
-        };
-    // 深度設定
-    config.depthEnable = true;
-    config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-
-    // PSOManagerに名前を付けて登録
-    PSOManager::GetInstance()->RegisterPsoGenerator("PLayer", config);
-    object_->SetPsoName("PLayer");
+    // PSOを生成
+    CreatePSO();
 
     // 待機状態で初期化
     ChangeState(std::make_unique<PlayerStateIdle>());
@@ -330,6 +222,119 @@ void Player::FireThread() {
     remainingThreadCount_--;
 }
 
+void Player::CreatePSO() {
+    PsoConfig config {};
+    config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
+    config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
+
+
+    config.rootSignatureGenerator = []() {
+        std::vector<D3D12_ROOT_PARAMETER> rootParameters;
+        std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
+        D3D12_STATIC_SAMPLER_DESC sampler {};
+        sampler = PSOManager::GetInstance()->StaticSamplers();
+
+        staticSamplers.push_back(sampler);
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1] {};
+        descRangeTexture[0].BaseShaderRegister = 0; // t0
+        descRangeTexture[0].NumDescriptors = 1;
+        descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        descRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+
+
+        rootParameters.resize(8);
+
+
+
+        // Enum定義 (可読性のため)
+        enum {
+            kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
+        };
+
+        // 0. Material (CBV b0, Pixel)
+        rootParameters[kMaterial].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[kMaterial].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[kMaterial].Descriptor.ShaderRegister = 0;
+
+        // 1. Transform (CBV b0, Vertex)
+        rootParameters[kTransform].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[kTransform].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        rootParameters[kTransform].Descriptor.ShaderRegister = 0;
+
+        // 2. Texture (Table t0, Pixel)
+        rootParameters[kTexture].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParameters[kTexture].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[kTexture].DescriptorTable.pDescriptorRanges = descRangeTexture;
+        rootParameters[kTexture].DescriptorTable.NumDescriptorRanges = 1;
+
+        // ★変更: 3. DirectionalLight (SRV t1)
+        rootParameters[DirLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        rootParameters[DirLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[DirLight].Descriptor.ShaderRegister = 1; // t1
+
+        // ★追加: 4. PointLight (SRV t2)
+        rootParameters[PointLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        rootParameters[PointLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[PointLight].Descriptor.ShaderRegister = 2; // t2
+
+        // ★追加: 5. SpotLight (SRV t3)
+        rootParameters[SpotLight].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        rootParameters[SpotLight].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[SpotLight].Descriptor.ShaderRegister = 3; // t3
+
+        // ★追加: 6. LightCounts (CBV b3)
+        rootParameters[Count].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameters[Count].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        rootParameters[Count].Descriptor.ShaderRegister = 3; // b3 (b0,b1,b2は使用済みと仮定、あるいは空いている番号)
+        //カメラ
+        rootParameters[kCamera].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 定数バッファビュー
+        rootParameters[kCamera].Descriptor.ShaderRegister = 2; // レジスタ番号 2 (b2)
+        rootParameters[kCamera].Descriptor.RegisterSpace = 0;
+        rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
+
+        // シリアライズ
+        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature {};
+        descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        descriptionRootSignature.pParameters = rootParameters.data();
+        descriptionRootSignature.NumParameters = (UINT) rootParameters.size();
+        descriptionRootSignature.pStaticSamplers = staticSamplers.data();
+        descriptionRootSignature.NumStaticSamplers = (UINT) staticSamplers.size();
+
+
+        Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
+        Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+
+        HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+        if (FAILED(hr)) {
+            Logger::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+            assert(false);
+        }
+
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
+        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        assert(SUCCEEDED(hr));
+
+
+
+        return rootSignature;
+        };
+    config.inputLayoutGenerator = []() {
+        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        };
+        };
+    // 深度設定
+    config.depthEnable = true;
+    config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
+    // PSOManagerに名前を付けて登録
+    PSOManager::GetInstance()->RegisterPsoGenerator("PLayer", config);
+    object_->SetPsoName("PLayer");
+}
+
 void Player::SetPosition(const Vector3& pos) {
     translate_ = pos;
     object_->SetTranslate(translate_);
@@ -512,7 +517,7 @@ void Player::ResolveThreadMove() {
         return;
     }
 
-    ThreadManager::ThreadQueryResult query{};
+    ThreadManager::ThreadQueryResult query {};
 
     // 今フレームの予定移動先
     Vector3 nextPos = translate_;
@@ -534,65 +539,19 @@ void Player::ResolveThreadMove() {
     threadStart_ = query.startPoint;
     threadEnd_ = query.endPoint;
 
-    // 今いる線分の接線方向
-    Vector3 tangent = query.segmentEnd - query.segmentStart;
-    tangent.y = 0.0f;
+    // ThreadManagerに「移動補正ベクトル」と「端のフェード値(edgeFade)」を計算してもらう
+    ThreadManager::ConstrainedMoveResult moveResult = thread_->CalculateConstrainedVelocity(nextPos, query);
 
-    float tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
-    if (tangentLength <= 0.0001f) {
-        tangent = query.endPoint - query.startPoint;
-        tangent.y = 0.0f;
-        tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
+    // 1. 横方向の補正を適用
+    moveVel_.x += moveResult.velocityCorrection.x;
+    moveVel_.z += moveResult.velocityCorrection.z;
 
-        if (tangentLength <= 0.0001f) {
-            return;
-        }
-    }
-
-    tangent.x /= tangentLength;
-    tangent.z /= tangentLength;
-
-    // 最近点との差
-    Vector3 toClosest = {
-        query.closestPoint.x - nextPos.x,
-        0.0f,
-        query.closestPoint.z - nextPos.z
-    };
-
-    // 最近点との差を「接線方向成分」と「横方向成分」に分解
-    float alongError = toClosest.x * tangent.x + toClosest.z * tangent.z;
-
-    Vector3 lateral = {
-        toClosest.x - tangent.x * alongError,
-        0.0f,
-        toClosest.z - tangent.z * alongError
-    };
-
-    // 端に近いほど横補正を弱める
-    float edgeFade = 1.0f;
-
-    if (query.t < kThreadEndSnapFadeRange) {
-        edgeFade = query.t / kThreadEndSnapFadeRange;
-    } else if (query.t > (1.0f - kThreadEndSnapFadeRange)) {
-        edgeFade = (1.0f - query.t) / kThreadEndSnapFadeRange;
-    }
-
-    edgeFade = std::clamp(edgeFade, 0.0f, 1.0f);
-
-    // 横方向だけ補正する (edgeFadeをかける)
-    moveVel_.x += lateral.x * kThreadLateralFollowStrength * edgeFade;
-    moveVel_.z += lateral.z * kThreadLateralFollowStrength * edgeFade;
-
-    // 変更後 (Player.cpp : ResolveThreadMove内)
-    // ============== 修正箇所 ==============
-    // 糸の沈み込みを考慮した本来の目標Y座標
+    // 2. Y座標の沈み込み処理
     float targetY = query.closestPoint.y + threadOffsetY_;
 
-    // edgeFade(端で0.0、中央で1.0)を利用してY座標をブレンドする。
-    // 端にいる時は threadBaseY_ に完全に一致し、中央にいる時は targetY になる。
-    translate_.y = threadBaseY_ + (targetY - threadBaseY_) * edgeFade;
-    // ======================================
+    // ThreadManagerから貰った edgeFade を使ってY座標をブレンド
+    translate_.y = threadBaseY_ + (targetY - threadBaseY_) * moveResult.edgeFade;
 
-    // 糸への重さの適用
-    thread_->ApplyPlayerWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
+    // 3. 糸への重さの適用（※関数名を ApplyWeight に変更した想定）
+    thread_->ApplyWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
 }

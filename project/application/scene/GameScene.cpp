@@ -17,9 +17,9 @@ void GameScene::Initialize() {
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-    BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+  //  BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-    Audio::GetInstance()->PlayAudio(BGMhandle_, true);
+//    Audio::GetInstance()->PlayAudio(BGMhandle_, true);
     // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
     // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
     // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
@@ -179,10 +179,10 @@ void GameScene::Update()
 
         // Aボタンを押したときの処理
 
-        if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
+    //    if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
 
-            Audio::GetInstance()->StopAudio(BGMhandle_);
-        }
+      //      Audio::GetInstance()->StopAudio(BGMhandle_);
+        //}
 
         GetSceneManager()->ChangeScene("TitleScene");
     }
@@ -208,43 +208,43 @@ void GameScene::Update()
         }
 
     }*/
-    if (Input::GetInstance()->TriggerMouseDown(0)) {
+   /* if (Input::GetInstance()->TriggerMouseDown(0)) {
         if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
             Audio::GetInstance()->PauseAudio(BGMhandle_);
         }
         else {
             Audio::GetInstance()->ResumeAudio(BGMhandle_);
         }
-    }
-    if (Input::GetInstance()->GetJoyStick(0, state)) {
-        {
-            // 左スティックの値を取得
-            float x = (float) state.Gamepad.sThumbLX;
-            float y = (float) state.Gamepad.sThumbLY;
+    }*/
+    //if (Input::GetInstance()->GetJoyStick(0, state)) {
+    //    {
+    //        // 左スティックの値を取得
+    //        float x = (float) state.Gamepad.sThumbLX;
+    //        float y = (float) state.Gamepad.sThumbLY;
 
-            // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-            float normalizedX = x / 32767.0f;
-            float normalizedY = y / 32767.0f;
-            Vector3 cameraTranslate = camera->GetTranslate();
-            cameraTranslate =
-                Add(cameraTranslate,
-                    Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-            camera->SetTranslate(cameraTranslate);
-        }
-        {
-            //// 左スティックの値を取得
-            float x = (float) state.Gamepad.sThumbRX;
-            float y = (float) state.Gamepad.sThumbRY;
-            //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-            float normalizedX = x / 32767.0f;
-            float normalizedY = y / 32767.0f;
+    //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+    //        float normalizedX = x / 32767.0f;
+    //        float normalizedY = y / 32767.0f;
+    //        Vector3 cameraTranslate = camera->GetTranslate();
+    //        cameraTranslate =
+    //            Add(cameraTranslate,
+    //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+    //        camera->SetTranslate(cameraTranslate);
+    //    }
+    //    {
+    //        //// 左スティックの値を取得
+    //        float x = (float) state.Gamepad.sThumbRX;
+    //        float y = (float) state.Gamepad.sThumbRY;
+    //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+    //        float normalizedX = x / 32767.0f;
+    //        float normalizedY = y / 32767.0f;
 
-            Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-            point =
-                Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-            LightManager::GetInstance()->SetSpotLightDirection(0, point);
-        }
-    }
+    //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
+    //        point =
+    //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+    //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
+    //    }
+    //}
 
     if (isDebugCamera_)
     {

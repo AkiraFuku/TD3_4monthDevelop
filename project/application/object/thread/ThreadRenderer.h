@@ -1,83 +1,123 @@
 #pragma once
 
-#include <PhysicsNode.h>
-#include <Vector2.h>
-#include <Vector4.h>
+#include "PhysicsNode.h"
+#include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
 
 #include <d3d12.h>
 #include <wrl.h>
+#include <vector>
 
 class Camera;
 
 class ThreadRenderer {
 private:
-  // 頂点バッファ
-  struct VertexData {
-    Vector4 position;
-    Vector2 texcord;
-    Vector3 normal;
-  };
+    // ---------------------------------------------------------
+    // 構造体
+    // ---------------------------------------------------------
 
-  // 行列バッファ
-  struct TransformationMatrix {
-    Matrix4x4 WVP;
-    Matrix4x4 World;
-    Matrix4x4 WorldInverseTranspose;
-  };
+    // 頂点データ
+    struct VertexData {
+        Vector4 position;
+        Vector2 texcord;
+        Vector3 normal;
+    };
 
-  // マテリアルバッファ(Object3dと共通)
-  struct MaterialData {
-    Vector4 color;
-    int32_t enableLighting;
-    float padding[3];
-  };
+    // 変換行列データ
+    struct TransformationMatrix {
+        Matrix4x4 WVP;
+        Matrix4x4 World;
+        Matrix4x4 WorldInverseTranspose;
+    };
+
+    // マテリアルデータ
+    struct MaterialData {
+        Vector4 color;
+        int32_t enableLighting;
+        float padding[3];
+    };
 
 public:
-  /// <summary>
-  /// 初期化
-  /// </summary>
-  /// <param name="maxThreads">最大描画本数</param>
-  /// <param name="nodesPerThread">1本あたりのノード数</param>
-  /// <param name="radius">ロープの太さ</param>
-  /// <param name="radialSegments">断面の分割数(6なら六角形)</param>
-  void Initialize(int maxThreads, int nodesPerThread, float radius = 0.02f,
-                  int radialSegments = 6);
+    // ---------------------------------------------------------
+    // 公開関数
+    // ---------------------------------------------------------
 
-  /// <summary>
-  /// 更新
-  /// </summary>
-  /// <param name="nodes">物理演算のノード</param>
-  /// <param name="camera">カメラ</param>
-  /// 物理演算のノードを受け取って、頂点バッファをMapして書き換える
-  void Update(const std::vector<std::vector<PhysicsNode>> &allThreadNodes,
-              Camera *camera);
+    /// <summary>
+    /// 初期化
+    /// </summary>
+    /// <param name="maxThreads">描画する糸の最大本数</param>
+    /// <param name="nodesPerThread">1本あたりの最大ノード数</param>
+    /// <param name="radius">糸の太さ</param>
+    /// <param name="radialSegments">断面の分割数</param>
+    void Initialize(int maxThreads, int nodesPerThread, float radius = 0.02f, int radialSegments = 6);
 
-  /// <summary>
-  /// 描画
-  /// </summary>
-  void Draw();
+    /// <summary>
+    /// 更新
+    /// </summary>
+    /// <param name="allThreadNodes">全糸の物理演算ノード配列</param>
+    /// <param name="camera">ビュー投影行列参照用カメラ</param>
+    void Update(const std::vector<std::vector<PhysicsNode>>& allThreadNodes, Camera* camera);
+
+    /// <summary>
+    /// 描画
+    /// </summary>
+    void Draw();
 
 private:
-  float radius_ = 0.5f;
-  int radialSegments_ = 6;
-  int maxVertices_ = 0;        // 確保した最大頂点数
-  int currentVertexCount_ = 0; // 今フレームで実際に描画する頂点数
+    // ---------------------------------------------------------
+    // 内部処理関数
+    // ---------------------------------------------------------
 
-  // テクスチャハンドル
-  uint32_t textureHandle_ = 0;
+    /// <summary>
+    /// 合計頂点数に基づいた頂点バッファの作成
+    /// </summary>
+    void CreateVertexBuffer(int maxThreads, int nodesPerThread);
 
-  // 毎フレームのメモリ確保をなくすための1次元キャッシュ配列
-  std::vector<VertexData> ringsCache_;
+    /// <summary>
+    /// 行列およびマテリアル用定数バッファの作成
+    /// </summary>
+    void CreateConstantBuffers();
 
-  // 頂点バッファを持つ
-  Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer_;
-  D3D12_VERTEX_BUFFER_VIEW vbView_{};
+    /// <summary>
+    /// 全糸のノードを走査して頂点バッファを書き換える
+    /// </summary>
+    void UpdateVertices(const std::vector<std::vector<PhysicsNode>>& allThreadNodes);
 
-  // 行列をGPUに送るためのバッファ
-  Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource_;
-  TransformationMatrix *wvpResource_ = nullptr;
+    /// <summary>
+    /// 単一の糸のメッシュ（チューブ状）を生成してバッファへ書き込む
+    /// </summary>
+    void GenerateThreadMesh(const std::vector<PhysicsNode>& nodes, VertexData* mappedData, int& vertexIndex);
 
-  // マテリアルバッファ
-  Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
-  MaterialData *materialData_ = nullptr;
+    /// <summary>
+    /// ワールド行列およびWVP行列の更新
+    /// </summary>
+    void UpdateTransform(Camera* camera);
+
+private:
+    // ---------------------------------------------------------
+    // メンバ変数
+    // ---------------------------------------------------------
+
+    // 形状パラメータ
+    float radius_ = 0.02f;
+    int radialSegments_ = 6;
+
+    // 描画管理
+    int maxVertices_ = 0;        // 確保した最大頂点数
+    int currentVertexCount_ = 0; // 今フレームの描画頂点数
+    uint32_t textureHandle_ = 0; // テクスチャ
+
+    // 計算用キャッシュ（毎フレームのメモリ確保を防止）
+    std::vector<VertexData> ringsCache_;
+
+    // DirectXリソース
+    Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer_;
+    D3D12_VERTEX_BUFFER_VIEW vbView_ {};
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource_;
+    TransformationMatrix* wvpResource_ = nullptr;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
+    MaterialData* materialData_ = nullptr;
 };

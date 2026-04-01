@@ -1,3 +1,4 @@
+
 #include "PlayerState.h"
 
 #include "Input.h"
@@ -5,35 +6,54 @@
 
 #include <memory>
 
+static const float kStickMax = 32767.0f;
+static const float kDeadZone = 0.3f;
+
 // ======================================
 // 待機状態
 // ======================================
 
 // 初期化
-void PlayerStateIdle::Initialize(Player* player)
-{
+void PlayerStateIdle::Initialize(Player* player) {
     player->ChangeAnimation(PlayerAnima::AnimationState::Idle);
 }
 
 // 更新
-void PlayerStateIdle::Update(Player* player)
-{
-    // WASDで移動
+void PlayerStateIdle::Update(Player* player) {
+    bool isMoveInput = false;
+
+    // 1. WASDで移動判定
     if (Input::GetInstance()->PushedKeyDown(DIK_W) || Input::GetInstance()->PushedKeyDown(DIK_S) ||
         Input::GetInstance()->PushedKeyDown(DIK_A) || Input::GetInstance()->PushedKeyDown(DIK_D)) {
-        player->ChangeState(std::make_unique<PlayerStateMove>());
+        isMoveInput = true;
+    }
 
+    // 2. コントローラーで移動判定
+    XINPUT_STATE joyState {};
+    if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        // スティックの入力を -1.0f ～ 1.0f に正規化
+        float stickX = (float) joyState.Gamepad.sThumbLX / kStickMax;
+        float stickY = (float) joyState.Gamepad.sThumbLY / kStickMax;
+
+        // デッドゾーンを超えていたら移動とみなす
+        if (std::abs(stickX) > kDeadZone || std::abs(stickY) > kDeadZone) {
+            isMoveInput = true;
+        }
+    }
+
+    // 移動入力があれば移動状態へ
+    if (isMoveInput) {
+        player->ChangeState(std::make_unique<PlayerStateMove>());
         return;
     }
 
-    // SPACEで糸を発射
-    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) && player->CanFireThread()) {
+    // SPACE または コントローラーのAボタンで糸を発射
+    if ((Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        && player->CanFireThread()) {
+
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
     }
-
-
-
 }
 
 // ======================================
@@ -41,43 +61,62 @@ void PlayerStateIdle::Update(Player* player)
 // ======================================
 
 // 初期化
-void PlayerStateMove::Initialize(Player* player)
-{
+void PlayerStateMove::Initialize(Player* player) {
     if (player->OnThread())
     {
         player->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
 
-    }else{
-       player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
- 
+    } else {
+        player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+
     }
 }
 
 // 更新
 void PlayerStateMove::Update(Player* player) {
-    Vector3 moveDirection = { 0.0f, 0.0f, 0.0f };
+    Vector3 moveDirection = {0.0f, 0.0f, 0.0f};
 
-    // 1. 【脳の処理】キー入力から進みたい方向（意志）を決定する
-    if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.x += 0.7f;
-        moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.x += 0.7f;
-        moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.x -= 0.7f;
-        moveDirection.z -= 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.x -= 0.7f;
-        moveDirection.z += 0.7f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
-        moveDirection.x += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
-        moveDirection.x -= 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
-        moveDirection.z += 1.0f;
-    } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
-        moveDirection.z -= 1.0f;
+    // 1. 【脳の処理】進みたい方向（意志）を決定する
+
+    // コントローラー入力を取得
+    XINPUT_STATE joyState {};
+    bool isPadInput = false;
+
+    if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        float stickX = (float) joyState.Gamepad.sThumbLX / kStickMax;
+        float stickY = (float) joyState.Gamepad.sThumbLY / kStickMax;
+
+        if (std::abs(stickX) > kDeadZone || std::abs(stickY) > kDeadZone) {
+            // スティックのXを移動のX、Y(上下)を移動のZ(奥手前)に割り当てる
+            moveDirection.x = stickX;
+            moveDirection.z = stickY;
+            isPadInput = true;
+        }
+    }
+
+    // パッド入力がなければキー入力から進みたい方向を決定する
+    if (!isPadInput) {
+        if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+            moveDirection.x += 0.7f;
+            moveDirection.z += 0.7f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_D) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+            moveDirection.x += 0.7f;
+            moveDirection.z -= 0.7f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_S)) {
+            moveDirection.x -= 0.7f;
+            moveDirection.z -= 0.7f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_A) && Input::GetInstance()->PushedKeyDown(DIK_W)) {
+            moveDirection.x -= 0.7f;
+            moveDirection.z += 0.7f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_D)) {
+            moveDirection.x += 1.0f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_A)) {
+            moveDirection.x -= 1.0f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_W)) {
+            moveDirection.z += 1.0f;
+        } else if (Input::GetInstance()->PushedKeyDown(DIK_S)) {
+            moveDirection.z -= 1.0f;
+        }
     }
 
     // 2. 状態遷移の判断（入力がなければIdleへ）
@@ -117,8 +156,10 @@ void PlayerStateMove::Update(Player* player) {
         player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
     }
 
-    // 6. 状態遷移の判断（SPACEでShootへ）
-    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) && player->CanFireThread()) {
+    // 6. 状態遷移の判断（SPACE または コントローラーのAボタン でShootへ）
+    if ((Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        && player->CanFireThread()) {
+
         player->ChangeState(std::make_unique<PlayerStateShoot>());
         return;
     }
@@ -129,8 +170,7 @@ void PlayerStateMove::Update(Player* player) {
 // ======================================
 
 // 初期化
-void PlayerStateShoot::Initialize(Player* player)
-{
+void PlayerStateShoot::Initialize(Player* player) {
     frameCount_ = 0;
 
     // 状態に入った瞬間に一度だけ糸を発射
@@ -138,8 +178,7 @@ void PlayerStateShoot::Initialize(Player* player)
 }
 
 // 更新
-void PlayerStateShoot::Update(Player* player)
-{
+void PlayerStateShoot::Update(Player* player) {
     // フレームカウントを加算
     frameCount_ += kDeltaTime;
 

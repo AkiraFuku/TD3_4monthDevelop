@@ -17,9 +17,9 @@ void TitleScene::Initialize() {
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-    handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+   /* handle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");*/
 
-    //Audio::GetInstance()->PlayAudio(handle_, true);
+   /* Audio::GetInstance()->PlayAudio(handle_, true);*/
 
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 
@@ -133,14 +133,14 @@ void TitleScene::Update() {
     // 現在のジョイスティックを取得
     if (Input::GetInstance()->TriggerMouseDown(0))
     {
-        if (Audio::GetInstance()->IsPlaying(handle_))
+       /* if (Audio::GetInstance()->IsPlaying(handle_))
         {
             Audio::GetInstance()->PauseAudio(handle_);
         } else
         {
             Audio::GetInstance()->ResumeAudio(handle_);
 
-        }
+        }*/
     }
 
 
@@ -190,19 +190,19 @@ void TitleScene::Update() {
         camera->SetTranslate(camreaTranslate);
 
     }
-    if (Input::GetInstance()->GetJoyStick(0, state))
-    {
-        // 左スティックの値を取得
-        float x = (float)state.Gamepad.sThumbLX;
-        float y = (float)state.Gamepad.sThumbLY;
+    //if (Input::GetInstance()->GetJoyStick(0, state))
+    //{
+    //    // 左スティックの値を取得
+    //    float x = (float)state.Gamepad.sThumbLX;
+    //    float y = (float)state.Gamepad.sThumbLY;
 
-        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-        float normalizedX = x / 32767.0f;
-        float normalizedY = y / 32767.0f;
-        Vector3 camreaTranslate = camera->GetTranslate();
-        camreaTranslate = Add(camreaTranslate, Vector3{ normalizedX / 60.0f,normalizedY / 60.0f,0.0f });
-        camera->SetTranslate(camreaTranslate);
-    }
+    //    // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+    //    float normalizedX = x / 32767.0f;
+    //    float normalizedY = y / 32767.0f;
+    //    Vector3 camreaTranslate = camera->GetTranslate();
+    //    camreaTranslate = Add(camreaTranslate, Vector3{ normalizedX / 60.0f,normalizedY / 60.0f,0.0f });
+    //    camera->SetTranslate(camreaTranslate);
+    //}
 
     camera->Update();
     if (isDebugCamera_)
