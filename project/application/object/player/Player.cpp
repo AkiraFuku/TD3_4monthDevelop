@@ -54,6 +54,12 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
 
+    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
+    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
+    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+
+    JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
 
 }
 /// <summary>
@@ -110,6 +116,26 @@ void Player::Update() {
 #endif
 
     ResultMove();
+
+#ifdef _DEBUG
+
+    ImGui::Begin("Player Json");
+
+    if (ImGui::Button("Save"))
+    {
+        SaveJson();
+    }
+
+    if (ImGui::Button("Load"))
+    {
+        LoadJson();
+    }
+
+    ImGui::InputFloat3("Position", &translate_.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+    ImGui::End();
+
+#endif
 
     anima_->Update();
     object_->Update();
@@ -508,6 +534,36 @@ void Player::InitializeModel() {
 
     }
 
+}
+
+void Player::SaveJson()
+{
+    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
+    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
+    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+
+    JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
+    JSONManager::GetInstance()->SaveFile("Player");
+}
+
+void Player::LoadJson()
+{
+    // ファイルを読み込む
+    JSONManager::GetInstance()->LoadFile("Player");
+
+    // 値を取り出す
+    Vector3 pos;
+    if (JSONManager::GetInstance()->TryGetVector3("Player", "position", pos)) {
+        SetPosition(pos);
+    }
+
+    int32_t remaining;
+    if (JSONManager::GetInstance()->TryGetInt("Player", "remainingThreadCount", remaining)) {
+        remainingThreadCount_ = remaining;
+    }
+
+    ResultMove();
 }
 
 bool Player::TryMoveOnThread(const Vector3& moveDirection) {

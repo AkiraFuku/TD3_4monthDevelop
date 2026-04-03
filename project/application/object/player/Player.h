@@ -212,4 +212,13 @@ private:
     // 巣の素材の回収数
     int nestMaterialNum_ = 0;
 
+public:
+    // jsonにセーブ
+    void SaveJson();
+    // jsonからロード
+    void LoadJson();
+
+private:
+    JSONManager::Group playerGroup_;
+
 };
