@@ -27,14 +27,17 @@ void ThreadPhysics::Initialize(const Vector3& startPos, const Vector3& endPos, i
     float totalLength = Length(difference);
     segmentLength_ = totalLength / static_cast<float>(nodeCount - 1);
 
-    // ノードを直線上に配置
-    for (int i = 0; i < nodeCount; ++i) {
-        float t = static_cast<float>(i) / (nodeCount - 1);
-        Vector3 pos = startPos + (difference * t);
+    // ★ 追加: アニメーションの初期設定
+    startPos_ = startPos;
+    endPos_ = endPos;
+    isAnimating_ = true;
+    animTimer_ = 0.0f;
 
+    // ★ 変更: ノードを一旦すべて始点（startPos）付近にまとめて配置
+    for (int i = 0; i < nodeCount; ++i) {
         PhysicsNode node;
-        node.currentPos = pos;
-        node.previousPos = pos;
+        node.currentPos = startPos;
+        node.previousPos = startPos;
 
         // 両端は固定(質量0)、それ以外は動く(質量1)
         node.mass = (i == 0 || i == nodeCount - 1) ? 0.0f : 1.0f;
@@ -47,6 +50,65 @@ void ThreadPhysics::Initialize(const Vector3& startPos, const Vector3& endPos, i
 /// 更新
 /// </summary>
 void ThreadPhysics::Update() {
+    if (isAnimating_) {
+        animTimer_ += 1.0f;
+
+        // 進行度 (0.0 ~ 1.0)
+        float t = std::clamp(animTimer_ / animDuration_, 0.0f, 1.0f);
+
+        // イージング (easeOutQuad: 最初は速く、終点付近でゆっくり伸びる)
+        float easeT = 1.0f - (1.0f - t) * (1.0f - t);
+
+        Vector3 difference = endPos_ - startPos_;
+        Vector3 dir = difference;
+        float totalLen = Length(dir);
+        if (totalLen > 0.0001f) {
+            dir.x /= totalLen; dir.y /= totalLen; dir.z /= totalLen;
+        }
+
+        // 蛇行させるための垂直ベクトル（XZ平面に揺らす）を作成
+        Vector3 right = {-dir.z, 0.0f, dir.x};
+        float rLen = std::sqrt(right.x * right.x + right.z * right.z);
+        if (rLen > 0.0001f) {
+            right.x /= rLen;
+            right.z /= rLen;
+        } else {
+            right = {1.0f, 0.0f, 0.0f}; // 真下/真上を向いている場合の例外処理
+        }
+
+        for (size_t i = 0; i < nodes_.size(); ++i) {
+            // このノードの本来の配置割合 (0.0 ~ 1.0)
+            float nodeT = static_cast<float>(i) / (nodes_.size() - 1);
+
+            // 全体をeaseTの長さに縮めて配置（レンダラーの計算エラーを防ぐために最低0.001の長さを確保）
+            float currentT = nodeT * std::max(easeT, 0.001f);
+            Vector3 basePos = startPos_ + (difference * currentT);
+
+            // 波打たせるオフセット計算
+            float amplitude = 0.0f;
+
+            // 始点は壁にくっついたままにするため、nodeTが0付近で振幅を0にフェード
+            float startFade = std::clamp(nodeT * 10.0f, 0.0f, 1.0f);
+
+            // サイン波で蛇行の動きを作る（25.0f=波の細かさ, 0.8f=波の流れる速度）
+            float wave = std::sin(nodeT * 25.0f - animTimer_ * 0.8f);
+
+            // 終点に近づく(tが1に近づく)につれて全体の振幅をゼロにして真っ直ぐにする
+            amplitude = 0.4f * (1.0f - t) * wave * startFade;
+
+            // ノードの位置を更新（物理演算中ではないので previousPos も同じにする）
+            nodes_[i].currentPos = basePos + (right * amplitude);
+            nodes_[i].previousPos = nodes_[i].currentPos;
+        }
+
+        // アニメーション終了判定
+        if (animTimer_ >= animDuration_) {
+            isAnimating_ = false;
+        }
+
+        return; // アニメーション中は通常の物理演算(Integrate等)をスキップする
+    }
+
     Integrate();        // 1. 速度と重力の適用
     SolveConstraints(); // 2. 長さの補正
 }
