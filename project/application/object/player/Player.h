@@ -8,6 +8,9 @@
 #include "CollisionMask.h"
 
 #include "PlayerAnima.h"
+
+#include "JSONManager.h"
+
 class ThreadManager;
 class Egg;
 
