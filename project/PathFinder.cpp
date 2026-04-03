@@ -4,8 +4,10 @@
 #include "ThreadPhysics.h" // PhysicsNodeの構造を知るために必要
 #include <cmath>
 #include <algorithm>
+#include "OneWayObject.h"
 
-std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height, ThreadManager* tm) {
+std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height, ThreadManager* tm
+    , const std::vector<std::unique_ptr<OneWayObject>>& oneWays) {
     std::vector<Node*> openList;
     std::vector<Node*> closedList;
     std::vector<Point> finalPath;
@@ -43,6 +45,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
         };
         for (auto& dir : directions) {
             Point nextPos = { current->pos.x + dir.x, current->pos.y + dir.y };
+            Vector3 moveDir = { (float)dir.x, 0.0f, (float)dir.y };
 
             if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height) continue;
 
@@ -50,12 +53,32 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             float worldX = (float)nextPos.x - 256.0f;
             float worldZ = (float)nextPos.y - 256.0f;
 
+            
             bool isWall = CollisionMask::GetInstance()->IsWall(worldX, worldZ);
             bool hasThread = false;
+            Vector3 worldPos = { worldX, 0.0f, worldZ };
+
+            // 1. 【追加】橋の判定（最優先）
+            bool onOneWay = false;
+            bool canPassOneWay = true;
+
+            for (const auto& ow : oneWays) {
+                if (ow->IsInside(worldPos)) {
+
+                    if (!ow->CanPass(moveDir, Vector3{ (float)current->pos.x - 256.0f + 0.5f, 0, (float)current->pos.y - 256.0f + 0.5f })) 
+                    {
+                        canPassOneWay = false; // 逆走判定
+                        break;
+                    }
+
+                    onOneWay = true;
+                    break;
+                }
+            }
 
             if (tm) {
                 // ThreadManager内の全糸ノードをチェック
-                float checkRadiusSq = 1.0f; // 半径3.0の2乗。広めに設定
+                float checkRadiusSq = 0.8f; // 半径3.0の2乗。広めに設定
 
                 for (auto& physics : tm->GetPhysicsList()) {
                     for (const auto& node : physics->GetNodes()) {
@@ -71,14 +94,34 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 }
             }
 
-            // 壁かつ糸がない場所は通れない
-            if (isWall && !hasThread) continue;
+            bool canPass = !isWall || hasThread || onOneWay;
+
+            if (!canPass) {
+                continue; // 通れないなら次の方向へ
+            }
 
             bool inClosed = false;
             for (auto n : closedList) { if (n->pos == nextPos) { inClosed = true; break; } }
             if (inClosed) continue;
 
-            int newG = current->g + 1;
+            float moveCost = (dir.x != 0 && dir.y != 0) ? 1.414f : 1.0f;
+
+            // --- ここで優先度をつける ---
+            if (hasThread) {
+                // 糸の上は最優先（コストをそのまま、あるいは少し下げる）
+                moveCost *= 1.0f;
+            }
+            else if (!isWall) {
+                // 地面の上は次点
+                moveCost *= 1.2f;
+            }
+            else if (onOneWay) {
+                // 橋の上は「糸がない場合の最終手段」としてコストを高く設定する
+                // これにより、糸があるなら糸を、なければ橋を通るようになる
+                moveCost *= 5.0f;
+            }
+
+            int newG = current->g + static_cast<int>(moveCost * 10.0f);
             Node* openNode = nullptr;
             for (auto n : openList) { if (n->pos == nextPos) { openNode = n; break; } }
 

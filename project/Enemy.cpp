@@ -11,7 +11,7 @@ void Enemy::Initialize(const Vector3& pos) {
     object_->SetTranslate(pos);
 }
 
-void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm) {
+void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,const std::vector<std::unique_ptr<OneWayObject>>& oneWays) {
     // 1. 生のワールド座標を取得
     Vector3 myPos = object_->GetTranslate();
     Vector3 targetPos = eggPos;
@@ -76,7 +76,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm) {
     RescuePoint(goal);
 
     // パスを再検索
-    std::vector<Point> newPath = PathFinder::FindPath(start, goal, 512, 512, tm);
+    std::vector<Point> newPath = PathFinder::FindPath(start, goal, 512, 512, tm,oneWays);
 
     path_.clear();
     if (newPath.empty()) {
@@ -147,7 +147,7 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
     return true;
 }
 
-void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
+void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,const std::vector<std::unique_ptr<OneWayObject>>& oneWays) {
 
     if (isHit_) {
         // 卵に接触していたら何もしない
@@ -168,7 +168,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm) {
 
     // タイマーが満了したか、外部からリクエストがあった場合に再計算
     if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
-        RecalculatePath(eggPos, tm);
+        RecalculatePath(eggPos, tm,oneWays);
         recalculateTimer_ = 0;
         shouldReplanNextUpdate_ = false; // フラグを戻す
     }

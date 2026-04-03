@@ -1,9 +1,11 @@
 #pragma once
 #include <vector>
 #include <deque>
+#include <memory>
 
 // 前方宣言：ヘッダの循環参照を防ぐ
 class ThreadManager;
+class OneWayObject;
 
 struct Point {
     int x, y;
@@ -14,7 +16,8 @@ struct Point {
 class PathFinder {
 public:
     // ThreadManagerを引数で受け取り、動的な糸の橋を考慮できるようにする
-    static std::vector<Point> FindPath(Point start, Point goal, int width, int height, ThreadManager* threadManager);
+    static std::vector<Point> FindPath(Point start, Point goal, int width, int height,
+        ThreadManager* threadManager, const std::vector<std::unique_ptr<OneWayObject>>& oneWays);
 
 private:
     struct Node {
@@ -31,3 +34,4 @@ private:
 
     static int CalcH(Point a, Point b);
 };
+

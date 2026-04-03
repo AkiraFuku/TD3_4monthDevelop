@@ -5,6 +5,7 @@
 #include "DrawFunction.h"
 #include <deque>
 #include <memory>
+#include "OneWayObject.h"
 
 class ThreadManager;
 class Egg;
@@ -14,12 +15,12 @@ public:
     void Initialize(const Vector3& pos);
 
     // GameSceneから必要な情報を毎フレーム受け取る
-    void Update(const Vector3& eggPos, ThreadManager* tm);
+    void Update(const Vector3& eggPos, ThreadManager* tm, const std::vector<std::unique_ptr<OneWayObject>>& oneWays);
 
     void Draw();
 
     // 経路探索
-    void RecalculatePath(const Vector3& eggPos, ThreadManager* tm);
+    void RecalculatePath(const Vector3& eggPos, ThreadManager* tm, const std::vector<std::unique_ptr<OneWayObject>>& oneWays);
 
     // 経路をクリア
     bool IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm);
