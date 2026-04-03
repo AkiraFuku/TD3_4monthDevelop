@@ -1,42 +1,97 @@
 #pragma once
-#include"MathFunction.h"
-#include "Sprite.h"
-#include"Object3D.h"
-#include "Model.h"
-#include "Camera.h"
-#include "ParicleEmitter.h"
 #include "Audio.h"
-#include "TextureManager.h"
-#include "Scene.h"
-#include <memory>
-#include "Player.h"
-#include "Terrain.h"
+#include "Camera.h"
 #include "DebugCamera.h"
 #include "Egg.h"
 #include "Goal.h"
+#include "NestMaterial.h"
+#include "MathFunction.h"
+#include "Model.h"
+#include "Object3D.h"
+#include "ParicleEmitter.h"
+#include "Player.h"
+#include "Scene.h"
+#include "Sprite.h"
+#include "Terrain.h"
+#include "TextureManager.h"
+#include "Enemy.h"
+#include <memory>
+#include "CollisionMask.h"
 
-class GameScene :public Scene
-{
+#include "ThreadManager.h"
+#include "SpiderWebManager.h"
+#include "OneWayObject.h"
+
+class GameScene : public Scene {
 public:
+
     void Initialize() override;
-    void Finalize()override;
-    void Update()override;
-    void Draw()override;
+    void Finalize() override;
+    void Update() override;
+    void Draw() override;
+  
+  void CheckAllCollisions(); // 全ての当たり判定を確認
+  bool isCollision(const AABB& aabb1, const AABB& aabb2); // 当たり判定
+  void ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB); // プレイヤーを押し戻す関数
+  void ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB); // 敵を押し戻す関数
+
 private:
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Sprite> sprite;
     std::unique_ptr<Object3d> object3d2;
     std::unique_ptr<Object3d> object3d;
     std::unique_ptr<ParicleEmitter> emitter;
-  uint32_t handle_=0;
+   
 
-  DebugCamera debugCamera_;
-  bool isDebugCamera_ = false;
+    DebugCamera debugCamera_;
+    bool isDebugCamera_ = false;
 
-  Player* player_;
-  Terrain* terrain_;
-  Egg* egg_;
-  Goal* goal_;
+    Vector3 debugSaveCameraTranslate_ = { 0.0f, 0.0f, 0.0f };
+    Vector3 debugSaveCameraRotation_ = { 0.0f, 0.0f, 0.0f };
+
+    /*Player *player_;
+    Terrain *terrain_;*/
+
+    // 卵
+    std::unique_ptr<Egg> egg_;
+    // 卵の位置
+    Vector3 eggPos = { -13.0f,0.0f,0.0f };
+
+    // ゴール
+    std::unique_ptr<Goal> goal_;
+    // ゴールの位置
+    Vector3 goalPos = { 14.0f,0.0f,0.0f };
+
+    /*Player* player_;
+    Terrain* terrain_;*/
+
+    CollisionMask* collisionMask_;
+    bool isVisibleCollisionMask_ = true;
+
+  // ----- Player -----
+  std::unique_ptr<Player> player_;
+
+  // プレイヤーの位置
+  Vector3 playerPos_ = {-13.0f, -0.4f, 0.0f};
+
+  // ----- Thread -----
+  std::unique_ptr<ThreadManager> thread_;
+  std::unique_ptr<SpiderWebManager> spiderWeb_;
+
+  // 敵
+  //std::unique_ptr<Enemy> enemy_;
+  //// 敵の位置
+  //Vector3 enemyPos_ = { 3.0f,0.0f,10.0f };
+
+  std::vector<std::unique_ptr<Enemy>> enemies_; // 敵のリスト
+  std::vector<Vector3> enemyPositions_;         // 複数体の初期位置リスト
+
+  // 巣の素材
+  std::unique_ptr<NestMaterial> nestMaterial_;
+  // 素材の位置
+  Vector3 nestMaterialPos_ = { 3.0f,0.0f,8.0f };
+
+  // 一方通行のオブジェクト
+  std::vector<std::unique_ptr<OneWayObject>> oneWayObjects_;
 
 };
-

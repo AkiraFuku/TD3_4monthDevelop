@@ -16,6 +16,9 @@ public:
     static std::unique_ptr<ModelManager> instance;
     friend struct std::default_delete<ModelManager>;
     void CreateSphereModel(const std::string& modelName, uint32_t subdivision = 16);
+
+    void CreatePlaneFromTex(const std::string& modelName, const std::string& textureFilePath);
+
 private:
   
 

@@ -2,20 +2,18 @@
 #include "ModelManager.h"
 #include "imgui.h"
 #include "Egg.h"
+#include "Player.h"
 #include "SceneManager.h"
 
-void Goal::Initialize()
+void Goal::Initialize(const Vector3& pos)
 {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("resources","player/player.obj");
-    object_->SetModel("player/player.obj");
+    ModelManager::GetInstance()->LoadModel("resources","goal/goal.obj");
+    object_->SetModel("goal/goal.obj");
 
-    Vector3 translate = object_->GetTranslate();
-    translate.y -= 4.0f; // ゴールの位置を少し下げる
-    translate.z -= 2.0f;
-    object_->SetTranslate(translate);
+    object_->SetTranslate(pos);
 }
 
 void Goal::Finalize()
@@ -25,6 +23,7 @@ void Goal::Finalize()
 
 void Goal::Update()
 {
+#ifdef USE_IMGUI
     ImGui::Begin("Goal Window");
 
     Vector3 scale = object_->GetScale();
@@ -47,6 +46,7 @@ void Goal::Update()
 
 
     ImGui::End();
+#endif
 
     object_->Update();
 }
@@ -58,6 +58,12 @@ void Goal::Draw()
 
 void Goal::Clear()
 {
+    // プレイヤーの素材の回収数が必要数を下回っていたら無効
+    if (player_->GetNestMaterial() < needNestMaterialCount_)
+    {
+        return;
+    }
+
     // 卵とゴールの当たり判定
     Vector3 goalPos = object_->GetTranslate();
     Vector3 eggPos = egg_->GetWorldPosition();

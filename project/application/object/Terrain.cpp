@@ -18,6 +18,7 @@ void Terrain::Finalize()
 
 void Terrain::Update()
 {
+#ifdef USE_IMGUI
     ImGui::Begin("Terrain Window");
 
     Vector3 scale = object_->GetScale();
@@ -40,6 +41,7 @@ void Terrain::Update()
 
 
     ImGui::End();
+#endif
 
     object_->Update();
 }

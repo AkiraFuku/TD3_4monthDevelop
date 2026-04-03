@@ -5,12 +5,13 @@
 #include "Camera.h"
 
 class Egg;
+class Player;
 
 class Goal
 {
 public:
 
-    void Initialize();
+    void Initialize(const Vector3& pos);
 
     void Finalize();
 
@@ -23,8 +24,14 @@ public:
         egg_ = egg;
     }
 
+    // プレイヤーのポインタを取得
+    void SetPlayer(Player* player) { player_ = player; }
+
     // ゴール判定関数
     void Clear();
+
+    // ゴールに必要な素材数のsetter
+    void SetNeedNestCount(int num) { needNestMaterialCount_ = num; }
 
 public: // 外部入出力
 
@@ -42,6 +49,13 @@ private:
 
     // 卵のポインタ
     Egg* egg_ = nullptr;
+    // プレイヤーのポインタ
+    Player* player_ = nullptr;
+
+    // ゴールに必要な素材の数
+    int needNestMaterialCount_ = 0;
+    // プレイヤーが持っている素材の数
+    int playerNestMaterialCount_ = 0;
 
 };
 

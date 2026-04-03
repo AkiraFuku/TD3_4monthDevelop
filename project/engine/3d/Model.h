@@ -82,7 +82,13 @@ public:
 
     static Model* CreateSphere(uint32_t subdivision = 16);
 
+    static Model* CreatePlaneFromTex(const std::string& textureFilePath);
+
     static Node ReadNode(aiNode*node );
+
+public: // 外部入出力
+
+    void SetName(const std::string& name) { name_ = name; }
 
 private:
 

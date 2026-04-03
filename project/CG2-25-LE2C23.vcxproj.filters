@@ -7,11 +7,15 @@
     <FxCompile Include="resources\shaders\Particle\Particle.VS.hlsl" />
     <FxCompile Include="resources\shaders\Sprite\Sprite.PS.hlsl" />
     <FxCompile Include="resources\shaders\Sprite\Sprite.VS.hlsl" />
+    <FxCompile Include="resources\shaders\Player\Player.PS.hlsl" />
+    <FxCompile Include="resources\shaders\Player\Player.VS.hlsl" />
+    <FxCompile Include="resources\shaders\MaskMap\Mask.PS.hlsl" />
+    <FxCompile Include="resources\shaders\MaskMap\Mask.VS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
     <ClCompile Include="application\debugCamera\DebugCameraFunction.cpp" />
-    <ClCompile Include="application\object\Player.cpp" />
+    <ClCompile Include="application\object\player\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg.cpp" />
@@ -55,16 +59,29 @@
     <ClCompile Include="engine\scene\SceneManager.cpp" />
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
-    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
+    <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
+    <ClCompile Include="application\object\thread\ThreadManager.cpp" />
+    <ClCompile Include="application\collision\Vector4Function.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\Mass.cpp" />
     <ClCompile Include="engine\math\Quanternion.cpp" />
     <ClCompile Include="engine\math\RotateFunction.cpp" />
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="application\object\player\PlayerState.cpp" />
+    <ClCompile Include="SpiderWebManager.cpp" />
+    <ClCompile Include="engine\3d\Anima.cpp" />
+    <ClCompile Include="application\object\player\PlayerAnima.cpp" />
+    <ClCompile Include="NestMaterial.cpp" />
+    <ClCompile Include="application\JSONManager\JSONManager.cpp" />
+    <ClCompile Include="OneWayObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />
-    <ClInclude Include="application\object\Player.h" />
+    <ClInclude Include="application\object\player\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg.h" />
@@ -110,17 +127,33 @@
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
-    <ClInclude Include="Animation.h" />
+    <ClInclude Include="application\object\thread\ThreadRenderer.h" />
+    <ClInclude Include="application\object\thread\ThreadPhysics.h" />
+    <ClInclude Include="application\object\thread\PhysicsNode.h" />
+    <ClInclude Include="application\object\thread\ThreadManager.h" />
+    <ClInclude Include="application\collision\Vector4Function.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="PathFinder.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
     <ClInclude Include="engine\math\Quanternion.h" />
     <ClInclude Include="engine\math\RotateFunction.h" />
     <ClInclude Include="engine\math\Transform.h" />
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="application\object\player\PlayerState.h" />
+    <ClInclude Include="SpiderWebManager.h" />
+    <ClInclude Include="engine\3d\Anima.h" />
+    <ClInclude Include="application\object\player\PlayerAnima.h" />
+    <ClInclude Include="NestMaterial.h" />
+    <ClInclude Include="application\JSONManager\JSONManager.h" />
+    <ClInclude Include="OneWayObject.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
     <None Include="resources\shaders\Particle\Particle.hlsli" />
     <None Include="resources\shaders\Sprite\Sprite.hlsli" />
+    <None Include="resources\shaders\Player\Player.hlsli" />
+    <None Include="resources\shaders\MaskMap\Mask.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />

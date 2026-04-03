@@ -36,6 +36,9 @@ public:
     void SetFarCrip(const float farCrip) {
         this->farCrip = farCrip;
     }
+    void SetWorldMatrix(const Matrix4x4& worldMatrix) {
+        this->worldMatrix = worldMatrix;
+    }
     void SetViewMatrix(const Matrix4x4& viewMatrix) {
         this->viewMatrix = viewMatrix;
     }

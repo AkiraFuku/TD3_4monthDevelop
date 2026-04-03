@@ -111,3 +111,31 @@ const DirectX::TexMetadata& TextureManager::GetMetaData(const std::string& fileP
     return textureDates[filePath].metadata;
 
 }
+
+const DirectX::Image TextureManager::GetImage(const std::string& filePath) const
+{
+    //テクスチャの読み込み
+    DirectX::ScratchImage image{};
+    std::wstring filePathW = StringUtility::ConvertString(filePath);
+    HRESULT hr = DirectX::LoadFromWICFile(
+        filePathW.c_str(),
+        DirectX::WIC_FLAGS_FORCE_SRGB,
+        nullptr,
+        image
+
+    );
+    assert(SUCCEEDED(hr));
+    //ミップマップの生成
+    DirectX::ScratchImage mipImages{};
+    hr = DirectX::GenerateMipMaps(
+        image.GetImages(),
+        image.GetImageCount(),
+        image.GetMetadata(),
+        DirectX::TEX_FILTER_SRGB,
+        0,
+        mipImages
+    );
+    assert(SUCCEEDED(hr));
+
+    return *image.GetImage(0, 0, 0);
+}

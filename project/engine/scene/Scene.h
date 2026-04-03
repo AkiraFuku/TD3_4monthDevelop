@@ -1,4 +1,5 @@
 #pragma once
+#include "Audio.h"
 class SceneManager;
 class Scene
 {
@@ -15,7 +16,14 @@ public:
     SceneManager*  GetSceneManager() {
         return sceneManager_;
     }
+
+    uint32_t GetBGMHandle() const {
+        return BGMhandle_;
+    }
 private:
     SceneManager* sceneManager_ = nullptr;
+protected:
+     uint32_t BGMhandle_ = 0;
+
 };
 

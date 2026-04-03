@@ -26,24 +26,6 @@ SceneManager::~SceneManager()
 void SceneManager::Update() {
     // シーン切り替え処理
 
-
-    if (scene_) {
-        scene_->Update();
-    }
-}
-
-void SceneManager::Draw() {
-    if (scene_) {
-        scene_->Draw();
-    }
-}
-
-void SceneManager::ChangeScene(const std::string& sceneName)
-{
-    assert(sceneFactory_);
-    assert(nextScene_ == nullptr);
-    nextScene_ = sceneFactory_->CreateScene(sceneName);
-
     if (nextScene_) {
 
         if (scene_)
@@ -59,4 +41,32 @@ void SceneManager::ChangeScene(const std::string& sceneName)
         scene_->Initialize();
 
     }
+    if (scene_) {
+        scene_->Update();
+    }
+}
+
+void SceneManager::Draw() {
+    if (scene_) {
+        scene_->Draw();
+    }
+}
+
+void SceneManager::ChangeScene(const std::string& sceneName)
+{
+    assert(sceneFactory_);
+    // assert(nextScene_ == nullptr);
+     //
+    if (scene_&&scene_->GetBGMHandle()!=0)
+    {
+        if (Audio::GetInstance()->IsPlaying(scene_->GetBGMHandle()))
+        {
+            Audio::GetInstance()->StopAudio(scene_->GetBGMHandle());
+
+        }
+    }
+
+    nextScene_ = sceneFactory_->CreateScene(sceneName);
+
+
 }
