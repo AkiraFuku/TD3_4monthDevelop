@@ -12,7 +12,7 @@ void Egg::Initialize(const Vector3& pos) {
 
 
     ModelManager::GetInstance()->LoadModel("resources", "egg.obj");
-    object_->SetModel("egg.obj");
+    object_->AddModel("egg.obj","egg");
     object_->SetTranslate(pos);
 }
 

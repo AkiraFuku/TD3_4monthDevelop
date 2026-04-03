@@ -1,0 +1,27 @@
+{
+  "animations": [
+    {
+      "name": "Idle",
+      "type": "bob",
+      "isLoop": true,
+      "duration": -1,
+      "amplitude": 0.2,
+      "frequency": 2.0
+    },
+    {
+      "name": "Walk",
+      "type": "bob",
+      "isLoop": true,
+      "duration": -1,
+      "amplitude": 0.2,
+      "frequency": 10.0
+    },
+    {
+      "name": "Carry",
+      "type": "rotate",
+      "isLoop": false,
+      "duration": 2.0,
+      "angle": 0.5
+    }
+  ]
+}

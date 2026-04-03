@@ -2,8 +2,11 @@
 #include "Object3d.h"
 #include <vector>
 #include <memory>
-
 #include <functional>
+#include <string>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 class Anima {
 public:
@@ -32,6 +35,12 @@ public:
         currentMove_ = move;
         isAnimationFinished_ = false; // リセット
     }
+
+    // JSON ファイルから複数のアニメーションを読み込む
+    bool LoadAnimationsFromJSON(const std::string& filePath);
+    
+    // アニメーション定義を JSON から生成
+    static AnimeMove CreateAnimationFromJSON(const json& animConfig);
 
     bool IsAnimationFinished() const { return isAnimationFinished_; }
     bool IsAnimationPlaying() const { return isPlaying_ && !isAnimationFinished_; }
