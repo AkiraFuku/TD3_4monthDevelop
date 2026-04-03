@@ -120,7 +120,7 @@ void GameScene::Initialize() {
 
 	enemyPositions_ = {
 		{3.0f, 0.0f, 10.0f},
-		{8.0f, 0.0f, -5.0f}
+		{3.0f, 0.0f, -5.0f}
 	};
 
 	for (const auto& pos : enemyPositions_) {
@@ -133,6 +133,12 @@ void GameScene::Initialize() {
     // 巣の素材の初期化
     nestMaterial_ = std::make_unique<NestMaterial>();
     nestMaterial_->Initialize(nestMaterialPos_);
+
+    // ... 一方通行オブジェクトの生成 ...
+    auto oneWay = std::make_unique<OneWayObject>();
+    // 床
+    oneWay->Initialize({ -4.0f, 0.01f, 8.0f }, OneWayObject::Direction::NegativeX, 5.0f, 15.0f); // Yを少し上げるとチラつき防止になる
+    oneWayObjects_.push_back(std::move(oneWay));
 
 }
 void GameScene::Finalize() {
@@ -440,33 +446,13 @@ void GameScene::Update()
     thread_->Update();
     spiderWeb_->Update(*thread_);
 
+    // 一方通行オブジェクトの更新
+    for (auto& ow : oneWayObjects_) {
+        ow->Update();
+    }
+
     // ゴールの更新処理
     goal_->Update();
-
-
-    //// 敵の目的地を決定する
-    //Vector3 targetPos;
-    //if (egg_->IsOnPlayer()) {
-    //    // 持ち上げ中ならプレイヤーの足元の座標を使う
-    //    targetPos = player_->GetPosition();
-    //}
-    //else {
-    //    // 置いてあるなら卵自身の座標を使う
-    //    targetPos = egg_->GetWorldPosition();
-    //}
-
-
-    //// プレイヤーが糸を撃った瞬間を検知
-    //if (player_->GetAndResetDidFireThread()) {
-    //    // 敵に「道が変わったぞ！」と教える
-    //    enemy_->RequestPathReplan();
-
-    //    // デバッグ用ログ
-    //    OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
-    //}
-
-    //// 決定した目的地を敵に渡す
-    //enemy_->Update(targetPos, thread_.get());
 
 	// 敵の目的地を決定する
 	Vector3 targetPos;
@@ -489,7 +475,7 @@ void GameScene::Update()
 	for (auto& enemy : enemies_) {
         if(enemy->GetCanMove())
         {
-            enemy->Update(targetPos, thread_.get());
+            enemy->Update(targetPos, thread_.get(),oneWayObjects_);
         }
 	}
   
@@ -521,14 +507,17 @@ void GameScene::Draw() {
     goal_->Draw();
 
     // 敵の描画処理
-    //enemy_->Draw();
-
 	for (auto& enemy : enemies_) {
 		enemy->Draw();
 	}
 
     // 巣の素材の描画処理
     nestMaterial_->Draw();
+
+    // 一方通行オブジェクトの描画
+    for (auto& ow : oneWayObjects_) {
+        ow->Draw();
+    }
 
     // ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画

@@ -75,6 +75,7 @@
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
     <ClCompile Include="NestMaterial.cpp" />
+    <ClCompile Include="OneWayObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -143,6 +144,7 @@
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
     <ClInclude Include="NestMaterial.h" />
+    <ClInclude Include="OneWayObject.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
