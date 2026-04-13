@@ -54,10 +54,10 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
 
-    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
-    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
-    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
-    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+    playerGroup_.items["position"] = JSONManager::Item {translate_};
+    playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
+    playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item {remainingThreadCount_};
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
 
@@ -537,19 +537,17 @@ void Player::InitializeModel() {
 
 }
 
-void Player::SaveJson()
-{
-    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
-    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
-    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
-    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+void Player::SaveJson() {
+    playerGroup_.items["position"] = JSONManager::Item {translate_};
+    playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
+    playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item {remainingThreadCount_};
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
     JSONManager::GetInstance()->SaveFile("Player");
 }
 
-void Player::LoadJson()
-{
+void Player::LoadJson() {
     // ファイルを読み込む
     JSONManager::GetInstance()->LoadFile("Player");
 

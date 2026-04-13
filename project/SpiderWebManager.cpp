@@ -192,6 +192,26 @@ void SpiderWebManager::BuildWebFromIntersection(
     WebShapeCache& shapeCache =
         GetOrCreateWebShape(key, spokeDirs.size(), ringRates_.size());
 
+    if (shapeCache.animationProgress < 1.0f) {
+        // 毎フレーム進行させる (0.033f だと約30フレームで完成)
+        // ※速度を変えたい場合はこの数値を調整してください
+        shapeCache.animationProgress += 0.033f;
+        if (shapeCache.animationProgress > 1.0f) {
+            shapeCache.animationProgress = 1.0f;
+        }
+    }
+
+    // 進行度を取り出し、イーズアウト（徐々に減速する）を適用
+    float t = shapeCache.animationProgress;
+    float easeProgress = 1.0f - (1.0f - t) * (1.0f - t);
+    // ==========================================
+
+    // 放射糸の基本の長さを計算 (名前を spokeLengths -> baseSpokeLengths に変更)
+    std::vector<float> baseSpokeLengths(spokeDirs.size(), spokeLength_);
+    for (size_t i = 0; i < spokeDirs.size(); ++i) {
+        baseSpokeLengths[i] = spokeLength_ * shapeCache.spokeLengthRates[i];
+    }
+
     std::vector<float> spokeLengths(spokeDirs.size(), spokeLength_);
     for (size_t i = 0; i < spokeDirs.size(); ++i) {
         spokeLengths[i] = spokeLength_ * shapeCache.spokeLengthRates[i];
@@ -200,7 +220,11 @@ void SpiderWebManager::BuildWebFromIntersection(
     // 放射糸
     for (size_t i = 0; i < spokeDirs.size(); ++i) {
         Vector3 start = center + spokeDirs[i] * innerHoleRadius_;
-        Vector3 end = center + spokeDirs[i] * spokeLengths[i];
+
+        // easeProgress を掛けて、中心から伸びていくようにする
+        float currentLength = baseSpokeLengths[i] * easeProgress;
+        Vector3 end = center + spokeDirs[i] * currentLength;
+
         start.y = center.y;
         end.y = center.y;
         AddSegmentAsThread(start, end);
@@ -208,12 +232,27 @@ void SpiderWebManager::BuildWebFromIntersection(
 
     // 輪糸
     for (size_t r = 0; r < ringRates_.size(); ++r) {
+
+        // --- ★ 追加: 輪糸を内側から順番に生成するための計算 ---
+        float ringStartThreshold = static_cast<float>(r) / ringRates_.size();
+        if (t <= ringStartThreshold) {
+            continue; // まだこの輪を生成するタイミングでなければスキップ
+        }
+
+        // この輪専用の進行度 (0.0f ~ 1.0f) とイージング
+        float localProgress = (t - ringStartThreshold) / (1.0f / ringRates_.size());
+        localProgress = std::clamp(localProgress, 0.0f, 1.0f);
+        float localEase = 1.0f - (1.0f - localProgress) * (1.0f - localProgress);
+        // --------------------------------------------------
+
         std::vector<Vector3> ringPoints(spokeDirs.size());
 
         for (size_t i = 0; i < spokeDirs.size(); ++i) {
             size_t cacheIndex = r * spokeDirs.size() + i;
             float localJitter = shapeCache.ringRadiusRates[cacheIndex];
-            float radius = spokeLengths[i] * ringRates_[r] * localJitter;
+
+            // ★ 修正: localEase を掛けて、輪が徐々に広がるようにする
+            float radius = baseSpokeLengths[i] * ringRates_[r] * localJitter * localEase;
 
             ringPoints[i] = center + spokeDirs[i] * radius;
             ringPoints[i].y = center.y;
@@ -223,27 +262,21 @@ void SpiderWebManager::BuildWebFromIntersection(
             Vector3 start = ringPoints[i];
             Vector3 end = ringPoints[(i + 1) % ringPoints.size()];
 
-            // --- 弧を描くように分割して追加 ---
             Vector3 mid = (start + end) * 0.5f;
-            Vector3 sagDir = NormalizeXZ(center - mid); // 中心に向かう方向ベクトル
+            Vector3 sagDir = NormalizeXZ(center - mid);
 
-            // 始点と終点の距離に基づいて、たるみの最大量を決定
             float spanLength = LengthXZ(end - start);
-            float maxSag = spanLength * arcSagFactor_;
+
+            // ★ 修正: たるみ具合にも localEase を掛けることで、ピンと張った状態から自然にたるむ表現に
+            float maxSag = spanLength * arcSagFactor_ * localEase;
 
             Vector3 prevPos = start;
             for (int j = 1; j <= arcSegments_; ++j) {
-                float t = static_cast<float>(j) / arcSegments_;
-
-                // 1. 直線上の基本位置
-                Vector3 basePos = start + (end - start) * t;
-
-                // 2. 放物線状のたるみを計算 (t=0.5 のとき parabola=1.0 になる)
-                float parabola = 4.0f * t * (1.0f - t);
-
-                // 3. 基本位置から中心に向かってたるませる
+                float t_arc = static_cast<float>(j) / arcSegments_; // 変数名被りを防ぐため t_arc に変更
+                Vector3 basePos = start + (end - start) * t_arc;
+                float parabola = 4.0f * t_arc * (1.0f - t_arc);
                 Vector3 currentPos = basePos + sagDir * (maxSag * parabola);
-                currentPos.y = center.y; // 高さは揃える
+                currentPos.y = center.y;
 
                 AddSegmentAsThread(prevPos, currentPos);
                 prevPos = currentPos;

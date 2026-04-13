@@ -364,22 +364,22 @@ void GameScene::Update()
 		targetPos = egg_->GetWorldPosition();
 	}
 
-	//// プレイヤーが糸を撃った瞬間を検知
-	//if (player_->GetAndResetDidFireThread()) {
-	//	OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
-	//	// 【変更】すべての敵に経路再計算をリクエスト
-	//	for (auto& enemy : enemies_) {
-	//		enemy->RequestPathReplan();
-	//	}
-	//}
+	// プレイヤーが糸を撃った瞬間を検知
+	if (player_->GetAndResetDidFireThread()) {
+		OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+		// 【変更】すべての敵に経路再計算をリクエスト
+		for (auto& enemy : enemies_) {
+			enemy->RequestPathReplan();
+		}
+	}
 
-	//// 【変更】すべての敵のUpdateを呼ぶ
-	//for (auto& enemy : enemies_) {
- //       if(enemy->GetCanMove())
- //       {
- //           enemy->Update(targetPos, thread_.get(),oneWayObjects_);
- //       }
-	//}
+	// 【変更】すべての敵のUpdateを呼ぶ
+	for (auto& enemy : enemies_) {
+        if(enemy->GetCanMove())
+        {
+            enemy->Update(targetPos, thread_.get(),oneWayObjects_);
+        }
+	}
   
    // 巣の素材の更新処理
     nestMaterial_->Update();

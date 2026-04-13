@@ -22,6 +22,8 @@ private:
         bool initialized = false;
         std::vector<float> spokeLengthRates;
         std::vector<float> ringRadiusRates;
+
+        float animationProgress = 0.0f;
     };
 
 private:
