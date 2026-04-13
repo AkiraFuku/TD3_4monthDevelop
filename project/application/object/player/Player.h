@@ -119,6 +119,11 @@ public:
     void SetNestMaterial(int num) { nestMaterialNum_ += num; }
     int GetNestMaterial() const { return nestMaterialNum_; }
 
+    /// <summary>
+    /// 予測線の描画フラグを設定
+    /// </summary>
+    void SetCanDrawPrediction(bool canDraw) { canDrawPrediction_ = canDraw; }
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;

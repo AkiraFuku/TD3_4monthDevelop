@@ -27,7 +27,7 @@ private:
     // 物理演算（交差時）
     static inline const int   kIntersectedIterations = 40;    // 交差時の強い補正力
     static inline const float kIntersectedStiffness = 1.0f;   // 交差部分の強靭な弾力
-    static inline const float kIntersectionPullStiffness = 0.3f; // 交差した糸同士が引っ張り合う力の強さ
+    static inline const float kIntersectionPullStiffness = 0.5f; // 交差した糸同士が引っ張り合う力の強さ
 
     // 判定・検索・計算用の閾値
     static inline const float kMathEpsilon = 1e-6f;           // ゼロ除算回避などの微小値

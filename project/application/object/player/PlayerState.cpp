@@ -169,6 +169,8 @@ void PlayerStateMove::Update(Player* player) {
 
 // 初期化
 void PlayerStateShoot::Initialize(Player* player) {
+    player->SetCanDrawPrediction(false);
+
     frameCount_ = 0;
 
     // 状態に入った瞬間に一度だけ糸を発射
@@ -177,6 +179,8 @@ void PlayerStateShoot::Initialize(Player* player) {
 
 // 更新
 void PlayerStateShoot::Update(Player* player) {
+    player->SetCanDrawPrediction(false);
+
     // フレームカウントを加算
     frameCount_ += kDeltaTime;
 

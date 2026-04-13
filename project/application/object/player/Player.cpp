@@ -74,6 +74,8 @@ void Player::Update() {
 
     moveVel_ = {0.0f, 0.0f, 0.0f};
 
+    UpdatePredictionLine();
+
     if (state_) {
         state_->Update(this);
     }
@@ -102,6 +104,7 @@ void Player::Update() {
 
     // 状態の表示
     ImGui::Text("On Thread: %s", onThread_ ? "Yes" : "No");
+    ImGui::Text("Can Draw Prediction: %s", canDrawPrediction_ ? "Yes" : "No");
     ImGui::Text("Remaining Threads: %d", remainingThreadCount_);
 
     // 速度（移動量）の確認
@@ -139,8 +142,6 @@ void Player::Update() {
 
     anima_->Update();
     object_->Update();
-
-    UpdatePredictionLine();
 }
 /// <summary>
 /// 描画

@@ -42,7 +42,7 @@ private:
     std::vector<std::vector<PhysicsNode>> webNodes_;
     std::unordered_map<uint64_t, WebShapeCache> webShapeCache_;
 
-    float spokeLength_ = 0.7f;
+    float spokeLength_ = 1.5f;
     float innerHoleRadius_ = 0.03f;
     float liftY_ = 0.02f;
 
@@ -51,4 +51,9 @@ private:
     float webThickness_ = 0.008f;
     int radialSegments_ = 4;
     int maxIntersections_ = 64;
+
+    int arcSegments_ = 4;        // 輪糸1スパンあたりの分割数（増やすと滑らかになります）
+    float arcSagFactor_ = 0.15f; // たるみ具合の係数（スパン長に対する割合）
+
+    float missingThreadProbability_ = 0.15f; // 糸が張られない（欠損する）確率
 };

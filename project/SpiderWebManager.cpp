@@ -66,7 +66,9 @@ SpiderWebManager::WebShapeCache& SpiderWebManager::GetOrCreateWebShape(
     size_t ringCount) {
 
     auto& cache = webShapeCache_[key];
-    if (cache.initialized) {
+
+    // ▼ 修正箇所: 初期化済みでも、放射糸の本数が変わっていたら再構築（リサイズ）を許可する
+    if (cache.initialized && cache.spokeLengthRates.size() == spokeCount) {
         return cache;
     }
 
@@ -95,10 +97,11 @@ SpiderWebManager::WebShapeCache& SpiderWebManager::GetOrCreateWebShape(
 
 void SpiderWebManager::Initialize(Camera* camera) {
     camera_ = camera;
-
     renderer_ = std::make_unique<ThreadRenderer>();
 
-    const int maxSegmentsPerIntersection = 48;
+    // 輪糸を arcSegments_ 分割するため、交差点あたりのセグメント数を増やす
+    // (例: 放射糸8本 + 輪糸40スパン × 4分割 = 168セグメント。余裕を見て256に設定)
+    const int maxSegmentsPerIntersection = 256;
     const int maxWebSegments = maxIntersections_ * maxSegmentsPerIntersection;
 
     // 蜘蛛糸1本は 2ノード構成
@@ -152,17 +155,32 @@ void SpiderWebManager::BuildWebFromIntersection(
 
     // 4方向 + 中間4方向 = 8本の spoke
     std::vector<Vector3> spokeDirs;
-    spokeDirs.reserve(8);
+    spokeDirs.reserve(16); // 余裕を持たせる
+
+    const float pi = 3.14159265f;
+    const float targetAngleDiff = 30.0f * (pi / 180.0f); // 例: 約30度ごとに分割
 
     for (size_t i = 0; i < 4; ++i) {
-        const Vector3 d0 = ordered[i].dir;
-        const Vector3 d1 = ordered[(i + 1) % 4].dir;
+        const OrderedDirection& o0 = ordered[i];
+        const OrderedDirection& o1 = ordered[(i + 1) % 4];
 
-        spokeDirs.push_back(d0);
+        spokeDirs.push_back(o0.dir);
 
-        Vector3 mid = NormalizeXZ(d0 + d1);
-        if (!IsZeroXZ(mid)) {
-            spokeDirs.push_back(mid);
+        // 角度の差を計算（-π 〜 π を跨ぐラップアラウンドを考慮）
+        float a0 = o0.angle;
+        float a1 = o1.angle;
+        if (a1 <= a0) {
+            a1 += 2.0f * PI;
+        }
+        float diff = a1 - a0;
+
+        // 目標角度で分割（隙間が広ければ分割数が増える）
+        int splits = std::max(1, static_cast<int>(std::round(diff / targetAngleDiff)));
+
+        for (int s = 1; s < splits; ++s) {
+            float t = static_cast<float>(s) / splits;
+            float midAngle = a0 + diff * t;
+            spokeDirs.push_back({std::cos(midAngle), 0.0f, std::sin(midAngle)});
         }
     }
 
@@ -202,7 +220,34 @@ void SpiderWebManager::BuildWebFromIntersection(
         }
 
         for (size_t i = 0; i < ringPoints.size(); ++i) {
-            AddSegmentAsThread(ringPoints[i], ringPoints[(i + 1) % ringPoints.size()]);
+            Vector3 start = ringPoints[i];
+            Vector3 end = ringPoints[(i + 1) % ringPoints.size()];
+
+            // --- 弧を描くように分割して追加 ---
+            Vector3 mid = (start + end) * 0.5f;
+            Vector3 sagDir = NormalizeXZ(center - mid); // 中心に向かう方向ベクトル
+
+            // 始点と終点の距離に基づいて、たるみの最大量を決定
+            float spanLength = LengthXZ(end - start);
+            float maxSag = spanLength * arcSagFactor_;
+
+            Vector3 prevPos = start;
+            for (int j = 1; j <= arcSegments_; ++j) {
+                float t = static_cast<float>(j) / arcSegments_;
+
+                // 1. 直線上の基本位置
+                Vector3 basePos = start + (end - start) * t;
+
+                // 2. 放物線状のたるみを計算 (t=0.5 のとき parabola=1.0 になる)
+                float parabola = 4.0f * t * (1.0f - t);
+
+                // 3. 基本位置から中心に向かってたるませる
+                Vector3 currentPos = basePos + sagDir * (maxSag * parabola);
+                currentPos.y = center.y; // 高さは揃える
+
+                AddSegmentAsThread(prevPos, currentPos);
+                prevPos = currentPos;
+            }
         }
     }
 }
