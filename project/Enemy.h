@@ -6,6 +6,7 @@
 #include <deque>
 #include <memory>
 #include "OneWayObject.h"
+#include "BrokenBlock.h"
 
 class ThreadManager;
 class Egg;
@@ -15,12 +16,14 @@ public:
     void Initialize(const Vector3& pos);
 
     // GameSceneから必要な情報を毎フレーム受け取る
-    void Update(const Vector3& eggPos, ThreadManager* tm, const std::vector<std::unique_ptr<OneWayObject>>& oneWays);
+    void Update(const Vector3& eggPos, ThreadManager* tm, 
+        const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
 
     void Draw();
 
     // 経路探索
-    void RecalculatePath(const Vector3& eggPos, ThreadManager* tm, const std::vector<std::unique_ptr<OneWayObject>>& oneWays);
+    void RecalculatePath(const Vector3& eggPos, ThreadManager* tm, 
+        const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
 
     // 経路をクリア
     bool IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm);

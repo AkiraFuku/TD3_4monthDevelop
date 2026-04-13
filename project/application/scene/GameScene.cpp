@@ -120,7 +120,7 @@ void GameScene::Initialize() {
 
 	enemyPositions_ = {
 		{3.0f, 0.0f, 10.0f},
-		{3.0f, 0.0f, -5.0f}
+		{4.0f, 0.0f, 9.0f}
 	};
 
 	for (const auto& pos : enemyPositions_) {
@@ -137,8 +137,21 @@ void GameScene::Initialize() {
     // ... 一方通行オブジェクトの生成 ...
     auto oneWay = std::make_unique<OneWayObject>();
     // 床
-    oneWay->Initialize({ -4.0f, 0.01f, 8.0f }, OneWayObject::Direction::NegativeX, 5.0f, 15.0f); // Yを少し上げるとチラつき防止になる
+    oneWay->Initialize({ 0.0f, 0.01f, 0.0f }, OneWayObject::Direction::NegativeX, 5.0f, 15.0f); // Yを少し上げるとチラつき防止になる
     oneWayObjects_.push_back(std::move(oneWay));
+
+    // 数回渡ったら壊れるオブジェクトの生成
+    brokenBlockPos_ =
+    {
+        {-5.0f,0.0f,8.0f}
+    };
+
+    for (const auto& pos : brokenBlockPos_)
+    {
+        auto brokenBlock = std::make_unique<BrokenBlock>();
+        brokenBlock->Initialize(pos, 8.0f, 10.0f);
+        brokenBlocks_.push_back(std::move(brokenBlock));
+    }
 
 }
 void GameScene::Finalize() {
@@ -377,7 +390,7 @@ void GameScene::Update()
 	for (auto& enemy : enemies_) {
         if(enemy->GetCanMove())
         {
-            enemy->Update(targetPos, thread_.get(),oneWayObjects_);
+            enemy->Update(targetPos, thread_.get(),oneWayObjects_,brokenBlocks_);
         }
 	}
   
@@ -387,6 +400,12 @@ void GameScene::Update()
 
     collisionMask_->Update();
 
+    // 壊れるブロックの更新処理
+    for (auto& brokenBlock : brokenBlocks_)
+    {
+        brokenBlock->Update();
+    }
+
 
     // 当たり判定の確認
     CheckAllCollisions();
@@ -394,6 +413,16 @@ void GameScene::Update()
     // ゴールクリアの判定
     goal_->Clear();
     egg_->Death();
+
+    // 破壊フラグの立ったブロックを削除
+    // 破壊フラグの立ったブロックを削除
+    brokenBlocks_.erase(
+        std::remove_if(brokenBlocks_.begin(), brokenBlocks_.end(),
+            [](const std::unique_ptr<BrokenBlock>& block) {
+                return block->IsBroken();
+            }),
+        brokenBlocks_.end()
+    );
 
 }
 
@@ -419,6 +448,12 @@ void GameScene::Draw() {
     // 一方通行オブジェクトの描画
     for (auto& ow : oneWayObjects_) {
         ow->Draw();
+    }
+
+    // 壊れるブロックの更新処理
+    for (auto& brokenBlock : brokenBlocks_)
+    {
+        brokenBlock->Draw();
     }
 
     // ParticleManager::GetInstance()->Draw();

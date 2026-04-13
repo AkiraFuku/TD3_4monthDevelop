@@ -5,9 +5,10 @@
 #include <cmath>
 #include <algorithm>
 #include "OneWayObject.h"
+#include "BrokenBlock.h"
 
 std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height, ThreadManager* tm
-    , const std::vector<std::unique_ptr<OneWayObject>>& oneWays) {
+    , const std::vector<std::unique_ptr<OneWayObject>>& oneWays,const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock) {
     std::vector<Node*> openList;
     std::vector<Node*> closedList;
     std::vector<Point> finalPath;
@@ -76,6 +77,24 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 }
             }
 
+            // 壊れるブロックの判定
+            bool onBrokenBlock = false;
+            for (const auto& br : brokenBlock)
+            {
+                if (br->IsInside(worldPos) && !br->IsBroken())
+                {
+                    Vector3 currentWorldPos = { (float)current->pos.x - 256.0f + 0.5f, 0, (float)current->pos.y - 256.0f + 0.5f };
+
+                    if (br->IsImpassable() && !br->IsInside(currentWorldPos))
+                    {
+                        continue;
+                    }
+
+                    onBrokenBlock = true;
+                    break;
+                }
+            }
+
             if (tm) {
                 // ThreadManager内の全糸ノードをチェック
                 float checkRadiusSq = 0.8f; // 半径3.0の2乗。広めに設定
@@ -94,7 +113,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 }
             }
 
-            bool canPass = !isWall || hasThread || onOneWay;
+            bool canPass = !isWall || hasThread || onOneWay || onBrokenBlock;
 
             if (!canPass) {
                 continue; // 通れないなら次の方向へ
@@ -114,6 +133,10 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             else if (!isWall) {
                 // 地面の上は次点
                 moveCost *= 1.2f;
+            }
+            else if (onBrokenBlock)
+            {
+                moveCost *= 2.0f;
             }
             else if (onOneWay) {
                 // 橋の上は「糸がない場合の最終手段」としてコストを高く設定する

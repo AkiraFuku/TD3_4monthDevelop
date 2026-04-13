@@ -6,6 +6,7 @@
 // 前方宣言：ヘッダの循環参照を防ぐ
 class ThreadManager;
 class OneWayObject;
+class BrokenBlock;
 
 struct Point {
     int x, y;
@@ -17,7 +18,8 @@ class PathFinder {
 public:
     // ThreadManagerを引数で受け取り、動的な糸の橋を考慮できるようにする
     static std::vector<Point> FindPath(Point start, Point goal, int width, int height,
-        ThreadManager* threadManager, const std::vector<std::unique_ptr<OneWayObject>>& oneWays);
+        ThreadManager* threadManager, const std::vector<std::unique_ptr<OneWayObject>>& oneWays,
+        const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
 
 private:
     struct Node {

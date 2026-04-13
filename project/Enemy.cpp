@@ -11,7 +11,8 @@ void Enemy::Initialize(const Vector3& pos) {
     object_->SetTranslate(pos);
 }
 
-void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,const std::vector<std::unique_ptr<OneWayObject>>& oneWays) {
+void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
+    const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock) {
     // 1. 生のワールド座標を取得
     Vector3 myPos = object_->GetTranslate();
     Vector3 targetPos = eggPos;
@@ -76,7 +77,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,const std::
     RescuePoint(goal);
 
     // パスを再検索
-    std::vector<Point> newPath = PathFinder::FindPath(start, goal, 512, 512, tm,oneWays);
+    std::vector<Point> newPath = PathFinder::FindPath(start, goal, 512, 512, tm,oneWays,brokenBlock);
 
     path_.clear();
     if (newPath.empty()) {
@@ -147,7 +148,8 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
     return true;
 }
 
-void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,const std::vector<std::unique_ptr<OneWayObject>>& oneWays) {
+void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
+    const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock) {
 
     if (isHit_) {
         // 卵に接触していたら何もしない
@@ -168,7 +170,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,const std::vector<st
 
     // タイマーが満了したか、外部からリクエストがあった場合に再計算
     if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
-        RecalculatePath(eggPos, tm,oneWays);
+        RecalculatePath(eggPos, tm,oneWays,brokenBlock);
         recalculateTimer_ = 0;
         shouldReplanNextUpdate_ = false; // フラグを戻す
     }
@@ -254,6 +256,12 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,const std::vector<st
             // ※もし「捕まった瞬間に交差点のド真ん中に引きずり込みたい」場合は
             // ここで expectedPos = intersection.position; などにすることもできます
         }
+    }
+
+    // 壊れるブロックの判定
+    for (auto& brokenBlock : brokenBlock)
+    {
+        brokenBlock->CheckRiding(currentPos,this);
     }
 
     // ==========================================
