@@ -75,9 +75,8 @@ bool OneWayObject::IsInside(const Vector3& pos) const
     float maxZ = position_.z + (sizeZ / 2.0f);
 
     // 接続用のマージン（ここも重要）
-    float margin = 0.0f;
-    return (pos.x >= minX - margin && pos.x <= maxX + margin &&
-        pos.z >= minZ - margin && pos.z <= maxZ + margin);
+    return (pos.x >= minX && pos.x <= maxX &&
+        pos.z >= minZ  && pos.z <= maxZ);
 }
 
 OneWayObject::AABB OneWayObject::GetAABB() const {

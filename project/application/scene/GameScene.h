@@ -21,6 +21,7 @@
 #include "ThreadManager.h"
 #include "SpiderWebManager.h"
 #include "OneWayObject.h"
+#include "BrokenBlock.h"
 
 class GameScene : public Scene {
 public:
@@ -94,4 +95,8 @@ private:
   // 一方通行のオブジェクト
   std::vector<std::unique_ptr<OneWayObject>> oneWayObjects_;
 
+  // 数回で壊れるオブジェクト
+  std::vector<std::unique_ptr<BrokenBlock>> brokenBlocks_;
+  // オブジェクトの位置
+  std::vector<Vector3> brokenBlockPos_;
 };
