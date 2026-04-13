@@ -66,7 +66,9 @@ SpiderWebManager::WebShapeCache& SpiderWebManager::GetOrCreateWebShape(
     size_t ringCount) {
 
     auto& cache = webShapeCache_[key];
-    if (cache.initialized) {
+
+    // ▼ 修正箇所: 初期化済みでも、放射糸の本数が変わっていたら再構築（リサイズ）を許可する
+    if (cache.initialized && cache.spokeLengthRates.size() == spokeCount) {
         return cache;
     }
 
@@ -95,10 +97,11 @@ SpiderWebManager::WebShapeCache& SpiderWebManager::GetOrCreateWebShape(
 
 void SpiderWebManager::Initialize(Camera* camera) {
     camera_ = camera;
-
     renderer_ = std::make_unique<ThreadRenderer>();
 
-    const int maxSegmentsPerIntersection = 48;
+    // 輪糸を arcSegments_ 分割するため、交差点あたりのセグメント数を増やす
+    // (例: 放射糸8本 + 輪糸40スパン × 4分割 = 168セグメント。余裕を見て256に設定)
+    const int maxSegmentsPerIntersection = 256;
     const int maxWebSegments = maxIntersections_ * maxSegmentsPerIntersection;
 
     // 蜘蛛糸1本は 2ノード構成
@@ -152,17 +155,32 @@ void SpiderWebManager::BuildWebFromIntersection(
 
     // 4方向 + 中間4方向 = 8本の spoke
     std::vector<Vector3> spokeDirs;
-    spokeDirs.reserve(8);
+    spokeDirs.reserve(16); // 余裕を持たせる
+
+    const float pi = 3.14159265f;
+    const float targetAngleDiff = 30.0f * (pi / 180.0f); // 例: 約30度ごとに分割
 
     for (size_t i = 0; i < 4; ++i) {
-        const Vector3 d0 = ordered[i].dir;
-        const Vector3 d1 = ordered[(i + 1) % 4].dir;
+        const OrderedDirection& o0 = ordered[i];
+        const OrderedDirection& o1 = ordered[(i + 1) % 4];
 
-        spokeDirs.push_back(d0);
+        spokeDirs.push_back(o0.dir);
 
-        Vector3 mid = NormalizeXZ(d0 + d1);
-        if (!IsZeroXZ(mid)) {
-            spokeDirs.push_back(mid);
+        // 角度の差を計算（-π 〜 π を跨ぐラップアラウンドを考慮）
+        float a0 = o0.angle;
+        float a1 = o1.angle;
+        if (a1 <= a0) {
+            a1 += 2.0f * PI;
+        }
+        float diff = a1 - a0;
+
+        // 目標角度で分割（隙間が広ければ分割数が増える）
+        int splits = std::max(1, static_cast<int>(std::round(diff / targetAngleDiff)));
+
+        for (int s = 1; s < splits; ++s) {
+            float t = static_cast<float>(s) / splits;
+            float midAngle = a0 + diff * t;
+            spokeDirs.push_back({std::cos(midAngle), 0.0f, std::sin(midAngle)});
         }
     }
 
@@ -174,6 +192,26 @@ void SpiderWebManager::BuildWebFromIntersection(
     WebShapeCache& shapeCache =
         GetOrCreateWebShape(key, spokeDirs.size(), ringRates_.size());
 
+    if (shapeCache.animationProgress < 1.0f) {
+        // 毎フレーム進行させる (0.033f だと約30フレームで完成)
+        // ※速度を変えたい場合はこの数値を調整してください
+        shapeCache.animationProgress += 0.033f;
+        if (shapeCache.animationProgress > 1.0f) {
+            shapeCache.animationProgress = 1.0f;
+        }
+    }
+
+    // 進行度を取り出し、イーズアウト（徐々に減速する）を適用
+    float t = shapeCache.animationProgress;
+    float easeProgress = 1.0f - (1.0f - t) * (1.0f - t);
+    // ==========================================
+
+    // 放射糸の基本の長さを計算 (名前を spokeLengths -> baseSpokeLengths に変更)
+    std::vector<float> baseSpokeLengths(spokeDirs.size(), spokeLength_);
+    for (size_t i = 0; i < spokeDirs.size(); ++i) {
+        baseSpokeLengths[i] = spokeLength_ * shapeCache.spokeLengthRates[i];
+    }
+
     std::vector<float> spokeLengths(spokeDirs.size(), spokeLength_);
     for (size_t i = 0; i < spokeDirs.size(); ++i) {
         spokeLengths[i] = spokeLength_ * shapeCache.spokeLengthRates[i];
@@ -182,7 +220,11 @@ void SpiderWebManager::BuildWebFromIntersection(
     // 放射糸
     for (size_t i = 0; i < spokeDirs.size(); ++i) {
         Vector3 start = center + spokeDirs[i] * innerHoleRadius_;
-        Vector3 end = center + spokeDirs[i] * spokeLengths[i];
+
+        // easeProgress を掛けて、中心から伸びていくようにする
+        float currentLength = baseSpokeLengths[i] * easeProgress;
+        Vector3 end = center + spokeDirs[i] * currentLength;
+
         start.y = center.y;
         end.y = center.y;
         AddSegmentAsThread(start, end);
@@ -190,19 +232,55 @@ void SpiderWebManager::BuildWebFromIntersection(
 
     // 輪糸
     for (size_t r = 0; r < ringRates_.size(); ++r) {
+
+        // --- ★ 追加: 輪糸を内側から順番に生成するための計算 ---
+        float ringStartThreshold = static_cast<float>(r) / ringRates_.size();
+        if (t <= ringStartThreshold) {
+            continue; // まだこの輪を生成するタイミングでなければスキップ
+        }
+
+        // この輪専用の進行度 (0.0f ~ 1.0f) とイージング
+        float localProgress = (t - ringStartThreshold) / (1.0f / ringRates_.size());
+        localProgress = std::clamp(localProgress, 0.0f, 1.0f);
+        float localEase = 1.0f - (1.0f - localProgress) * (1.0f - localProgress);
+        // --------------------------------------------------
+
         std::vector<Vector3> ringPoints(spokeDirs.size());
 
         for (size_t i = 0; i < spokeDirs.size(); ++i) {
             size_t cacheIndex = r * spokeDirs.size() + i;
             float localJitter = shapeCache.ringRadiusRates[cacheIndex];
-            float radius = spokeLengths[i] * ringRates_[r] * localJitter;
+
+            // ★ 修正: localEase を掛けて、輪が徐々に広がるようにする
+            float radius = baseSpokeLengths[i] * ringRates_[r] * localJitter * localEase;
 
             ringPoints[i] = center + spokeDirs[i] * radius;
             ringPoints[i].y = center.y;
         }
 
         for (size_t i = 0; i < ringPoints.size(); ++i) {
-            AddSegmentAsThread(ringPoints[i], ringPoints[(i + 1) % ringPoints.size()]);
+            Vector3 start = ringPoints[i];
+            Vector3 end = ringPoints[(i + 1) % ringPoints.size()];
+
+            Vector3 mid = (start + end) * 0.5f;
+            Vector3 sagDir = NormalizeXZ(center - mid);
+
+            float spanLength = LengthXZ(end - start);
+
+            // ★ 修正: たるみ具合にも localEase を掛けることで、ピンと張った状態から自然にたるむ表現に
+            float maxSag = spanLength * arcSagFactor_ * localEase;
+
+            Vector3 prevPos = start;
+            for (int j = 1; j <= arcSegments_; ++j) {
+                float t_arc = static_cast<float>(j) / arcSegments_; // 変数名被りを防ぐため t_arc に変更
+                Vector3 basePos = start + (end - start) * t_arc;
+                float parabola = 4.0f * t_arc * (1.0f - t_arc);
+                Vector3 currentPos = basePos + sagDir * (maxSag * parabola);
+                currentPos.y = center.y;
+
+                AddSegmentAsThread(prevPos, currentPos);
+                prevPos = currentPos;
+            }
         }
     }
 }

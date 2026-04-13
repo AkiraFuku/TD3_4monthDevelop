@@ -54,10 +54,10 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
 
-    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
-    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
-    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
-    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+    playerGroup_.items["position"] = JSONManager::Item {translate_};
+    playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
+    playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item {remainingThreadCount_};
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
 
@@ -73,6 +73,8 @@ void Player::Finalize() {
 void Player::Update() {
 
     moveVel_ = {0.0f, 0.0f, 0.0f};
+
+    UpdatePredictionLine();
 
     if (state_) {
         state_->Update(this);
@@ -102,6 +104,7 @@ void Player::Update() {
 
     // 状態の表示
     ImGui::Text("On Thread: %s", onThread_ ? "Yes" : "No");
+    ImGui::Text("Can Draw Prediction: %s", canDrawPrediction_ ? "Yes" : "No");
     ImGui::Text("Remaining Threads: %d", remainingThreadCount_);
 
     // 速度（移動量）の確認
@@ -139,8 +142,6 @@ void Player::Update() {
 
     anima_->Update();
     object_->Update();
-
-    UpdatePredictionLine();
 }
 /// <summary>
 /// 描画
@@ -536,19 +537,17 @@ void Player::InitializeModel() {
 
 }
 
-void Player::SaveJson()
-{
-    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
-    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
-    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
-    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+void Player::SaveJson() {
+    playerGroup_.items["position"] = JSONManager::Item {translate_};
+    playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
+    playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item {remainingThreadCount_};
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
     JSONManager::GetInstance()->SaveFile("Player");
 }
 
-void Player::LoadJson()
-{
+void Player::LoadJson() {
     // ファイルを読み込む
     JSONManager::GetInstance()->LoadFile("Player");
 

@@ -555,6 +555,32 @@ void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllN
     for (auto& physics : physicsList_) {
         outAllNodes.push_back(physics->GetNodes());
     }
+
+    // 全ての交差点について、互いの糸を引っ張り合わせる（連動してたわませる）
+    for (const auto& intersection : intersections_) {
+        // 交差している2つのThreadPhysicsを取得
+        auto& physicsA = physicsList_[intersection.threadIndexA];
+        auto& physicsB = physicsList_[intersection.threadIndexB];
+
+        // 交差している線分の始点ノードのインデックス
+        int nodeIndexA = static_cast<int>(intersection.segmentIndexA);
+        int nodeIndexB = static_cast<int>(intersection.segmentIndexB);
+
+        // 現在のノードの座標を取得
+        Vector3 posA = physicsA->GetNodePosition(nodeIndexA);
+        Vector3 posB = physicsB->GetNodePosition(nodeIndexB);
+
+        // 2つのノードの距離差分（AからBへ向かうベクトル）
+        Vector3 diff = posB - posA;
+
+        // 引っ張り合う力の計算（kIntersectionPullStiffness を掛ける）
+        // ※ Y軸のたわみだけを連動させたい場合は、diff.x と diff.z を 0.0f にしても良いです
+        Vector3 pullForce = diff * kIntersectionPullStiffness;
+
+        // お互いを引き寄せるように位置を補正する（質量が同じと仮定して半分ずつ動かす）
+        physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
+        physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+    }
 }
 
 void ThreadManager::CalculateIntersections() {
