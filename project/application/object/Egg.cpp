@@ -11,8 +11,8 @@ void Egg::Initialize(const Vector3& pos) {
     object_->Initialize();
 
 
-    ModelManager::GetInstance()->LoadModel("resources", "egg.obj");
-    object_->SetModel("egg.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "egg/egg.obj");
+    object_->SetModel("egg/egg.obj");
     object_->SetTranslate(pos);
 }
 

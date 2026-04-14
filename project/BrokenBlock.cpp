@@ -10,8 +10,8 @@ void BrokenBlock::Initialize(const Vector3& pos, float width, float depth)
     height = depth;
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-    ModelManager::GetInstance()->LoadModel("resources", "plane.obj");
-    object_->SetModel("plane.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "brokenBlock/brokenBlock.obj");
+    object_->SetModel("brokenBlock/brokenBlock.obj");
     object_->SetTranslate(pos);
     float pi = std::numbers::pi_v<float>;
     object_->SetRotate({ 0.0f, pi, 0.0f });

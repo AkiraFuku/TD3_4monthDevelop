@@ -12,10 +12,10 @@ void OneWayObject::Initialize(const Vector3& pos, Direction dir, float width, fl
     object_->Initialize();
 
 
-    ModelManager::GetInstance()->LoadModel("resources", "plane.obj");
-    object_->SetModel("plane.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "oneWay/oneWay.obj");
+    object_->SetModel("oneWay/oneWay.obj");
     object_->SetTranslate(pos);
-    object_->SetScale({ width_, 1.0f, depth_ });
+    object_->SetScale({ width_, 1.0f, 1.0f });
 
     // 許可方向（allowedDir_）に合わせてモデルを回転させる
     float pi = std::numbers::pi_v<float>;

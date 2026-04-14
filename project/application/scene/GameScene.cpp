@@ -137,19 +137,19 @@ void GameScene::Initialize() {
     // ... 一方通行オブジェクトの生成 ...
     auto oneWay = std::make_unique<OneWayObject>();
     // 床
-    oneWay->Initialize({ 0.0f, 0.01f, 0.0f }, OneWayObject::Direction::NegativeX, 5.0f, 15.0f); // Yを少し上げるとチラつき防止になる
+    oneWay->Initialize({ 0.0f, -2.0f, 0.0f }, OneWayObject::Direction::PositiveX, 4.0f, 15.0f); // Yを少し上げるとチラつき防止になる
     oneWayObjects_.push_back(std::move(oneWay));
 
     // 数回渡ったら壊れるオブジェクトの生成
     brokenBlockPos_ =
     {
-        {-4.0f,0.0f,8.0f}
+        {-4.0f,-2.0f,8.0f}
     };
 
     for (const auto& pos : brokenBlockPos_)
     {
         auto brokenBlock = std::make_unique<BrokenBlock>();
-        brokenBlock->Initialize(pos, 8.0f, 10.0f);
+        brokenBlock->Initialize(pos, 8.0f, 9.0f);
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 

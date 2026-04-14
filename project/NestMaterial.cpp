@@ -7,8 +7,8 @@ void NestMaterial::Initialize(const Vector3& pos)
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
 
-    ModelManager::GetInstance()->LoadModel("resources", "nestMaterial.obj");
-    object_->SetModel("nestMaterial.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "nestMaterial/nestMaterial.obj");
+    object_->SetModel("nestMaterial/nestMaterial.obj");
 
     object_->SetTranslate(pos);
 }
