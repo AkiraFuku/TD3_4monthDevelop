@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "DrawFunction.h"
+#include "EggAnima.h"
 
 class Player;
 
@@ -52,6 +53,7 @@ public: // 外部入出力
 
 private:
 
+    std::unique_ptr<EggAnima> anima_;
     std::unique_ptr<Object3d> object_;
 
     Vector3 scale_ = { 1.0f,1.0f,1.0f };

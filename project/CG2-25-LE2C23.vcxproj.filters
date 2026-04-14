@@ -18,7 +18,7 @@
     <ClCompile Include="application\object\player\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
-    <ClCompile Include="application\object\Egg.cpp" />
+    <ClCompile Include="application\object\Egg\Egg.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
     <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
@@ -63,7 +63,7 @@
     <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
     <ClCompile Include="application\object\thread\ThreadManager.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
-    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="application\object\enemy\Enemy.cpp" />
     <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\Mass.cpp" />
@@ -78,6 +78,7 @@
     <ClCompile Include="application\JSONManager\JSONManager.cpp" />
     <ClCompile Include="OneWayObject.cpp" />
     <ClCompile Include="BrokenBlock.cpp" />
+    <ClCompile Include="application\object\Egg\EggAnima.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -85,7 +86,7 @@
     <ClInclude Include="application\object\player\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
-    <ClInclude Include="application\object\Egg.h" />
+    <ClInclude Include="application\object\Egg\Egg.h" />
     <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />
@@ -133,7 +134,7 @@
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\thread\ThreadManager.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
-    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="application\object\enemy\Enemy.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
@@ -149,6 +150,7 @@
     <ClInclude Include="application\JSONManager\JSONManager.h" />
     <ClInclude Include="OneWayObject.h" />
     <ClInclude Include="BrokenBlock.h" />
+    <ClInclude Include="application\object\Egg\EggAnima.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

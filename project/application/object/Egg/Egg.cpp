@@ -12,8 +12,18 @@ void Egg::Initialize(const Vector3& pos) {
 
 
     ModelManager::GetInstance()->LoadModel("resources", "egg.obj");
-    object_->SetModel("egg.obj");
+    object_->AddModel("egg.obj","egg");
+ //   object_->FindInstance("egg")->transform.scale = { 0.5f, 0.5f, 0.5f };
+    object_->FindInstance("egg")->transform.translate = { 0.0f, 0.5f, 0.0f };
+
     object_->SetTranslate(pos);
+    
+    anima_ = std::make_unique<EggAnima>();
+    anima_->Initialize(object_.get());
+    anima_->Play();
+
+
+
 }
 
 void Egg::Finalize() {
@@ -87,6 +97,7 @@ void Egg::Update() {
 
     object_->SetTranslate(translate);
 
+    anima_->Update();
     object_->Update();
 
 }
