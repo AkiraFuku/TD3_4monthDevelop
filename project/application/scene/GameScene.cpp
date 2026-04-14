@@ -120,7 +120,7 @@ void GameScene::Initialize() {
 
 	enemyPositions_ = {
 		{3.0f, 0.0f, 10.0f},
-		{4.0f, 0.0f, 9.0f}
+		{3.0f, 0.0f, 10.0f}
 	};
 
 	for (const auto& pos : enemyPositions_) {
@@ -143,7 +143,7 @@ void GameScene::Initialize() {
     // 数回渡ったら壊れるオブジェクトの生成
     brokenBlockPos_ =
     {
-        {-5.0f,0.0f,8.0f}
+        {-4.0f,0.0f,8.0f}
     };
 
     for (const auto& pos : brokenBlockPos_)

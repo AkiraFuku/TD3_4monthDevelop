@@ -39,7 +39,7 @@ private:
     bool isBroken_ = false;
     bool isImpassable_ = false;
     // 壊れるまでの回数
-    int maxbreakCount_ = 1;
+    int maxbreakCount_ = 2;
     int currentCount_ = 0;
     // 乗っているキャラのリスト
     std::set<const void*> riders_;
