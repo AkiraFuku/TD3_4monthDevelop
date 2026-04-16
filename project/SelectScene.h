@@ -18,8 +18,9 @@ private:
     bool isDebugCamera_ = false;
 
     // ステージ画像
-    std::vector<std::unique_ptr <Sprite>> sprite_;
+    std::vector<std::unique_ptr <Sprite>> sprites_;
     std::unique_ptr<Sprite> arrowSprite_;
+    std::unique_ptr<Sprite> background_;
     const uint32_t kStageNum_ = 3;
     uint32_t stageIndex = 0;
     uint32_t preIndex = 0;
