@@ -26,52 +26,71 @@ void CollisionMask::Finalize()
 void CollisionMask::Initialize() 
 {
    
-    maskDatas_.resize(4);
+    stageDatas_.resize(4);
 
     for (size_t i = 0; i < 4; i++)
     {
 
-        std::unique_ptr<MaskData> maskData{};
+        std::unique_ptr<StageData> stageData{};
 
         std::unique_ptr<Object3d>object = std::make_unique<Object3d>();
         object->Initialize();
         object->SetRotate(Vector3{ -90.0f / 180.0f * PI, 0.0f, 0.0f });
         object->SetTranslate(translate_);
         
-        maskDatas_[i] = std::make_unique<MaskData>();
-        maskDatas_[i]->object = std::move(object);
+        stageDatas_[i] = std::make_unique<StageData>();
+        stageDatas_[i]->maskData_ = std::make_unique<MaskData>();
+        stageDatas_[i]->maskData_->object = std::move(object);
         
-
+        stageDatas_[i]->startPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+        stageDatas_[i]->eggStartPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+        stageDatas_[i]->goalPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+        stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
+        stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
+        stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
+        stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
+        stageDatas_[i]->oneWayObjectPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
     }
 
-    LoadFromFile("resources/Mask/Mask.png", maskDatas_[0]->textureData);
-    maskDatas_[0]->name = "mapMaskData";
-    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[0]->name, "resources/Mask/Mask.png");
-    LoadFromFile("resources/Mask/Mask(1).png", maskDatas_[1]->textureData);
-    maskDatas_[1]->name = "mapMaskData1";
-    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[1]->name, "resources/Mask/Mask(1).png");
-    LoadFromFile("resources/Mask/Mask(2).png", maskDatas_[2]->textureData);
-    maskDatas_[2]->name = "mapMaskData2";
-    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[2]->name, "resources/Mask/Mask(2).png");
-    LoadFromFile("resources/Mask/Mask(3).png", maskDatas_[3]->textureData);
-    maskDatas_[3]->name = "mapMaskData3";
-    ModelManager::GetInstance()->CreatePlaneFromTex(maskDatas_[3]->name, "resources/Mask/Mask(3).png");
-
-    for (size_t i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
-        GenerateSDF(maskDatas_[i].get());
-
-        maskDatas_[i]->object->SetModel(maskDatas_[i]->name);
-
-        auto model = ModelManager::GetInstance()->findModel(maskDatas_[i]->name);
-
-        maskDatas_[i]->max_ = model->GetModelData().vertices[1].position;
-        maskDatas_[i]->min_ = model->GetModelData().vertices[2].position;
+        CreateJsonData(i);
+        LoadJsonData(i);
     }
-    
-    currentMaskMap_ = CollisionMask::MaskMap::Map4;
 
-    maskMapRequest_ = CollisionMask::MaskMap::Unknown;
+   /* LoadFromFile("resources/Mask/Mask.png", stageDatas_[0]->maskData_->textureData);
+    stageDatas_[0]->maskData_->name = "mapMaskData";
+    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[0]->maskData_->name, "resources/Mask/Mask.png");
+    
+    LoadFromFile("resources/Mask/Mask(1).png", stageDatas_[1]->maskData_->textureData);
+    stageDatas_[1]->maskData_->name = "mapMaskData1";
+    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[1]->maskData_->name, "resources/Mask/Mask(1).png");
+    
+    LoadFromFile("resources/Mask/Mask(2).png", stageDatas_[2]->maskData_->textureData);
+    stageDatas_[2]->maskData_->name = "mapMaskData2";
+    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[2]->maskData_->name, "resources/Mask/Mask(2).png");
+    
+    LoadFromFile("resources/Mask/Mask(3).png", stageDatas_[3]->maskData_->textureData);
+    stageDatas_[3]->maskData_->name = "mapMaskData3";
+    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[3]->maskData_->name, "resources/Mask/Mask(3).png");*/
+
+    /*for (size_t i = 0; i < 4; i++)
+    {
+        GenerateSDF(stageDatas_[i]->maskData_.get());
+
+        stageDatas_[i]->maskData_->object->SetModel(stageDatas_[i]->maskData_->name);
+
+        auto model = ModelManager::GetInstance()->findModel(stageDatas_[i]->maskData_->name);
+
+        stageDatas_[i]->maskData_->max_ = model->GetModelData().vertices[1].position;
+        stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
+    }*/
+    
+    currentStageID_ = CollisionMask::StageID::Map1;
+
+    LoadJsonData(static_cast<int>(currentStageID_));
+
+    stageChangeRequest_ = CollisionMask::StageID::Unknown;
 
     PsoConfig config{};
     config.vsPath = L"resources/shaders/MaskMap/Mask.VS.hlsl";
@@ -185,40 +204,58 @@ void CollisionMask::Initialize()
 
     for (size_t i = 0; i < 4; i++)
     {
-        maskDatas_[i].get()->object->SetPsoName("MaskMap");
+        stageDatas_[i]->maskData_.get()->object->SetPsoName("MaskMap");
     }
 }
 
 void CollisionMask::Update() 
 {
-    if(maskMapRequest_ != MaskMap::Unknown)
+    if(stageChangeRequest_ != StageID::Unknown)
     {
-        currentMaskMap_ = maskMapRequest_;
-        maskMapRequest_ = MaskMap::Unknown;
+        currentStageID_ = stageChangeRequest_;
+        LoadJsonData(static_cast<int>(currentStageID_));
+        stageChangeRequest_ = StageID::Unknown;
     }
 
 #ifdef _DEBUG
 
     ImGui::Begin("MaskMap Setting");
 
-    int maskMapIndex = static_cast<int>(currentMaskMap_);
-    const char* items[] = { "Map1", "Map2", "Map3","Map4"};
+    int maskMapIndex = static_cast<int>(currentStageID_);
+    const char* items[] = {"Map0", "Map1", "Map2", "Map3","Map4"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
-        SetMaskMapRequest(static_cast<MaskMap>(maskMapIndex));
+        SetMaskMapRequest(static_cast<StageID>(maskMapIndex));
     }
+
+   /* if (ImGui::Button("Save"))
+    {
+        SaveJsonData();
+    }*/
+
+    if (ImGui::Button("Load"))
+    {
+        LoadJsonData(static_cast<int>(currentStageID_));
+    }
+    if (ImGui::Button("Save"))
+    {
+        SaveJsonData(static_cast<int>(currentStageID_));
+    }
+
+   
+
 
     ImGui::End();
 
 #endif // _DEBUG
     
 
-    maskDatas_[static_cast<int>(currentMaskMap_)]->object->Update();
+    stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Update();
 }
 
 void CollisionMask::Draw() 
 {
-    maskDatas_[static_cast<int>(currentMaskMap_)]->object->Draw();
+    stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Draw();
 }
 
 bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textureData)
@@ -325,7 +362,7 @@ float CollisionMask::FindNearestWallDist(int startX, int startZ, MaskData* mask)
 
 float CollisionMask::GetSDFValue(float worldX, float worldZ)
 {
-    auto& maskData = maskDatas_[static_cast<int>(currentMaskMap_)];
+    auto& maskData = stageDatas_[static_cast<int>(currentStageID_)]->maskData_;
 
     // 1. ワールド座標を画像上の浮動小数点の座標 (u, v) に変換
     float u = (worldX - maskData->min_.x) / (maskData->max_.x - maskData->min_.x) 
@@ -385,10 +422,10 @@ bool CollisionMask::IsWall(float x, float z) const
 {
 
 
-    Vector4 min_ = maskDatas_[static_cast<int>(currentMaskMap_)]->min_;
-    Vector4 max_ = maskDatas_[static_cast<int>(currentMaskMap_)]->max_;
-    int widthX = maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.widthX;
-    int widthZ = maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.widthZ;
+    Vector4 min_ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->min_;
+    Vector4 max_ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->max_;
+    int widthX = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.widthX;
+    int widthZ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.widthZ;
 
     float u = ((x - min_.x) / (max_.x - min_.x)) * widthX;
     float v = ((z - min_.y) / (max_.y - min_.y)) * widthZ;
@@ -400,15 +437,15 @@ bool CollisionMask::IsWall(float x, float z) const
     if (ix < 0 || ix >= widthX || iz < 0 || iz >= widthZ) return true;
 
     // インデックス計算（1ピクセル1バイトの場合）
-    return maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.data[iz * widthX + ix] < 128; // 閾値で判定
+    return stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.data[iz * widthX + ix] < 128; // 閾値で判定
 }
 
 bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float& width)
 {
-    Vector4 min_ = maskDatas_[static_cast<int>(currentMaskMap_)]->min_;
-    Vector4 max_ = maskDatas_[static_cast<int>(currentMaskMap_)]->max_;
-    int widthX = maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.widthX;
-    int widthZ = maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.widthZ;
+    Vector4 min_ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->min_;
+    Vector4 max_ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->max_;
+    int widthX = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.widthX;
+    int widthZ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.widthZ;
 
     float left  = x - (width / 2.0f);
     float right = x + (width / 2.0f);
@@ -430,7 +467,7 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
         for (int ix = minIX; ix <= maxIX; ++ix) 
         {
             // 黒ピクセルがあれば衝突
-            if (maskDatas_[static_cast<int>(currentMaskMap_)]->textureData.data[iz * widthX + ix] < 128)
+            if (stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.data[iz * widthX + ix] < 128)
             {
             #ifdef _DEBUG
 
@@ -506,4 +543,87 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
     }
 
     return result;
+}
+
+void CollisionMask::CreateJsonData(int stageID)
+{
+   stageGroup_.items["texturePass"] = JSONManager::Item{ };
+   stageGroup_.items["startPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
+   stageGroup_.items["eggStartPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
+   stageGroup_.items["goalPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
+   stageGroup_.itemVector["enemyStartPos"] = std::vector<JSONManager::Item> { };
+   stageGroup_.itemVector["nestMaterialPos"] = std::vector<JSONManager::Item>{ };
+   stageGroup_.itemVector["oneWayObjectPos"] = std::vector<JSONManager::Item>{ };
+
+   JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
+}
+
+void CollisionMask::LoadJsonData(int stageID)
+{
+    JSONManager::GetInstance()->LoadFile("Stage" + std::to_string(stageID));
+
+    std::string texturePass;
+    if (JSONManager::GetInstance()->TryGetString("Stage" + std::to_string(stageID), "texturePass", texturePass))
+    {
+        stageDatas_[stageID]->texturePass_ = texturePass;
+    }
+    Vector3 startPos;
+    if (JSONManager::GetInstance()->TryGetVector3("Stage" + std::to_string(stageID), "startPos", startPos))
+    {
+        stageDatas_[stageID]->startPos_ = startPos;
+    }
+    Vector3 eggStartPos;
+    if (JSONManager::GetInstance()->TryGetVector3("Stage" + std::to_string(stageID), "eggStartPos", eggStartPos))
+    {
+        stageDatas_[stageID]->eggStartPos_ = eggStartPos;
+    }
+    Vector3 goalPos;
+    if (JSONManager::GetInstance()->TryGetVector3("Stage" + std::to_string(stageID), "goalPos", goalPos))
+    {
+        stageDatas_[stageID]->goalPos_ = goalPos;
+    }
+    std::vector<Vector3> enemyStartPos;
+    if(JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "enemyStartPos", enemyStartPos))
+    {
+        stageDatas_[stageID]->enemyStartPos_ = enemyStartPos;
+    }
+    std::vector<Vector3> nestMaterialPos;
+    if (JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "nestMaterialPos", nestMaterialPos))
+    {
+        stageDatas_[stageID]->nestMaterialPos_ = nestMaterialPos;
+    }
+    std::vector<Vector3> oneWayObjectPos;
+    if (JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "oneWayObjectPos", oneWayObjectPos))
+    {
+        stageDatas_[stageID]->oneWayObjectPos_ = oneWayObjectPos;
+    }
+
+    LoadFromFile(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->maskData_->textureData);
+    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->texturePass_);
+
+    GenerateSDF(stageDatas_[stageID]->maskData_.get());
+
+    stageDatas_[stageID]->maskData_->object->SetModel(stageDatas_[stageID]->texturePass_);
+
+    auto model = ModelManager::GetInstance()->findModel(stageDatas_[stageID]->texturePass_);
+
+    stageDatas_[stageID]->maskData_->max_ = model->GetModelData().vertices[1].position;
+    stageDatas_[stageID]->maskData_->min_ = model->GetModelData().vertices[2].position;
+}
+
+void CollisionMask::SaveJsonData(int stageID)
+{
+   
+    stageGroup_.items["startPos"] = JSONManager::Item{ stageDatas_[stageID]->startPos_ };
+    stageGroup_.items["eggStartPos"] = JSONManager::Item{ stageDatas_[stageID]->eggStartPos_};
+    stageGroup_.items["goalPos"] = JSONManager::Item{ stageDatas_[stageID]->goalPos_ };
+    stageGroup_.itemVector["enemyStartPos"] = 
+        JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->enemyStartPos_);
+    stageGroup_.itemVector["nestMaterialPos"] = 
+        JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->nestMaterialPos_);
+    stageGroup_.itemVector["oneWayObjectPos"] = 
+        JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectPos_);
+
+    JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
+    JSONManager::GetInstance()->SaveFile("Stage" + std::to_string(stageID));
 }
