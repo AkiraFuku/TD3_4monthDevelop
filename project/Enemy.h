@@ -7,6 +7,7 @@
 #include <memory>
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
+#include "Audio.h"
 
 class ThreadManager;
 class Egg;
@@ -69,5 +70,8 @@ private:
     bool canMove_ = true;
 
     bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
+
+    // サウンド
+    Audio::SoundHandle attack_ = 0;
 
 };

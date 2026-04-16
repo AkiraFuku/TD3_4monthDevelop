@@ -10,6 +10,7 @@ void Enemy::Initialize(const Vector3& pos) {
     ModelManager::GetInstance()->LoadModel("resources", "enemy/enemy.obj");
     object_->SetModel("enemy/enemy.obj"); // 敵のモデル
     object_->SetTranslate(pos);
+    attack_ = Audio::GetInstance()->LoadAudio("resources/sounds/damage.wav");
 }
 
 void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
@@ -330,6 +331,9 @@ void Enemy::OnCollision(Egg* egg)
         // 一定間隔で卵のHPを減らす
         egg->SetHP(1.0f);
         attackTimer_ = 60;
+        // サウンド再生
+        Audio::GetInstance()->PlayAudio(attack_, false, 1.0f);
+
     }
     else
     {

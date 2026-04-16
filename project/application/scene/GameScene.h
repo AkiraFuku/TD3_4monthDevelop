@@ -99,4 +99,7 @@ private:
   std::vector<std::unique_ptr<BrokenBlock>> brokenBlocks_;
   // オブジェクトの位置
   std::vector<Vector3> brokenBlockPos_;
+
+  // サウンド
+  Audio::SoundHandle handle_ = 0;
 };

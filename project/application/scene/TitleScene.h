@@ -21,5 +21,6 @@ private:
     std::unique_ptr<Camera> camera;
     DebugCamera debugCamera_;
     bool isDebugCamera_ = false;
-     uint32_t handle_=0;
+    Audio::SoundHandle handle_ = 0;
+    Audio::SoundHandle enter_ = 0;
 };
