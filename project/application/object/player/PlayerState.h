@@ -55,3 +55,14 @@ private:
 
     static inline const float kDeltaTime = 1.0f / 60.0f;
 };
+
+// ======================================
+// 一方通行オブジェクト自動移動状態
+// ======================================
+class PlayerStateOneWayMove : public IPlayerState {
+public:
+    // 初期化
+    void Initialize(Player* player) override;
+    // 更新
+    void Update(Player* player) override;
+};

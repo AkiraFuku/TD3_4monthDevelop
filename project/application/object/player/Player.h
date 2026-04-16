@@ -13,7 +13,7 @@
 
 class ThreadManager;
 class Egg;
-
+class OneWayObject;
 
 class Player {
 public:
@@ -124,6 +124,18 @@ public:
     /// </summary>
     void SetCanDrawPrediction(bool canDraw) { canDrawPrediction_ = canDraw; }
 
+    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWayObjects) { oneWayObjects_ = oneWayObjects; }
+    // OneWayObjectに乗っているかどうかのゲッターとセッター
+    void SetCurrentOneWay(OneWayObject* oneWay) { currentOneWay_ = oneWay; }
+    OneWayObject* GetCurrentOneWay() const { return currentOneWay_; }
+
+    // 現在足元にOneWayObjectがあるか確認して返す関数
+    OneWayObject* CheckOnOneWayObject() const;
+
+private:
+    // 現在乗っているOneWayObjectのポインタ
+    OneWayObject* currentOneWay_ = nullptr;
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
@@ -175,6 +187,8 @@ private:
 
     void UpdatePredictionLine();
 
+    void IsCollisionOneWay();
+
 private:
     // Thread上を歩いているか
     bool onThread_ = false;
@@ -206,6 +220,9 @@ private:
     float threadOffsetY_ = 0.0f;
 
     CollisionMask::RayResult rayResult_;
+
+    // 一方通行オブジェクトのポインタリスト
+    std::vector<OneWayObject*> oneWayObjects_;
 
 private:
     // アニメーション制御
