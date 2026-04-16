@@ -23,4 +23,5 @@ private:
     bool isDebugCamera_ = false;
     Audio::SoundHandle handle_ = 0;
     Audio::SoundHandle enter_ = 0;
+    std::unique_ptr<Sprite> sprite_;
 };

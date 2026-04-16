@@ -10,6 +10,9 @@ void TitleScene::Initialize() {
     camera->SetRotate({ 0.0f,0.0f,0.0f });
     camera->SetTranslate({ 0.0f,0.0f,-5.0f });
 
+    sprite_ = std::make_unique<Sprite>();
+    sprite_->Initialize("resources/title.png");
+    
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/title.wav");
     enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
@@ -21,6 +24,8 @@ void TitleScene::Finalize() {
     Audio::GetInstance()->StopAudio(handle_);
 }
 void TitleScene::Update() {
+
+    sprite_->Update();
 
     // スペースキーを押していたら
     if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
@@ -36,5 +41,5 @@ void TitleScene::Update() {
 
 }
 void TitleScene::Draw() {
-
+    sprite_->Draw();
 }
