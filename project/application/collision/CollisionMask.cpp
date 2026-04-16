@@ -57,7 +57,6 @@ void CollisionMask::Initialize()
         CreateJsonData(i);
         LoadJsonData(i);
     }
-  
 
    /* LoadFromFile("resources/Mask/Mask.png", stageDatas_[0]->maskData_->textureData);
     stageDatas_[0]->maskData_->name = "mapMaskData";

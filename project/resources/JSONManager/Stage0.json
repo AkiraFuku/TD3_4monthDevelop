@@ -46,6 +46,6 @@
             "y": 0.0,
             "z": 0.0
         },
-        "texturePass": 0
+        "texturePass": "resources/Mask/Mask.png"
     }
 }
