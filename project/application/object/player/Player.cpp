@@ -6,14 +6,13 @@
 
 #include"ThreadManager.h"
 #include "Egg.h"
+#include "OneWayObject.h"
 
 #include <cmath>
 #include <numbers>
 
 #include "PSOManager.h"
 #include "Logger.h"
-
-
 
 /// <summary>
 /// 初期化
@@ -74,7 +73,6 @@ void Player::Finalize() {
 /// 更新
 /// </summary>
 void Player::Update() {
-
     moveVel_ = {0.0f, 0.0f, 0.0f};
 
     UpdatePredictionLine();
@@ -121,6 +119,8 @@ void Player::Update() {
 
 #endif
 
+    IsCollisionOneWay();
+
     ResultMove();
 
 #ifdef _DEBUG
@@ -141,6 +141,18 @@ void Player::Update() {
 
     ImGui::End();
 
+#endif
+
+#ifdef USE_IMGUI
+    // 既存の ImGui 処理の近くに追加
+    ImGui::Begin("OneWayObject Debug");
+    for (size_t i = 0; i < oneWayObjects_.size(); ++i) {
+        if (oneWayObjects_[i]) {
+            // 現在のプレイヤー位置と移動速度を渡す
+            oneWayObjects_[i]->DebugDrawImGui(static_cast<int>(i), translate_, moveVel_);
+        }
+    }
+    ImGui::End();
 #endif
 
     anima_->Update();
@@ -205,41 +217,90 @@ void Player::IsCollisionSDF() {
         {nextPos.x + hW, nextPos.z + hH}  // 右上
     };
 
-    // 3. 四隅の中で「最も壁に近い点」を探す
-    float minDist = 10000.0f;
-    Vector2 targetCorner = {nextPos.x, nextPos.z};
+    // =========================================================
+    // ★追加: ループの前に「どのくらい OneWayObject に乗っているか」を判定する
+    // =========================================================
+    OneWayObject* activeOneWay = nullptr;
+    for (auto* oneWay : oneWayObjects_) {
+        if (!oneWay) continue;
 
+        int insideCount = 0; // OneWayObjectの中に入っている頂点の数
+        for (const auto& corner : corners) {
+            Vector3 cornerPos = {corner.x, translate_.y, corner.y};
+            if (oneWay->IsInside(cornerPos)) {
+                insideCount++;
+            }
+        }
 
-    for (const auto& corner : corners) {
-        float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
-        if (d < minDist) {
-            minDist = d;
-            targetCorner = corner;
+        // 四隅のうち2つ以上（半分以上の面積）入っていれば有効とみなす
+        // ※「完全に乗り切ったら」にしたい場合は >= 4 に調整してください
+        if (insideCount >= 4) {
+            activeOneWay = oneWay;
+            break;
         }
     }
 
-    // 4. 衝突判定（最も近い点が「中」に入っていたら）
-    // 矩形判定の場合、理想的な距離（閾値）は 0 です。
-    if (minDist < 0.075f) {
-        // 最もめり込んでいる点の法線を取得
-        Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(targetCorner.x, targetCorner.y);
+    // ★修正点: 4つの頂点「すべて」に対して順番にめり込み判定と押し戻しを行う
+    for (const auto& corner : corners) {
+        float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
 
-        if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
-        {
-            // 押し戻し量
-            float pushBack = 0.075f - minDist;
+        // 衝突判定（この頂点が壁にめり込んでいる場合）
+        if (d < 0.075f) {
+            // めり込んでいる点の法線を取得
+            Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(corner.x, corner.y);
 
-            // 座標を補正
-            moveVel_.x += normal.x * pushBack;
-            moveVel_.z += normal.y * pushBack;
+            if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f)
+            {
+                // 押し戻し量
+                float pushBack = 0.075f - d;
+                Vector2 pushVec = {normal.x * pushBack, normal.y * pushBack};
 
-            // 速度の射影（滑り処理）
-            float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
-            if (dot < 0) {
-                moveVel_.x -= dot * normal.x;
-                moveVel_.z -= dot * normal.y;
+                // =========================================================
+                // ★修正: 事前に判定した activeOneWay の結果を使うように変更
+                // =========================================================
+                bool isOnOneWay = false;
+                OneWayObject::Direction overrideDir = OneWayObject::Direction::PositiveZ; // 初期化
+
+                if (activeOneWay) {
+                    isOnOneWay = true;
+                    overrideDir = activeOneWay->GetDirection();
+                }
+
+                if (isOnOneWay) {
+                    // 壁からの押し戻し方向と OneWayObject の進行方向を比較し、
+                    // 通行を許可する方向への壁の押し戻し成分だけをゼロにする
+                    if (overrideDir == OneWayObject::Direction::PositiveZ && pushVec.y < 0.0f) {
+                        pushVec.y = 0.0f; normal.y = 0.0f;
+                    } else if (overrideDir == OneWayObject::Direction::NegativeZ && pushVec.y > 0.0f) {
+                        pushVec.y = 0.0f; normal.y = 0.0f;
+                    } else if (overrideDir == OneWayObject::Direction::PositiveX && pushVec.x < 0.0f) {
+                        pushVec.x = 0.0f; normal.x = 0.0f;
+                    } else if (overrideDir == OneWayObject::Direction::NegativeX && pushVec.x > 0.0f) {
+                        pushVec.x = 0.0f; normal.x = 0.0f;
+                    }
+
+                    // 法線の一部をゼロにした場合、滑り処理を正しく行うため再正規化する
+                    float len = std::sqrt(normal.x * normal.x + normal.y * normal.y);
+                    if (len > 0.0001f) {
+                        normal.x /= len;
+                        normal.y /= len;
+                    } else {
+                        normal.x = 0.0f;
+                        normal.y = 0.0f;
+                    }
+                }
+
+                // 座標を補正 (計算した pushVec を足す)
+                moveVel_.x += pushVec.x;
+                moveVel_.z += pushVec.y;
+
+                // 速度の射影（滑り処理）
+                float dot = moveVel_.x * normal.x + moveVel_.z * normal.y;
+                if (dot < 0) {
+                    moveVel_.x -= dot * normal.x;
+                    moveVel_.z -= dot * normal.y;
+                }
             }
-
         }
     }
 }
@@ -456,6 +517,16 @@ bool Player::CanFireThread() const {
     return true;
 }
 
+OneWayObject* Player::CheckOnOneWayObject() const {
+    Vector3 pos = GetPosition();
+    for (auto* oneWay : oneWayObjects_) {
+        if (oneWay && oneWay->IsInside(pos)) {
+            return oneWay;
+        }
+    }
+    return nullptr;
+}
+
 void Player::TurnToDirection(const Vector3& direction) {
     if (std::abs(direction.x) < 0.0001f && std::abs(direction.z) < 0.0001f) {
         return;
@@ -526,6 +597,15 @@ void Player::UpdatePredictionLine() {
                 predictionPointObj_->SetScale({0.5f, 0.05f, 0.5f});
                 predictionPointObj_->Update();
             }
+        }
+    }
+}
+
+void Player::IsCollisionOneWay() {
+    // 登録されている全ての OneWayObject に対して補正をかける
+    for (auto* oneWay : oneWayObjects_) {
+        if (oneWay) {
+            oneWay->ResolveCollision(translate_, moveVel_);
         }
     }
 }
