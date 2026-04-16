@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "DrawFunction.h"
+#include "Audio.h"
 
 class Player;
 
@@ -71,5 +72,9 @@ private:
 
     // HP
     float HP_ = 10.0f;
+
+    // サウンド
+    Audio::SoundHandle up_ = 0;
+    Audio::SoundHandle down_ = 0;
 };
 

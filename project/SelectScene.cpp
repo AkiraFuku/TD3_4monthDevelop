@@ -9,6 +9,7 @@ void SelectScene::Initialize()
     camera->SetRotate({ 0.0f,0.0f,0.0f });
     camera->SetTranslate({ 0.0f,0.0f,-5.0f });
 
+    // テクスチャの読み込み
     TextureManager::GetInstance()->LoadTexture("resources/stage1.png");
     TextureManager::GetInstance()->LoadTexture("resources/stage2.png");
     TextureManager::GetInstance()->LoadTexture("resources/stage3.png");
@@ -35,26 +36,37 @@ void SelectScene::Initialize()
     arrowPos_ = sprite_[0]->GetPosition();
     arrowPos_.y += 300.0f;
     arrowSprite_->SetPosition(arrowPos_);
+
+    // サウンド読み込み
+    handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/stageSelect.wav");
+    enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
+    select_ = Audio::GetInstance()->LoadAudio("resources/sounds/select.wav");
+    // サウンド再生
+    Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 }
 
 void SelectScene::Finalize()
 {
+    Audio::GetInstance()->StopAudio(handle_);
 }
 
 void SelectScene::Update()
 {
     preIndex = stageIndex;
 
-    if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW))
+    if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) ||
+        Input::GetInstance()->TriggerKeyDown(DIK_D))
     {
         stageIndex++;
+        Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
         if (stageIndex >= 3)
         {
             stageIndex = 0;
         }
     }
-    else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW))
+    else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) ||
+        Input::GetInstance()->TriggerKeyDown(DIK_A))
     {
         if (stageIndex <= 0)
         {
@@ -65,10 +77,13 @@ void SelectScene::Update()
             stageIndex--;
         }
 
+        Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+
     }
     else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
     {
         // ゲームシーンに戻る
+        Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
         SceneManager::GetInstance()->ChangeScene("GameScene");
     }
 
