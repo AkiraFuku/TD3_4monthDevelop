@@ -54,6 +54,7 @@ private:
     float frameCount_ = 0;
 
     static inline const float kDeltaTime = 1.0f / 60.0f;
+
 };
 
 // ======================================

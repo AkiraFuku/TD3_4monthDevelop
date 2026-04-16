@@ -61,6 +61,7 @@ void PlayerStateIdle::Update(Player* player) {
     if ((Input::GetInstance()->TriggerKeyDown(DIK_B) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))) {
 
         player->ChangeState(std::make_unique<PlayerStateShoot>());
+
         return;
     }
 }

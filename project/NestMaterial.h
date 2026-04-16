@@ -5,6 +5,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "DrawFunction.h"
+#include "Audio.h"
 
 class NestMaterial
 {
@@ -45,6 +46,8 @@ private:
     static inline const float kWidth = 1.6f;
     static inline const float kHeight = 1.6f;
 
+    // サウンド
+    Audio::SoundHandle get_ = 0;
 
 };
 

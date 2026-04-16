@@ -60,6 +60,9 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
 
+    // サウンド読み込み
+    threadSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/thread.wav");
+    
 }
 /// <summary>
 /// 終了
@@ -356,6 +359,9 @@ void Player::FireThread() {
 
     thread_->AddThread(start, end);
     didFireThread_ = true;
+
+    // サウンド再生
+    Audio::GetInstance()->PlayAudio(threadSound_, false, 1.0f);
 
     remainingThreadCount_--;
 }

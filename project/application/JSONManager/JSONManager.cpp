@@ -79,15 +79,55 @@ void JSONManager::SaveFile(const std::string& groupName)
         }
         else if(std::holds_alternative<float>(item.value))
         {
-            // int32_t型の値を登録
+            // float型の値を登録
             root[groupName][itemName] = std::get<float>(item.value);
         }
         else if (std::holds_alternative<Vector3>(item.value))
         {
             // float型のjson配列登録
             Vector3 value = std::get<Vector3>(item.value);
-            root[groupName][itemName] = json::array({ value.x, value.y, value.z });
+            root[groupName][itemName] = {{"x", value.x}, {"y", value.y}, {"z", value.z}};
         }
+        else if (std::holds_alternative<std::string>(item.value))
+        {
+            // std::srring型の値を登録
+            root[groupName][itemName] = std::get<std::string>(item.value);
+        }
+    }
+
+    // vector配列を格納
+    for (auto itItemVector = itGroup->second.itemVector.begin();
+        itItemVector != itGroup->second.itemVector.end(); ++itItemVector)
+    {
+        const std::string& listName = itItemVector->first;
+        const std::vector<JSONManager::Item>& list = itItemVector->second;
+
+        // このリスト用のJSON配列を作成
+        json jsonList = json::array();
+
+        for (const auto& item : list) 
+        {
+            if (std::holds_alternative<int32_t>(item.value)) 
+            {
+                jsonList.push_back(std::get<int32_t>(item.value));
+            } 
+            else if (std::holds_alternative<float>(item.value)) 
+            {
+                jsonList.push_back(std::get<float>(item.value));
+            } 
+            else if (std::holds_alternative<Vector3>(item.value)) 
+            {
+                Vector3 value = std::get<Vector3>(item.value);
+                jsonList.push_back({ {"x", value.x}, {"y", value.y}, {"z", value.z} });
+            } 
+            else if (std::holds_alternative<std::string>(item.value)) 
+            {
+                jsonList.push_back(std::get<std::string>(item.value));
+            }
+        }
+
+        // 最終的なルートに追加
+        root[groupName][listName] = jsonList;
     }
 
     // ディレクトリが無ければ作成する
@@ -164,13 +204,48 @@ void JSONManager::LoadFile(const std::string& groupName)
         {
             item.value = val.get<float>();
         } 
-        else if (val.is_array() && val.size() == 3) 
+        else if (val.is_object())
         {
             Vector3 v{};
-            v.x = val[0].get<float>();
-            v.y = val[1].get<float>();
-            v.z = val[2].get<float>();
+            v.x = val["x"].get<float>();
+            v.y = val["y"].get<float>();
+            v.z = val["z"].get<float>();
             item.value = v;
+        }
+        else if (val.is_string())
+        {
+            item.value = val.get<std::string>();
+        }
+        else if (val.is_array())
+        {
+            std::vector<Item> itemList;
+            for (const auto& subVal : val) {
+                Item subItem;
+             
+                if (subVal.is_number_integer()) 
+                {
+                    subItem.value = static_cast<int32_t>(subVal.get<int64_t>());
+                }
+                else if (subVal.is_number_float())
+                {
+                    subItem.value = subVal.get<float>();
+                } 
+                else if (subVal.is_object())
+                {
+                    Vector3 v{};
+                    v.x = subVal["x"].get<float>();
+                    v.y = subVal["y"].get<float>();
+                    v.z = subVal["z"].get<float>();
+                    subItem.value = v;
+                } 
+                else if (subVal.is_string())
+                {
+                    subItem.value = subVal.get<std::string>();
+                }
+                // ... 他の型の判定
+                itemList.push_back(subItem);
+            }
+            group.itemVector[itemName] = std::move(itemList);
         }
        
 
@@ -234,5 +309,21 @@ bool JSONManager::TryGetVector3(const std::string& groupName, const std::string&
         out = std::get<Vector3>(itItem->second.value);
         return true;
     }
+    return false;
+}
+
+bool JSONManager::TryGetString(const std::string& groupName, const std::string& itemName, std::string& out) const
+{
+    auto itGroup = datas_.find(groupName);
+    if (itGroup == datas_.end()) return false;
+    auto itItem = itGroup->second.items.find(itemName);
+    if (itItem == itGroup->second.items.end()) return false;
+
+    if (std::holds_alternative<std::string>(itItem->second.value))
+    {
+        out = std::get<std::string>(itItem->second.value);
+        return true;
+    }
+
     return false;
 }

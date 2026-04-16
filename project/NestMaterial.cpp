@@ -11,6 +11,8 @@ void NestMaterial::Initialize(const Vector3& pos)
     object_->SetModel("nestMaterial/nestMaterial.obj");
 
     object_->SetTranslate(pos);
+
+    get_ = Audio::GetInstance()->LoadAudio("resources/sounds/get.wav");
 }
 
 void NestMaterial::Finalize()
@@ -64,6 +66,9 @@ void NestMaterial::OnCollision()
 
     // プレイヤーが接触していたらデスフラグを立てる
     isDead_ = true;
+
+    // サウンド再生
+    Audio::GetInstance()->PlayAudio(get_, false, 1.0f);
 }
 
 Vector3 NestMaterial::GetWorldPosition() const

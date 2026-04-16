@@ -160,6 +160,11 @@ void GameScene::Initialize() {
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 
+    // サウンド読み込み
+    handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
+    // サウンド再生
+    Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
+
 }
 void GameScene::Finalize() {
 
@@ -168,6 +173,8 @@ void GameScene::Finalize() {
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
     collisionMask_->Finalize();
+
+    Audio::GetInstance()->StopAudio(handle_);
 
     /*player_->Finalize();
     delete player_;

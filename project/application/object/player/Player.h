@@ -6,7 +6,7 @@
 #include "DrawFunction.h"
 #include"PlayerState.h"
 #include "CollisionMask.h"
-
+#include "Audio.h"
 #include "PlayerAnima.h"
 
 #include "JSONManager.h"
@@ -233,6 +233,9 @@ private:
 
     // 巣の素材の回収数
     int nestMaterialNum_ = 0;
+
+    // サウンド
+    Audio::SoundHandle threadSound_ = 0;
 
 public:
     // jsonにセーブ

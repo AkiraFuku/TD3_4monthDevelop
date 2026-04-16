@@ -4,6 +4,7 @@
 #include "Object3d.h"
 #include <memory>
 #include <set>
+#include "Audio.h"
 
 class BrokenBlock
 {
@@ -43,5 +44,8 @@ private:
     int currentCount_ = 0;
     // 乗っているキャラのリスト
     std::set<const void*> riders_;
+
+    // サウンド
+    Audio::SoundHandle broken_ = 0;
 };
 

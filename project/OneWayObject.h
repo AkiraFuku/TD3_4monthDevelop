@@ -38,7 +38,7 @@ public:
     Direction GetDirection() const { return allowedDir_; }
     struct AABB { Vector3 min; Vector3 max; } GetAABB() const;
 
-private:
+private:    
     Vector3 position_;
     Direction allowedDir_;
     float width_;

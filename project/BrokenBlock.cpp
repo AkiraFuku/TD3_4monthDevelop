@@ -17,6 +17,8 @@ void BrokenBlock::Initialize(const Vector3& pos, float width, float depth)
     object_->SetRotate({ 0.0f, pi, 0.0f });
     Vector3 scale = { this->width,1.0f,height };
     object_->SetScale(scale);
+
+    broken_ = Audio::GetInstance()->LoadAudio("resources/sounds/broken.wav");
 }
 
 void BrokenBlock::Update()
@@ -85,6 +87,8 @@ void BrokenBlock::CheckRiding(const Vector3& pos, const void* entityPtr) {
             if (isImpassable_)
             {
                 isBroken_ = true;
+                // サウンド再生
+                Audio::GetInstance()->PlayAudio(broken_, false, 1.0f);
                 return;
             }
         }
