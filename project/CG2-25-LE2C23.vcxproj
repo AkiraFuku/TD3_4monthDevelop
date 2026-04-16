@@ -82,6 +82,7 @@
     <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
+    <ClCompile Include="SelectScene.cpp" />
     <ClCompile Include="SpiderWebManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +154,7 @@
     <ClInclude Include="application\object\thread\ThreadRenderer.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
+    <ClInclude Include="SelectScene.h" />
     <ClInclude Include="SpiderWebManager.h" />
   </ItemGroup>
   <ItemGroup>
