@@ -2,6 +2,7 @@
 #include "TextureManager.h"
 #include "Input.h"
 #include "SceneManager.h"
+#include "CollisionMask.h"
 
 void SelectScene::Initialize()
 {
@@ -88,8 +89,9 @@ void SelectScene::Update()
     }
     else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
     {
-        // ゲームシーンに戻る
+        // ゲームシーンに移行
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
+        CollisionMask::GetInstance()->SetCurrentStageID(stageIndex);
         SceneManager::GetInstance()->ChangeScene("GameScene");
     }
 
