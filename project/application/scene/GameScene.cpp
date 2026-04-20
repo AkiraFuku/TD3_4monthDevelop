@@ -178,18 +178,22 @@ void GameScene::Initialize() {
         // 1つずつ生成する
         auto threadLimit = std::make_unique<Sprite>(); 
         threadLimit->Initialize(path);
+        threadLimit->SetPosition(Vector2{ 250.0f,500.0f });
         threadLimitSprites_.push_back(std::move(threadLimit));
 
         auto threadCount = std::make_unique<Sprite>(); 
         threadCount->Initialize(path);
+        threadCount->SetPosition(Vector2{ 0.0f,500.0f });
         threadCountSprites_.push_back(std::move(threadCount));
 
         auto nestLimit = std::make_unique<Sprite>(); 
         nestLimit->Initialize(path);
+        nestLimit->SetPosition(Vector2{ 850.0f,500.0f });
         nestMaterialSprites_.push_back(std::move(nestLimit));
 
         auto nestCount = std::make_unique<Sprite>(); 
         nestCount->Initialize(path);
+        nestCount->SetPosition(Vector2{ 600.0f,500.0f });
         nestCountSprites_.push_back(std::move(nestCount));
     }
 
