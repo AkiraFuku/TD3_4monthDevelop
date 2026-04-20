@@ -82,16 +82,15 @@ void GameScene::Initialize() {
     terrain_ = new Terrain();
     terrain_->Initialize();*/
 
-    collisionMask_ = CollisionMask::GetInstance();
-    collisionMask_->Initialize();
-    playerPos_ = collisionMask_->GetStartPos();
-    eggPos = collisionMask_->GetEggStartPos();
-    goalPos = collisionMask_->GetGoalPos();
+    CollisionMask::GetInstance()->Initialize();
+    playerPos_ = CollisionMask::GetInstance()->GetStartPos();
+    eggPos = CollisionMask::GetInstance()->GetEggStartPos();
+    goalPos = CollisionMask::GetInstance()->GetGoalPos();
     for (int i = 0; i < enemyPositions_.size(); ++i)
     {
-        enemyPositions_[i] = collisionMask_->GetEnemyStartPos(i);
+        enemyPositions_[i] = CollisionMask::GetInstance()->GetEnemyStartPos(i);
     }
-    nestMaterialPos_ = collisionMask_->GetNestMaterialPos(0);
+    nestMaterialPos_ = CollisionMask::GetInstance()->GetNestMaterialPos(0);
 
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
@@ -179,7 +178,7 @@ void GameScene::Finalize() {
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
-    collisionMask_->Finalize();
+    CollisionMask::GetInstance()->Finalize();
 
     Audio::GetInstance()->StopAudio(handle_);
 
@@ -360,7 +359,7 @@ void GameScene::Update()
 
 #endif // USE_IMGUI
 
-    collisionMask_->Update();
+    CollisionMask::GetInstance()->Update();
 
     // Rキーを押したらリセット
     if (Input::GetInstance()->PushedKeyDown(DIK_R))
@@ -490,7 +489,7 @@ void GameScene::Draw() {
 
     if(isVisibleCollisionMask_)
     {
-        collisionMask_->Draw();
+        CollisionMask::GetInstance()->Draw();
     }
 }
 
@@ -660,13 +659,13 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
 
 void GameScene::LoadStageData()
 {
-    player_->SetPosition(collisionMask_->GetStartPos());
-    egg_->SetTranslate(collisionMask_->GetEggStartPos());
-    goal_->SetTranslate(collisionMask_->GetGoalPos());
+    player_->SetPosition(CollisionMask::GetInstance()->GetStartPos());
+    egg_->SetTranslate(CollisionMask::GetInstance()->GetEggStartPos());
+    goal_->SetTranslate(CollisionMask::GetInstance()->GetGoalPos());
     size_t i = 0;
     for(auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
     {
-        (*itEnemy)->SetPosition(collisionMask_->GetEnemyStartPos(i));
+        (*itEnemy)->SetPosition(CollisionMask::GetInstance()->GetEnemyStartPos(i));
         ++i;
     }
    /* i = 0;
@@ -676,12 +675,12 @@ void GameScene::LoadStageData()
         ++i;
     }*/
 
-    nestMaterial_->SetTranslate(collisionMask_->GetNestMaterialPos(0));
+    nestMaterial_->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(0));
 
     i = 0;
     for (auto itOnWayObject = oneWayObjects_.begin(); itOnWayObject != oneWayObjects_.end(); ++itOnWayObject)
     {
-        (*itOnWayObject)->SetTranslate(collisionMask_->GetOneWayObjectPos(i));
+        (*itOnWayObject)->SetTranslate(CollisionMask::GetInstance()->GetOneWayObjectPos(i));
         ++i;
     }
   

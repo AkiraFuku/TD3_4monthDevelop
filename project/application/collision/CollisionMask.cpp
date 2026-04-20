@@ -23,7 +23,7 @@ void CollisionMask::Finalize()
     instance_.reset();
 }
 
-void CollisionMask::Initialize() 
+void CollisionMask::Initialize()
 {
    
     stageDatas_.resize(4);
@@ -86,7 +86,7 @@ void CollisionMask::Initialize()
         stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
     }*/
     
-    currentStageID_ = CollisionMask::StageID::Map1;
+    currentStageID_ = static_cast<StageID>(stageID_);
 
     LoadJsonData(static_cast<int>(currentStageID_));
 
