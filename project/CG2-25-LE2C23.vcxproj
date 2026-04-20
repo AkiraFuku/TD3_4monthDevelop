@@ -26,6 +26,7 @@
     <ClCompile Include="BrokenBlock.cpp" />
     <ClCompile Include="application\object\enemy\Enemy.cpp" />
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
@@ -97,6 +98,7 @@
     <ClInclude Include="BrokenBlock.h" />
     <ClInclude Include="application\object\enemy\Enemy.h" />
     <ClInclude Include="application\object\Egg\EggAnima.h" />
+    <ClInclude Include="application\object\enemy\EnemyAnima.h" />
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />

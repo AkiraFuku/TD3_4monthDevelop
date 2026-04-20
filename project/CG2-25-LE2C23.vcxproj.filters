@@ -79,6 +79,7 @@
     <ClCompile Include="OneWayObject.cpp" />
     <ClCompile Include="BrokenBlock.cpp" />
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -151,6 +152,7 @@
     <ClInclude Include="OneWayObject.h" />
     <ClInclude Include="BrokenBlock.h" />
     <ClInclude Include="application\object\Egg\EggAnima.h" />
+    <ClInclude Include="application\object\enemy\EnemyAnima.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
