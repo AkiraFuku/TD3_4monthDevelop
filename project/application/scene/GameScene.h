@@ -83,6 +83,9 @@ private:
   std::unique_ptr<ThreadManager> thread_;
   std::unique_ptr<SpiderWebManager> spiderWeb_;
 
+  // 糸の発射回数上限
+  int threadLimit_ = 0;
+
   // 敵
   //std::unique_ptr<Enemy> enemy_;
   //// 敵の位置
@@ -111,4 +114,12 @@ private:
 
   // サウンド
   Audio::SoundHandle handle_ = 0;
+
+  // UI
+  std::vector<std::unique_ptr <Sprite>> threadLimitSprites_;
+  std::vector<std::unique_ptr <Sprite>> threadCountSprites_;
+  std::vector<std::unique_ptr <Sprite>> nestMaterialSprites_;
+  std::vector<std::unique_ptr <Sprite>> nestCountSprites_;
+  std::unique_ptr<Sprite> slashSprite_;
+  std::unique_ptr<Sprite> slashNestSprite_;
 };

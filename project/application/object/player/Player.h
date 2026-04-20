@@ -132,6 +132,9 @@ public:
     // 現在足元にOneWayObjectがあるか確認して返す関数
     OneWayObject* CheckOnOneWayObject() const;
 
+    // 糸の生成回数のgetter
+    int GetThreadCount() const { return remainingThreadCount_; }
+
 private:
     // 現在乗っているOneWayObjectのポインタ
     OneWayObject* currentOneWay_ = nullptr;

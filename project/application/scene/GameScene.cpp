@@ -171,6 +171,40 @@ void GameScene::Initialize() {
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
+    // UIの初期化
+    for (int i = 0; i < 10; ++i) {
+        std::string path = "resources/numbers/" + std::to_string(i) + ".png";
+
+        // 1つずつ生成する
+        auto threadLimit = std::make_unique<Sprite>(); 
+        threadLimit->Initialize(path);
+        threadLimitSprites_.push_back(std::move(threadLimit));
+
+        auto threadCount = std::make_unique<Sprite>(); 
+        threadCount->Initialize(path);
+        threadCountSprites_.push_back(std::move(threadCount));
+
+        auto nestLimit = std::make_unique<Sprite>(); 
+        nestLimit->Initialize(path);
+        nestMaterialSprites_.push_back(std::move(nestLimit));
+
+        auto nestCount = std::make_unique<Sprite>(); 
+        nestCount->Initialize(path);
+        nestCountSprites_.push_back(std::move(nestCount));
+    }
+
+    slashSprite_ = std::make_unique<Sprite>();
+    slashSprite_->Initialize("resources/numbers/slash.png");
+    slashNestSprite_ = std::make_unique<Sprite>();
+    slashNestSprite_->Initialize("resources/numbers/slash.png");
+
+    threadLimit_ = player_->GetThreadCount();
+    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 0.0f,500.0f });
+    slashSprite_->SetPosition(Vector2{ 150.0f,500.0f });
+    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 250.0f,500.0f });
+    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 600.0f,500.0f });
+    slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
 }
 void GameScene::Finalize() {
 
@@ -427,6 +461,13 @@ void GameScene::Update()
         brokenBlock->Update();
     }
 
+    // UIの更新
+    threadCountSprites_[player_->GetThreadCount()]->Update();
+    slashSprite_->Update();
+    threadLimitSprites_[threadLimit_]->Update();
+    nestCountSprites_[player_->GetNestMaterial()]->Update();
+    slashNestSprite_->Update();
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
 
     // 当たり判定の確認
     CheckAllCollisions();
@@ -491,6 +532,13 @@ void GameScene::Draw() {
     {
         CollisionMask::GetInstance()->Draw();
     }
+
+    threadCountSprites_[player_->GetThreadCount()]->Draw();
+    slashSprite_->Draw();
+    threadLimitSprites_[threadLimit_]->Draw();
+    nestCountSprites_[player_->GetNestMaterial()]->Draw();
+    slashNestSprite_->Draw();
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
 }
 
 void GameScene::CheckAllCollisions() {
