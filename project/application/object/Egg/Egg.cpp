@@ -11,12 +11,16 @@ void Egg::Initialize(const Vector3& pos) {
     object_->Initialize();
 
 
-    ModelManager::GetInstance()->LoadModel("resources", "egg.obj");
-    object_->AddModel("egg.obj","egg");
+    ModelManager::GetInstance()->LoadModel("resources", "egg/egg.obj");
+    object_->AddModel("egg/egg.obj","egg");
  //   object_->FindInstance("egg")->transform.scale = { 0.5f, 0.5f, 0.5f };
     object_->FindInstance("egg")->transform.translate = { 0.0f, 0.5f, 0.0f };
 
     object_->SetTranslate(pos);
+
+    // サウンド読み込み
+    up_ = Audio::GetInstance()->LoadAudio("resources/sounds/up.wav");
+    down_ = Audio::GetInstance()->LoadAudio("resources/sounds/down.wav");
     
     anima_ = std::make_unique<EggAnima>();
     anima_->Initialize(object_.get());
@@ -54,6 +58,10 @@ void Egg::Update() {
             }
 
             onPlayer_ = false;
+
+            // サウンド再生
+            Audio::GetInstance()->PlayAudio(down_, false, 1.0f);
+
             // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
             player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
             object_->SetTranslate(translate);
@@ -73,6 +81,8 @@ void Egg::Update() {
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
                 onPlayer_ = true;
+                // サウンド再生
+                Audio::GetInstance()->PlayAudio(up_, false, 1.0f);
                 // キャリーアニメーションを再生
                 player_->ChangeAnimation(PlayerAnima::AnimationState::Carry);
                 translate = player_->GetPosition();

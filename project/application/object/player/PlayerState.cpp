@@ -3,6 +3,7 @@
 
 #include "Input.h"
 #include "Player.h"
+#include "OneWayObject.h"
 
 #include <memory>
 
@@ -20,6 +21,15 @@ void PlayerStateIdle::Initialize(Player* player) {
 
 // 更新
 void PlayerStateIdle::Update(Player* player) {
+    OneWayObject* oneWay = player->CheckOnOneWayObject();
+
+    // オブジェクトに触れていて、かつ「入り口側」から入ろうとしている場合のみ遷移
+    if (oneWay && oneWay->IsAtEntrySide(player->GetPosition())) {
+        player->SetCurrentOneWay(oneWay);
+        player->ChangeState(std::make_unique<PlayerStateOneWayMove>());
+        return;
+    }
+
     bool isMoveInput = false;
 
     // 1. WASDで移動判定
@@ -51,6 +61,7 @@ void PlayerStateIdle::Update(Player* player) {
     if ((Input::GetInstance()->TriggerKeyDown(DIK_B) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))) {
 
         player->ChangeState(std::make_unique<PlayerStateShoot>());
+
         return;
     }
 }
@@ -73,6 +84,13 @@ void PlayerStateMove::Initialize(Player* player) {
 
 // 更新
 void PlayerStateMove::Update(Player* player) {
+    OneWayObject* oneWay = player->CheckOnOneWayObject();
+    if (oneWay) {
+        player->SetCurrentOneWay(oneWay);
+        player->ChangeState(std::make_unique<PlayerStateOneWayMove>());
+        return;
+    }
+
     Vector3 moveDirection = {0.0f, 0.0f, 0.0f};
 
     // 1. 【脳の処理】進みたい方向（意志）を決定する
@@ -188,4 +206,39 @@ void PlayerStateShoot::Update(Player* player) {
     if (frameCount_ >= 0.5f) {
         player->ChangeState(std::make_unique<PlayerStateIdle>());
     }
+}
+
+// ======================================
+// 一方通行オブジェクト自動移動状態
+// ======================================
+
+void PlayerStateOneWayMove::Initialize(Player* player) {
+    // 必要に応じて歩行などのアニメーションに変更する
+    player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+}
+
+void PlayerStateOneWayMove::Update(Player* player) {
+    OneWayObject* oneWay = player->GetCurrentOneWay();
+
+    // OneWayObjectから外れた（終点を超えた）場合は、Idle状態に戻る
+    if (!oneWay || !oneWay->IsInside(player->GetPosition())) {
+        player->SetCurrentOneWay(nullptr);
+        player->ChangeState(std::make_unique<PlayerStateIdle>());
+        return;
+    }
+
+    // OneWayObjectの許可されている方向を取得して自動移動ベクトルを決定
+    Vector3 autoMoveDir = {0.0f, 0.0f, 0.0f};
+    switch (oneWay->GetDirection()) {
+    case OneWayObject::Direction::PositiveX: autoMoveDir = {1.0f, 0.0f, 0.0f}; break;
+    case OneWayObject::Direction::NegativeX: autoMoveDir = {-1.0f, 0.0f, 0.0f}; break;
+    case OneWayObject::Direction::PositiveZ: autoMoveDir = {0.0f, 0.0f, 1.0f}; break;
+    case OneWayObject::Direction::NegativeZ: autoMoveDir = {0.0f, 0.0f, -1.0f}; break;
+    }
+
+    // WASD入力関係なく、強制的に進行方向へ移動させる
+    player->Move(autoMoveDir);
+
+    // 自動移動中も壁などのSDF衝突判定は行う
+    //player->IsCollisionSDF();
 }

@@ -11,6 +11,7 @@
 
 
 struct ShaderSet {
+
     Microsoft::WRL::ComPtr<IDxcBlob> vs;
     Microsoft::WRL::ComPtr<IDxcBlob> ps;
 };

@@ -6,14 +6,14 @@
 #include "DrawFunction.h"
 #include"PlayerState.h"
 #include "CollisionMask.h"
-
+#include "Audio.h"
 #include "PlayerAnima.h"
 
 #include "JSONManager.h"
 
 class ThreadManager;
 class Egg;
-
+class OneWayObject;
 
 class Player {
 public:
@@ -124,6 +124,18 @@ public:
     /// </summary>
     void SetCanDrawPrediction(bool canDraw) { canDrawPrediction_ = canDraw; }
 
+    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWayObjects) { oneWayObjects_ = oneWayObjects; }
+    // OneWayObjectに乗っているかどうかのゲッターとセッター
+    void SetCurrentOneWay(OneWayObject* oneWay) { currentOneWay_ = oneWay; }
+    OneWayObject* GetCurrentOneWay() const { return currentOneWay_; }
+
+    // 現在足元にOneWayObjectがあるか確認して返す関数
+    OneWayObject* CheckOnOneWayObject() const;
+
+private:
+    // 現在乗っているOneWayObjectのポインタ
+    OneWayObject* currentOneWay_ = nullptr;
+
 private:
     // 現在の状態
     std::unique_ptr<IPlayerState> state_;
@@ -175,6 +187,8 @@ private:
 
     void UpdatePredictionLine();
 
+    void IsCollisionOneWay();
+
 private:
     // Thread上を歩いているか
     bool onThread_ = false;
@@ -207,6 +221,9 @@ private:
 
     CollisionMask::RayResult rayResult_;
 
+    // 一方通行オブジェクトのポインタリスト
+    std::vector<OneWayObject*> oneWayObjects_;
+
 private:
     // アニメーション制御
     std::unique_ptr<PlayerAnima> anima_;
@@ -216,6 +233,9 @@ private:
 
     // 巣の素材の回収数
     int nestMaterialNum_ = 0;
+
+    // サウンド
+    Audio::SoundHandle threadSound_ = 0;
 
 public:
     // jsonにセーブ

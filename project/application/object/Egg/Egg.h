@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "DrawFunction.h"
+#include "Audio.h"
 #include "EggAnima.h"
 
 class Player;
@@ -49,7 +50,7 @@ public:
     
 public: // 外部入出力
 
-    
+    void SetTranslate(const Vector3& translate) { object_->SetTranslate(translate); }
 
 private:
 
@@ -73,5 +74,9 @@ private:
 
     // HP
     float HP_ = 10.0f;
+
+    // サウンド
+    Audio::SoundHandle up_ = 0;
+    Audio::SoundHandle down_ = 0;
 };
 

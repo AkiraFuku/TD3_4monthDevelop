@@ -82,6 +82,17 @@ void GameScene::Initialize() {
     terrain_ = new Terrain();
     terrain_->Initialize();*/
 
+    collisionMask_ = CollisionMask::GetInstance();
+    collisionMask_->Initialize();
+    playerPos_ = collisionMask_->GetStartPos();
+    eggPos = collisionMask_->GetEggStartPos();
+    goalPos = collisionMask_->GetGoalPos();
+    for (int i = 0; i < enemyPositions_.size(); ++i)
+    {
+        enemyPositions_[i] = collisionMask_->GetEnemyStartPos(i);
+    }
+    nestMaterialPos_ = collisionMask_->GetNestMaterialPos(0);
+
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
@@ -110,18 +121,14 @@ void GameScene::Initialize() {
     goal_->SetNeedNestCount(1);
 
 
-    collisionMask_ = CollisionMask::GetInstance();
-    collisionMask_->Initialize();
+    
 
     // 敵の初期化
 
     /*enemy_ = std::make_unique<Enemy>();
     enemy_->Initialize(enemyPos_);*/
 
-	enemyPositions_ = {
-		{3.0f, 0.0f, 10.0f},
-		{3.0f, 0.0f, 10.0f}
-	};
+	
 
 	for (const auto& pos : enemyPositions_) {
 		auto enemy = std::make_unique<Enemy>();
@@ -137,21 +144,33 @@ void GameScene::Initialize() {
     // ... 一方通行オブジェクトの生成 ...
     auto oneWay = std::make_unique<OneWayObject>();
     // 床
-    oneWay->Initialize({ 0.0f, 0.01f, 0.0f }, OneWayObject::Direction::NegativeX, 5.0f, 15.0f); // Yを少し上げるとチラつき防止になる
+    oneWay->Initialize({ 0.0f, -1.0f, 0.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
     oneWayObjects_.push_back(std::move(oneWay));
+
+    // 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
+    std::vector<OneWayObject*> rawPtrs;
+    for (auto& obj : oneWayObjects_) {
+        rawPtrs.push_back(obj.get());
+    }
+    player_->SetOneWayObjects(rawPtrs);
 
     // 数回渡ったら壊れるオブジェクトの生成
     brokenBlockPos_ =
     {
-        {-4.0f,0.0f,8.0f}
+        {-4.0f,-2.0f,8.0f}
     };
 
     for (const auto& pos : brokenBlockPos_)
     {
         auto brokenBlock = std::make_unique<BrokenBlock>();
-        brokenBlock->Initialize(pos, 8.0f, 10.0f);
+        brokenBlock->Initialize(pos, 8.0f, 9.0f);
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
+
+    // サウンド読み込み
+    handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
+    // サウンド再生
+    Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
 }
 void GameScene::Finalize() {
@@ -161,6 +180,8 @@ void GameScene::Finalize() {
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
     collisionMask_->Finalize();
+
+    Audio::GetInstance()->StopAudio(handle_);
 
     /*player_->Finalize();
     delete player_;
@@ -339,6 +360,8 @@ void GameScene::Update()
 
 #endif // USE_IMGUI
 
+    collisionMask_->Update();
+
     // Rキーを押したらリセット
     if (Input::GetInstance()->PushedKeyDown(DIK_R))
     {
@@ -351,9 +374,6 @@ void GameScene::Update()
 
     sprite->Update();
 
-
-    player_->Update();
-
     // 卵の更新処理
     egg_->Update();
 
@@ -365,6 +385,8 @@ void GameScene::Update()
     for (auto& ow : oneWayObjects_) {
         ow->Update();
     }
+
+    player_->Update();
 
     // ゴールの更新処理
     goal_->Update();
@@ -398,7 +420,7 @@ void GameScene::Update()
     nestMaterial_->Update();
 
 
-    collisionMask_->Update();
+    
 
     // 壊れるブロックの更新処理
     for (auto& brokenBlock : brokenBlocks_)
@@ -634,4 +656,34 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
     }
     // 修正した座標を反映
     enemy->SetPosition(currentPos);
+}
+
+void GameScene::LoadStageData()
+{
+    player_->SetPosition(collisionMask_->GetStartPos());
+    egg_->SetTranslate(collisionMask_->GetEggStartPos());
+    goal_->SetTranslate(collisionMask_->GetGoalPos());
+    size_t i = 0;
+    for(auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
+    {
+        (*itEnemy)->SetPosition(collisionMask_->GetEnemyStartPos(i));
+        ++i;
+    }
+   /* i = 0;
+    for (auto itNestMaterial = nestMaterials_.begin(); itNestMaterial != nestMaterials_.end(); ++itNestMaterial)
+    {
+        (*itNestMaterial)->SetTranslate(collisionMask_->GetNestMaterialPos(i));
+        ++i;
+    }*/
+
+    nestMaterial_->SetTranslate(collisionMask_->GetNestMaterialPos(0));
+
+    i = 0;
+    for (auto itOnWayObject = oneWayObjects_.begin(); itOnWayObject != oneWayObjects_.end(); ++itOnWayObject)
+    {
+        (*itOnWayObject)->SetTranslate(collisionMask_->GetOneWayObjectPos(i));
+        ++i;
+    }
+  
+    std::vector<Vector3> oneWayObjectPos_;
 }

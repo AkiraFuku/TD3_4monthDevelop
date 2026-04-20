@@ -4,6 +4,7 @@
 #include "Object3d.h"
 #include <memory>
 #include <set>
+#include "Audio.h"
 
 class BrokenBlock
 {
@@ -39,9 +40,12 @@ private:
     bool isBroken_ = false;
     bool isImpassable_ = false;
     // 壊れるまでの回数
-    int maxbreakCount_ = 2;
+    int maxbreakCount_ = 1;
     int currentCount_ = 0;
     // 乗っているキャラのリスト
     std::set<const void*> riders_;
+
+    // サウンド
+    Audio::SoundHandle broken_ = 0;
 };
 
