@@ -102,7 +102,7 @@ bool BrokenBlock::IsRider(const void* entityPtr) const
 
 }
 
-BrokenBlock::AABB BrokenBlock::GetAABB() const
+AABB BrokenBlock::GetAABB() const
 {
     return {
        { position_.x - width / 2.0f, 0, position_.z - height / 2.0f },

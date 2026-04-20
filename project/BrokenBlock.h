@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include "Audio.h"
+#include "DrawFunction.h"
 
 class BrokenBlock
 {
@@ -24,7 +25,7 @@ public:
     bool IsBroken() const { return isBroken_; }
     bool IsImpassable() const { return isImpassable_; }
 
-    struct AABB { Vector3 min; Vector3 max; } GetAABB() const;
+    AABB GetAABB() const;
 
 private:
     Vector3 position_;
