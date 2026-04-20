@@ -144,8 +144,15 @@ void GameScene::Initialize() {
     // ... 一方通行オブジェクトの生成 ...
     auto oneWay = std::make_unique<OneWayObject>();
     // 床
-    oneWay->Initialize({ 0.0f, -2.0f, 0.0f }, OneWayObject::Direction::PositiveX, 4.0f, 15.0f); // Yを少し上げるとチラつき防止になる
+    oneWay->Initialize({ 0.0f, -1.0f, 0.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
     oneWayObjects_.push_back(std::move(oneWay));
+
+    // 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
+    std::vector<OneWayObject*> rawPtrs;
+    for (auto& obj : oneWayObjects_) {
+        rawPtrs.push_back(obj.get());
+    }
+    player_->SetOneWayObjects(rawPtrs);
 
     // 数回渡ったら壊れるオブジェクトの生成
     brokenBlockPos_ =
@@ -367,9 +374,6 @@ void GameScene::Update()
 
     sprite->Update();
 
-
-    player_->Update();
-
     // 卵の更新処理
     egg_->Update();
 
@@ -381,6 +385,8 @@ void GameScene::Update()
     for (auto& ow : oneWayObjects_) {
         ow->Update();
     }
+
+    player_->Update();
 
     // ゴールの更新処理
     goal_->Update();

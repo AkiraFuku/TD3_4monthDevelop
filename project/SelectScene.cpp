@@ -15,6 +15,9 @@ void SelectScene::Initialize()
     TextureManager::GetInstance()->LoadTexture("resources/stage3.png");
     TextureManager::GetInstance()->LoadTexture("resources/arrow.png");
 
+    background_ = std::make_unique<Sprite>();
+    background_->Initialize("resources/selectScene.png");
+
     stagePos_ =
     {
         {0.0f,300.0f},
@@ -28,15 +31,16 @@ void SelectScene::Initialize()
         std::string path = "resources/stage" + std::to_string(i + 1) + ".png";
         sprite->Initialize(path);
         sprite->SetPosition(stagePos_[i]);
-        sprite_.push_back(std::move(sprite));
+        sprites_.push_back(std::move(sprite));
     }
 
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/arrow.png");
-    arrowPos_ = sprite_[0]->GetPosition();
+    arrowPos_ = sprites_[0]->GetPosition();
     arrowPos_.y += 300.0f;
     arrowSprite_->SetPosition(arrowPos_);
 
+   
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/stageSelect.wav");
     enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
@@ -52,6 +56,8 @@ void SelectScene::Finalize()
 
 void SelectScene::Update()
 {
+    background_->Update();
+
     preIndex = stageIndex;
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) ||
@@ -89,13 +95,13 @@ void SelectScene::Update()
 
     if (preIndex != stageIndex)
     {
-        Vector2 pos = sprite_[stageIndex]->GetPosition();
+        Vector2 pos = sprites_[stageIndex]->GetPosition();
         pos.y += 300.0f;
         arrowSprite_->SetPosition(pos);
     }
 
     // スプライトの更新処理
-    for (const std::unique_ptr <Sprite>& sprite : sprite_)
+    for (const std::unique_ptr <Sprite>& sprite : sprites_)
     {
         sprite->Update();
     }
@@ -106,10 +112,13 @@ void SelectScene::Update()
 
 void SelectScene::Draw()
 {
-    for (const std::unique_ptr <Sprite>& sprite : sprite_)
+    
+    for (const std::unique_ptr <Sprite>& sprite : sprites_)
     {
         sprite->Draw();
     }
 
     arrowSprite_->Draw();
+
+    background_->Draw();
 }

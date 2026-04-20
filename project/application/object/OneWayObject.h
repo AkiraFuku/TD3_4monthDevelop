@@ -26,8 +26,14 @@ public:
 
     bool IsInside(const Vector3& pos) const;
 
-public: // 外部入出力
+    // プレイヤーの現在位置と移動量を受け取り、進入不可なら移動量を補正する
+    void ResolveCollision( Vector3& currentPos, Vector3& moveVel) const;
 
+    void DebugDrawImGui(int index, const Vector3& playerPos, const Vector3& playerMoveVel) const;
+
+    bool IsAtEntrySide(const Vector3& playerPos) const;
+
+public: // 外部入出力
     // ゲッター
     Vector3 GetPosition() const { return position_; }
     Direction GetDirection() const { return allowedDir_; }

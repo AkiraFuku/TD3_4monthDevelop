@@ -31,7 +31,7 @@ public:
     // デスフラグのgetter
     bool IsDead() { return isDead_; }
 
-public: // 外部入出力
+
     
     void SetTranslate(const Vector3& translate) { translate_ = translate; }
 
