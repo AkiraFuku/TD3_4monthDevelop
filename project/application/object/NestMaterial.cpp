@@ -23,7 +23,7 @@ void NestMaterial::Finalize()
 void NestMaterial::Update()
 {
 #ifdef USE_IMGUI
-    ImGui::Begin("Goal Window");
+    ImGui::Begin("NestMaterial Window");
 
     Vector3 scale = object_->GetScale();
     if (ImGui::DragFloat3("Scale", &scale.x, 0.1f, 0.1f, 10.0f))

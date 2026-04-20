@@ -74,9 +74,9 @@
     <ClCompile Include="SpiderWebManager.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
-    <ClCompile Include="NestMaterial.cpp" />
+    <ClCompile Include="application\object\NestMaterial.cpp" />
     <ClCompile Include="application\JSONManager\JSONManager.cpp" />
-    <ClCompile Include="OneWayObject.cpp" />
+    <ClCompile Include="application\object\OneWayObject.cpp" />
     <ClCompile Include="BrokenBlock.cpp" />
     <ClCompile Include="SelectScene.cpp" />
   </ItemGroup>
@@ -146,9 +146,9 @@
     <ClInclude Include="SpiderWebManager.h" />
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
-    <ClInclude Include="NestMaterial.h" />
+    <ClInclude Include="application\object\NestMaterial.h" />
     <ClInclude Include="application\JSONManager\JSONManager.h" />
-    <ClInclude Include="OneWayObject.h" />
+    <ClInclude Include="application\object\OneWayObject.h" />
     <ClInclude Include="BrokenBlock.h" />
     <ClInclude Include="SelectScene.h" />
   </ItemGroup>
