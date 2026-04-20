@@ -18,7 +18,9 @@ public:
 
     // GameSceneから必要な情報を毎フレーム受け取る
     void Update(const Vector3& eggPos, ThreadManager* tm, 
-        const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
+        const std::vector<std::unique_ptr<OneWayObject>>& oneWays, 
+        const std::vector<std::unique_ptr<BrokenBlock>>& brokenBlock,
+        std::vector<uint64_t>& occupiedWebKeys);
 
     void Draw();
 
@@ -48,6 +50,11 @@ public:
 
     bool GetCanMove()const { return canMove_; }
 
+    // 蜘蛛の巣に捕まっているか
+    bool IsTrapped() const { return isTrapped_; }
+    // 捕まっている蜘蛛の巣の識別IDを取得
+    uint64_t GetTrappedWebKey() const { return trappedWebKey_; }
+
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);
@@ -68,6 +75,9 @@ private:
     // 当たり判定フラグ
     bool isHit_ = false;
     bool canMove_ = true;
+
+    bool isTrapped_ = false;   // ★蜘蛛の巣に捕まっているフラグ
+    uint64_t trappedWebKey_ = 0; // ★捕まっている場所のキー
 
     bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
 
