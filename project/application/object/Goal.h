@@ -36,7 +36,7 @@ public:
 public: // 外部入出力
 
 
-
+    void SetTranslate(const Vector3& translate) { object_->SetTranslate(translate); }
 
 
 private:

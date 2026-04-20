@@ -112,9 +112,45 @@ public:
     }
 
 
-public:
+public: // 外部入出力
 
     void SetMaskMapRequest(const StageID& maskMapRequest){ stageChangeRequest_ = maskMapRequest; }
+
+    const Vector3 GetStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->startPos_; }
+    const Vector3 GetEggStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->eggStartPos_; }
+    const Vector3 GetGoalPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->goalPos_; }
+    const Vector3& GetEnemyStartPos(const size_t i)
+    {
+        if (i >= stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size())
+        {
+            // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+            return defaultPos;
+        }
+
+        return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_[i]; 
+    }
+    const Vector3& GetNestMaterialPos(const size_t i)
+    { 
+        if (i >= stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_.size())
+        {
+            // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+            return defaultPos;
+        }
+
+        return stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_[i]; 
+    }
+    const Vector3& GetOneWayObjectPos(const size_t i)
+    { 
+        if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_.size())
+        {
+            // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+            return defaultPos;
+        }
+        return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_[i]; 
+    }
 
 private:
 

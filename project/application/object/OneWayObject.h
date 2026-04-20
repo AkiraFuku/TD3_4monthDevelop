@@ -33,10 +33,20 @@ public:
 
     bool IsAtEntrySide(const Vector3& playerPos) const;
 
+public: // 外部入出力
+
     // ゲッター
     Vector3 GetPosition() const { return position_; }
     Direction GetDirection() const { return allowedDir_; }
     struct AABB { Vector3 min; Vector3 max; } GetAABB() const;
+
+    // セッター
+    void SetTranslate(const Vector3& translate) {
+        position_ = translate;
+        if (object_) {
+            object_->SetTranslate(translate);
+        }
+    }
 
 private:    
     Vector3 position_;

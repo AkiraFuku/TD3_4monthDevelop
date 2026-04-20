@@ -82,6 +82,17 @@ void GameScene::Initialize() {
     terrain_ = new Terrain();
     terrain_->Initialize();*/
 
+    collisionMask_ = CollisionMask::GetInstance();
+    collisionMask_->Initialize();
+    playerPos_ = collisionMask_->GetStartPos();
+    eggPos = collisionMask_->GetEggStartPos();
+    goalPos = collisionMask_->GetGoalPos();
+    for (int i = 0; i < enemyPositions_.size(); ++i)
+    {
+        enemyPositions_[i] = collisionMask_->GetEnemyStartPos(i);
+    }
+    nestMaterialPos_ = collisionMask_->GetNestMaterialPos(0);
+
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
@@ -110,18 +121,14 @@ void GameScene::Initialize() {
     goal_->SetNeedNestCount(1);
 
 
-    collisionMask_ = CollisionMask::GetInstance();
-    collisionMask_->Initialize();
+    
 
     // 敵の初期化
 
     /*enemy_ = std::make_unique<Enemy>();
     enemy_->Initialize(enemyPos_);*/
 
-	enemyPositions_ = {
-		{3.0f, 0.0f, 10.0f},
-		{3.0f, 0.0f, 10.0f}
-	};
+	
 
 	for (const auto& pos : enemyPositions_) {
 		auto enemy = std::make_unique<Enemy>();
@@ -353,6 +360,8 @@ void GameScene::Update()
 
 #endif // USE_IMGUI
 
+    collisionMask_->Update();
+
     // Rキーを押したらリセット
     if (Input::GetInstance()->PushedKeyDown(DIK_R))
     {
@@ -411,7 +420,7 @@ void GameScene::Update()
     nestMaterial_->Update();
 
 
-    collisionMask_->Update();
+    
 
     // 壊れるブロックの更新処理
     for (auto& brokenBlock : brokenBlocks_)
@@ -647,4 +656,34 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
     }
     // 修正した座標を反映
     enemy->SetPosition(currentPos);
+}
+
+void GameScene::LoadStageData()
+{
+    player_->SetPosition(collisionMask_->GetStartPos());
+    egg_->SetTranslate(collisionMask_->GetEggStartPos());
+    goal_->SetTranslate(collisionMask_->GetGoalPos());
+    size_t i = 0;
+    for(auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
+    {
+        (*itEnemy)->SetPosition(collisionMask_->GetEnemyStartPos(i));
+        ++i;
+    }
+   /* i = 0;
+    for (auto itNestMaterial = nestMaterials_.begin(); itNestMaterial != nestMaterials_.end(); ++itNestMaterial)
+    {
+        (*itNestMaterial)->SetTranslate(collisionMask_->GetNestMaterialPos(i));
+        ++i;
+    }*/
+
+    nestMaterial_->SetTranslate(collisionMask_->GetNestMaterialPos(0));
+
+    i = 0;
+    for (auto itOnWayObject = oneWayObjects_.begin(); itOnWayObject != oneWayObjects_.end(); ++itOnWayObject)
+    {
+        (*itOnWayObject)->SetTranslate(collisionMask_->GetOneWayObjectPos(i));
+        ++i;
+    }
+  
+    std::vector<Vector3> oneWayObjectPos_;
 }
