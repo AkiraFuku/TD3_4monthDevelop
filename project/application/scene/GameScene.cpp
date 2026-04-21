@@ -130,7 +130,7 @@ void GameScene::Initialize() {
 
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
-    goal_->SetNeedNestCount(2);
+    goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
 
 
     
@@ -538,8 +538,8 @@ void GameScene::Update()
     CheckAllCollisions();
 
     // ゴールクリアの判定
-   /* goal_->Clear();
-    egg_->Death();*/
+    goal_->Clear();
+    egg_->Death();
 
     // 破壊フラグの立ったブロックを削除
     // 破壊フラグの立ったブロックを削除
@@ -558,7 +558,8 @@ void GameScene::Update()
         Audio::GetInstance()->StopAudio(BGMhandle_);
 
         // シーン遷移
-        CollisionMask::GetInstance()->SetCurrentStageID(3);
+        const int currentStageID = CollisionMask::GetInstance()->GetCurrentStageID();
+        CollisionMask::GetInstance()->SetCurrentStageID(currentStageID); 
         SceneManager::GetInstance()->ChangeScene("GameScene");
         isReset_ = true;
         return;
