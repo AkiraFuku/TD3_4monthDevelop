@@ -8,6 +8,7 @@
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
 #include "Audio.h"
+#include "EnemyAnima.h"
 
 class ThreadManager;
 class Egg;
@@ -17,13 +18,13 @@ public:
     void Initialize(const Vector3& pos);
 
     // GameSceneから必要な情報を毎フレーム受け取る
-    void Update(const Vector3& eggPos, ThreadManager* tm, 
+    void Update(const Vector3& eggPos, ThreadManager* tm,
         const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
 
     void Draw();
 
     // 経路探索
-    void RecalculatePath(const Vector3& eggPos, ThreadManager* tm, 
+    void RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
         const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
 
     // 経路をクリア
@@ -39,20 +40,27 @@ public:
     void OnCollision(Egg* egg_);
 
     // ヒットフラグをセット
-    void SetHitFlag(bool isHit) { isHit_ = isHit; }
+    void SetHitFlag(bool isHit) {
+        isHit_ = isHit;
+    }
 
     void SetPosition(const Vector3& pos);
 
     // 外部から強制的に再計算させる
-    void RequestPathReplan() { shouldReplanNextUpdate_ = true; }
+    void RequestPathReplan() {
+        shouldReplanNextUpdate_ = true;
+    }
 
-    bool GetCanMove()const { return canMove_; }
+    bool GetCanMove()const {
+        return canMove_;
+    }
 
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);
 
 private:
+    std::unique_ptr<EnemyAnima> anima_;
     std::unique_ptr<Object3d> object_;
     std::deque<Point> path_;
     float moveSpeed_ = 0.08f;
@@ -63,11 +71,12 @@ private:
     static inline const float kHeight = 1.6f;
 
     // 卵への攻撃タイマー
-    int attackTimer_ = 60;
+    int attackTimer_ = 360;
 
     // 当たり判定フラグ
     bool isHit_ = false;
     bool canMove_ = true;
+    bool isAttack_=false;
 
     bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
 

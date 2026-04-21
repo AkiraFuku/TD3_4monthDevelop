@@ -8,9 +8,14 @@ void Enemy::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
     ModelManager::GetInstance()->LoadModel("resources", "enemy/enemy.obj");
-    object_->SetModel("enemy/enemy.obj"); // 敵のモデル
+    object_->AddModel("enemy/enemy.obj", "enemy"); // 敵のモデル
     object_->SetTranslate(pos);
     attack_ = Audio::GetInstance()->LoadAudio("resources/sounds/damage.wav");
+
+    anima_ = std::make_unique<EnemyAnima>();
+    anima_->Initialize(object_.get());
+    anima_->Play();
+    anima_->ChangeAnimation(EnemyAnima::AnimationState::Walk);
 }
 
 void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
@@ -48,7 +53,9 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
                     float dx = node.currentPos.x - worldP.x;
                     float dz = node.currentPos.z - worldP.z;
                     // 糸の判定（少し広めに 1.5マス分 = 2.25f）
-                    if ((dx * dx + dz * dz) < 2.25f) { hasThread = true; break; }
+                    if ((dx * dx + dz * dz) < 2.25f) {
+                        hasThread = true; break;
+                    }
                 }
                 if (hasThread) break;
             }
@@ -79,13 +86,12 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
     RescuePoint(goal);
 
     // パスを再検索
-    std::vector<Point> newPath = PathFinder::FindPath(start, goal, 512, 512, tm,oneWays,brokenBlock);
+    std::vector<Point> newPath = PathFinder::FindPath(start, goal, 512, 512, tm, oneWays, brokenBlock);
 
     path_.clear();
     if (newPath.empty()) {
         OutputDebugStringA("Path not found!\n");
-    }
-    else {
+    } else {
         for (const auto& p : newPath) path_.push_back(p);
         if (!path_.empty()) path_.pop_front();
         char buf[64];
@@ -155,6 +161,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
 
     if (isHit_) {
         // 卵に接触していたら何もしない
+       // anima_->ChangeAnimation(EnemyAnima::AnimationState::Attack);
         return;
     }
 
@@ -172,7 +179,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
 
     // タイマーが満了したか、外部からリクエストがあった場合に再計算
     if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
-        RecalculatePath(eggPos, tm,oneWays,brokenBlock);
+        RecalculatePath(eggPos, tm, oneWays, brokenBlock);
         recalculateTimer_ = 0;
         shouldReplanNextUpdate_ = false; // フラグを戻す
     }
@@ -210,8 +217,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
 
         if (distance < 0.2f) {
             path_.pop_front(); // 目標地点に到達したらリストから消す
-        }
-        else {
+        } else {
             expectedPos.x += (diff.x / distance) * moveSpeed_;
             expectedPos.z += (diff.z / distance) * moveSpeed_;
             isMoving = true;
@@ -263,17 +269,20 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     // 壊れるブロックの判定
     for (auto& brokenBlock : brokenBlock)
     {
-        brokenBlock->CheckRiding(currentPos,this);
+        brokenBlock->CheckRiding(currentPos, this);
     }
 
     // ==========================================
     // 3. 座標の確定とモデルの更新
     // ==========================================
+    anima_->Update();
     object_->SetTranslate(expectedPos);
     object_->Update();
 }
 
-void Enemy::Draw() { object_->Draw(); }
+void Enemy::Draw() {
+    object_->Draw();
+}
 
 Point Enemy::WorldToGrid(const Vector3& pos) {
     // CollisionMaskが512x512で、中心を(0,0)としたい場合
@@ -328,15 +337,16 @@ void Enemy::OnCollision(Egg* egg)
 {
     if (attackTimer_ <= 0)
     {
+        isHit_=true;
         // 一定間隔で卵のHPを減らす
         egg->SetHP(1.0f);
-        attackTimer_ = 60;
+        attackTimer_ = 360;
         // サウンド再生
         Audio::GetInstance()->PlayAudio(attack_, false, 1.0f);
 
-    }
-    else
+    } else
     {
+        isHit_=false;
         attackTimer_--;
     }
 
