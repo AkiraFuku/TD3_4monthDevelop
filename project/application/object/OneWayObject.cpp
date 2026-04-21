@@ -56,32 +56,24 @@ bool OneWayObject::CanPass(const Vector3& moveDir, const Vector3& currentPos) co
     return dot > 0.0f;
 }
 
-bool OneWayObject::IsInside(const Vector3& pos) const
-{
-    float sizeX, sizeZ;
+bool OneWayObject::IsInside(const Vector3& pos) const {
+    float sizeX = width_;
+    float sizeZ = depth_;
 
-    // ログの結果（Zに長くなっている）を見て、あえて逆に割り当てます
-    if (allowedDir_ == Direction::PositiveX || allowedDir_ == Direction::NegativeX) {
-        // X方向に伸ばしたい場合
-        sizeX = depth_; // 長辺(15.0)をXに
-        sizeZ = width_; // 短辺(5.0)をZに
+    // 90度または-90度回転している場合、判定上のXとZのサイズを入れ替える
+    if (allowedDir_ == Direction::PositiveZ || allowedDir_ == Direction::NegativeZ) {
+        sizeX = depth_;  // 回転後のワールドXサイズ
+        sizeZ = width_;  // 回転後のワールドZサイズ
     }
-    else {
-        // Z方向に伸ばしたい場合
-        sizeX = width_;
-        sizeZ = depth_;
-    }
-
-    object_->SetScale({sizeX, 1.0f, sizeZ});
 
     float minX = position_.x - (sizeX / 2.0f);
     float maxX = position_.x + (sizeX / 2.0f);
     float minZ = position_.z - (sizeZ / 2.0f);
     float maxZ = position_.z + (sizeZ / 2.0f);
 
-    // 接続用のマージン（ここも重要）
-    return (pos.x >= minX && pos.x <= maxX &&
-        pos.z >= minZ  && pos.z <= maxZ);
+    // デバッグ用のSetScaleは削除（副作用を防ぐため）
+
+    return (pos.x >= minX && pos.x <= maxX && pos.z >= minZ && pos.z <= maxZ);
 }
 
 void OneWayObject::ResolveCollision(Vector3& currentPos, Vector3& moveVel) const {
@@ -149,15 +141,17 @@ void OneWayObject::ResolveCollision(Vector3& currentPos, Vector3& moveVel) const
 }
 
 AABB OneWayObject::GetAABB() const {
-    float realWidth = width_;
-    float realDepth = depth_;
-    if (allowedDir_ == Direction::PositiveX || allowedDir_ == Direction::NegativeX) {
-        realWidth = depth_;
-        realDepth = width_;
+    float sizeX = width_;
+    float sizeZ = depth_;
+
+    if (allowedDir_ == Direction::PositiveZ || allowedDir_ == Direction::NegativeZ) {
+        sizeX = depth_;
+        sizeZ = width_;
     }
+
     return {
-        { position_.x - realWidth / 2.0f, 0, position_.z - realDepth / 2.0f },
-        { position_.x + realWidth / 2.0f, 0, position_.z + realDepth / 2.0f }
+        {position_.x - sizeX / 2.0f, position_.y - 0.5f, position_.z - sizeZ / 2.0f},
+        {position_.x + sizeX / 2.0f, position_.y + 0.5f, position_.z + sizeZ / 2.0f}
     };
 }
 

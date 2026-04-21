@@ -106,7 +106,7 @@ private:
   std::vector<Vector3> nestMaterialPositions_ = { { 3.0f,0.0f,8.0f },{ 3.0f,0.0f,8.0f } };
 
   // 一方通行のオブジェクト
-  std::vector<std::unique_ptr<OneWayObject>> oneWayObjects_;
+  std::vector<std::unique_ptr<OneWayObject>> stageOneWays_;
 
   // 数回で壊れるオブジェクト
   std::vector<std::unique_ptr<BrokenBlock>> brokenBlocks_;

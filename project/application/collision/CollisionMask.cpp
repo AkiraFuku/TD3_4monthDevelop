@@ -49,7 +49,8 @@ void CollisionMask::Initialize()
         stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
         stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
         stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
-        stageDatas_[i]->oneWayObjectPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
+        stageDatas_[i]->oneWayObjectPos_.push_back(Vector3 {0.0f, 0.0f, 0.0f});
+        stageDatas_[i]->oneWayObjectScale_.push_back(Vector3 {1.0f, 1.0f, 1.0f});
     }
 
     for (int i = 0; i < 5; i++)
@@ -598,6 +599,13 @@ void CollisionMask::LoadJsonData(int stageID)
     {
         stageDatas_[stageID]->oneWayObjectPos_ = oneWayObjectPos;
     }
+    std::vector<Vector3> oneWayObjectScale;
+    if (JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "oneWayObjectScale", oneWayObjectScale))
+    {
+        stageDatas_[stageID]->oneWayObjectScale_ = oneWayObjectScale;
+    }
+
+    JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "oneWayObjectDir", stageDatas_[stageID]->oneWayObjectDir_);
 
     LoadFromFile(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->maskData_->textureData);
     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->texturePass_);
@@ -624,6 +632,10 @@ void CollisionMask::SaveJsonData(int stageID)
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->nestMaterialPos_);
     stageGroup_.itemVector["oneWayObjectPos"] = 
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectPos_);
+    stageGroup_.itemVector["oneWayObjectScale"] =
+        JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectScale_);
+    stageGroup_.itemVector["oneWayObjectDir"] =
+        JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectDir_);
 
     JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
     JSONManager::GetInstance()->SaveFile("Stage" + std::to_string(stageID));
