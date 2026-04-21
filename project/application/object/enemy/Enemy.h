@@ -29,9 +29,6 @@ public:
     void RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
         const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock);
 
-    // 経路をクリア
-    bool IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm);
-
     // ワールド座標を取得
     Vector3 GetWorldPosition() const;
 
@@ -61,6 +58,8 @@ public:
     bool IsTrapped() const { return isTrapped_; }
     // 捕まっている蜘蛛の巣の識別IDを取得
     uint64_t GetTrappedWebKey() const { return trappedWebKey_; }
+
+    void Reset(const Vector3& pos);
 
 private:
     Point WorldToGrid(const Vector3& pos);

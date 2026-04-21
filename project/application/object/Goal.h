@@ -35,6 +35,7 @@ public:
     // getter
     int GetNeedNestCount() const { return needNestMaterialCount_; }
 
+
 public: // 外部入出力
 
 

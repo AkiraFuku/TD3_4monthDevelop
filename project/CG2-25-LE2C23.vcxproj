@@ -54,6 +54,7 @@
     <ClCompile Include="application\scene\GameScene.cpp" />
     <ClCompile Include="engine\Tool\LightManager.cpp" />
     <ClCompile Include="application\object\Goal.cpp" />
+    <ClCompile Include="Fade.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -150,6 +151,7 @@
     <ClInclude Include="application\object\Goal.h" />
     <ClInclude Include="application\object\NestMaterial.h" />
     <ClInclude Include="application\object\OneWayObject.h" />
+    <ClInclude Include="Fade.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\player\PlayerState.h" />

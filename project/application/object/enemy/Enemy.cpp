@@ -115,60 +115,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
 
 }
 
-bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager* tm)
-{
-
-    Vector3 diff = { end.x - start.x, 0.0f, end.z - start.z };
-    float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
-    if (distance < 0.5f) return true;
-
-    int steps = static_cast<int>(distance * 2.0f); // 精度を上げるため 0.5 単位でチェック
-    Vector3 unitDiff = { diff.x / distance, 0.0f, diff.z / distance };
-
-    for (int i = 1; i <= steps; ++i) {
-        float checkX = start.x + unitDiff.x * (i * 0.5f);
-        float checkZ = start.z + unitDiff.z * (i * 0.5f);
-
-        //if (tm) {
-        //    bool hitIntersection = false;
-        //    for (const auto& intersection : tm->GetIntersections()) {
-        //        float dx = intersection.position.x - checkX;
-        //        float dz = intersection.position.z - checkZ;
-        //        if ((dx * dx + dz * dz) < (intersection.radius * intersection.radius)) {
-        //            hitIntersection = true;
-        //            break;
-        //        }
-        //    }
-        //    if (hitIntersection) {
-        //        return false; // 交差点があるので直進不可
-        //    }
-        //}
-
-        // --- ここを PathFinder と同じロジックにする ---
-        bool isWall = CollisionMask::GetInstance()->IsWall(checkX, checkZ);
-        bool hasThread = false;
-
-        if (tm) {
-            for (auto& physics : tm->GetPhysicsList()) {
-                for (const auto& node : physics->GetNodes()) {
-                    float dx = node.currentPos.x - checkX;
-                    float dz = node.currentPos.z - checkZ;
-                    if ((dx * dx + dz * dz) < 0.64f) {
-                        hasThread = true;
-                        break;
-                    }
-                }
-                if (hasThread) break;
-            }
-        }
-
-        // 壁なのに糸がない場所が1つでもあれば、直進はできない
-        if (isWall && !hasThread) {
-            return false;
-        }
-    }
-    return true;
-}
+//
 
 void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     const std::vector<std::unique_ptr<OneWayObject>>& oneWays,
@@ -310,6 +257,18 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
 
 void Enemy::Draw() {
     object_->Draw();
+}
+
+void Enemy::Reset(const Vector3& pos) {
+    object_->SetTranslate(pos);
+    path_.clear();             // 保存されている古い経路を消去
+    isTrapped_ = false;        // 捕縛状態を解除
+    canMove_ = true;           // 移動可能に戻す
+    isHit_ = false;            // 当たり判定フラグをリセット
+    recalculateTimer_ = 0;     // 再計算タイマーを戻す
+    attackTimer_ = 0;
+    // 必要に応じてアニメーションを Idle に戻す
+    anima_->ChangeAnimation(EnemyAnima::AnimationState::Idle);
 }
 
 Point Enemy::WorldToGrid(const Vector3& pos) {
