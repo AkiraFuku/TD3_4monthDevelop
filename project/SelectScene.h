@@ -5,6 +5,9 @@
 #include "Scene.h"
 #include "DebugCamera.h"
 
+static const float kStickMax = 32767.0f;
+static const float kDeadZone = 0.3f;
+
 class SelectScene : public Scene
 {
 public:
@@ -31,5 +34,8 @@ private:
     Audio::SoundHandle handle_ = 0;
     Audio::SoundHandle enter_ = 0;
     Audio::SoundHandle select_ = 0;
+
+    // スティック
+    bool isStickPushed = false;
 };
 

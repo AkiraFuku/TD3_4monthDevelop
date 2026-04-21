@@ -61,8 +61,41 @@ void SelectScene::Update()
 
     preIndex = stageIndex;
 
-    if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) ||
-        Input::GetInstance()->TriggerKeyDown(DIK_D))
+    // コントローラー入力を取得
+    XINPUT_STATE joyState{};
+     bool stickRightTrigger = false;
+    bool stickLeftTrigger = false;
+
+    if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+
+        if (std::abs(stickX) > kDeadZone){
+            
+            // 右に倒した瞬間
+            if (stickX > 0.5f) {
+                if (!isStickPushed) {
+                    stickRightTrigger = true; // 倒した瞬間だけオン
+                    isStickPushed = true;
+                }
+            }
+            // 左に倒した瞬間
+            else if (stickX < -0.5f) {
+                if (!isStickPushed) {
+                    stickLeftTrigger = true; // 倒した瞬間だけオン
+                    isStickPushed = true;
+                }
+            }
+            // スティックが中央に戻ったらリセット
+            else {
+                isStickPushed = false;
+            }
+        }
+    }
+
+
+
+    if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+        Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
     {
         stageIndex++;
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
@@ -72,8 +105,8 @@ void SelectScene::Update()
             stageIndex = 0;
         }
     }
-    else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) ||
-        Input::GetInstance()->TriggerKeyDown(DIK_A))
+    else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+        Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
     {
         if (stageIndex <= 0)
         {
@@ -87,7 +120,7 @@ void SelectScene::Update()
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
     }
-    else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+    else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
     {
         // ゲームシーンに移行
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);

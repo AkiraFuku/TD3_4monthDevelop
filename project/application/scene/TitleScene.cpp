@@ -28,7 +28,7 @@ void TitleScene::Update() {
     sprite_->Update();
 
     // スペースキーを押していたら
-    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE)) {
+    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0,XINPUT_GAMEPAD_A)) {
         // サウンド再生
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
 
