@@ -90,8 +90,12 @@ void GameScene::Initialize() {
     {
         enemyPositions_[i] = CollisionMask::GetInstance()->GetEnemyStartPos(i);
     }
-    nestMaterialPos_ = CollisionMask::GetInstance()->GetNestMaterialPos(0);
 
+    for (int i = 0; i < nestMaterialPositions_.size(); ++i)
+    {
+        nestMaterialPositions_[i] = CollisionMask::GetInstance()->GetNestMaterialPos(i);
+    }
+  
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
@@ -117,7 +121,7 @@ void GameScene::Initialize() {
 
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
-    goal_->SetNeedNestCount(1);
+    goal_->SetNeedNestCount(2);
 
 
     
@@ -137,13 +141,17 @@ void GameScene::Initialize() {
 
 
     // 巣の素材の初期化
-    nestMaterial_ = std::make_unique<NestMaterial>();
-    nestMaterial_->Initialize(nestMaterialPos_);
-
+    for (const auto& pos : nestMaterialPositions_)
+    {
+        auto nestMaterial = std::make_unique<NestMaterial>();
+        nestMaterial->Initialize(pos);
+        nestMaterial_.push_back(std::move(nestMaterial));
+    }
+   
     // ... 一方通行オブジェクトの生成 ...
     auto oneWay = std::make_unique<OneWayObject>();
     // 床
-    oneWay->Initialize({ 0.0f, -1.0f, 0.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
+    oneWay->Initialize({ 100.0f, -1.0f, 100.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
     oneWayObjects_.push_back(std::move(oneWay));
 
     // 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
@@ -468,10 +476,13 @@ void GameScene::Update()
 	}
   
    // 巣の素材の更新処理
-    nestMaterial_->Update();
-
-
-    
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            nestMaterial->Update();
+        }
+    }
 
     // 壊れるブロックの更新処理
     for (auto& brokenBlock : brokenBlocks_)
@@ -523,7 +534,13 @@ void GameScene::Draw() {
 	}
 
     // 巣の素材の描画処理
-    nestMaterial_->Draw();
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            nestMaterial->Draw();
+        }
+    }
 
     // 一方通行オブジェクトの描画
     for (auto& ow : oneWayObjects_) {
@@ -584,20 +601,23 @@ void GameScene::CheckAllCollisions() {
 	}
   
   // 巣の素材の座標
-    AABB nestAABB = nestMaterial_->GetAABB();
-
-    if (isCollision(nestAABB, playerAABB))
+    for (auto& nestMaterial : nestMaterial_)
     {
-        //　巣の素材がなかったらリターン
-        if (nestMaterial_->IsDead())
+        if (!nestMaterial->IsDead())
         {
-            return;
-        }
+            AABB nestAABB = nestMaterial->GetAABB();
 
-        // プレイヤーが素材に接触していたら
-        nestMaterial_->OnCollision();
-        player_->SetNestMaterial(1);
+            if (isCollision(nestAABB, playerAABB))
+            {
+                // プレイヤーが素材に接触していたら
+                nestMaterial->OnCollision();
+                player_->SetNestMaterial(1);
+            }
+        }
     }
+    
+
+    
 }
 
 bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
@@ -741,8 +761,12 @@ void GameScene::LoadStageData()
         ++i;
     }*/
 
-    nestMaterial_->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(0));
-
+    for (auto itNestMaterial = nestMaterial_.begin(); itNestMaterial != nestMaterial_.end(); ++itNestMaterial)
+     {
+         (*itNestMaterial)->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(i));
+         ++i;
+     }
+    
     i = 0;
     for (auto itOnWayObject = oneWayObjects_.begin(); itOnWayObject != oneWayObjects_.end(); ++itOnWayObject)
     {

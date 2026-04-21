@@ -53,11 +53,6 @@ void NestMaterial::Update()
 
 void NestMaterial::Draw()
 {
-    if (isDead_)
-    {
-        return;
-    }
-
     object_->Draw();
 }
 
