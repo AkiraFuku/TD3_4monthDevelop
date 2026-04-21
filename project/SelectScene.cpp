@@ -91,7 +91,7 @@ void SelectScene::Update()
     {
         // ゲームシーンに移行
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
-        CollisionMask::GetInstance()->SetCurrentStageID(stageIndex);
+        CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 3);
         SceneManager::GetInstance()->ChangeScene("GameScene");
     }
 
