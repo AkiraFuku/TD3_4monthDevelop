@@ -3,6 +3,7 @@
 #include "Object3d.h"
 #include <cmath>
 #include <numbers>
+#include "DrawFunction.h"
 
 class OneWayObject {
 public:
@@ -38,7 +39,7 @@ public: // 外部入出力
     // ゲッター
     Vector3 GetPosition() const { return position_; }
     Direction GetDirection() const { return allowedDir_; }
-    struct AABB { Vector3 min; Vector3 max; } GetAABB() const;
+    AABB GetAABB() const;
 
     // セッター
     void SetTranslate(const Vector3& translate) {

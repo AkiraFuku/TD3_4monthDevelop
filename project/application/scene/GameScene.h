@@ -83,6 +83,9 @@ private:
   std::unique_ptr<ThreadManager> thread_;
   std::unique_ptr<SpiderWebManager> spiderWeb_;
 
+  // 糸の発射回数上限
+  int threadLimit_ = 0;
+
   // 敵
   //std::unique_ptr<Enemy> enemy_;
   //// 敵の位置
@@ -92,14 +95,15 @@ private:
   std::vector<Vector3> enemyPositions_
   {
              {3.0f, 0.0f, 10.0f},
+             {3.0f, 0.0f, 10.0f},
              {3.0f, 0.0f, 10.0f}
   };
       // 複数体の初期位置リスト
 
   // 巣の素材
-  std::unique_ptr<NestMaterial> nestMaterial_;
+  std::vector<std::unique_ptr<NestMaterial>> nestMaterial_;
   // 素材の位置
-  Vector3 nestMaterialPos_ = { 3.0f,0.0f,8.0f };
+  std::vector<Vector3> nestMaterialPositions_ = { { 3.0f,0.0f,8.0f },{ 3.0f,0.0f,8.0f } };
 
   // 一方通行のオブジェクト
   std::vector<std::unique_ptr<OneWayObject>> oneWayObjects_;
@@ -111,4 +115,12 @@ private:
 
   // サウンド
   Audio::SoundHandle handle_ = 0;
+
+  // UI
+  std::vector<std::unique_ptr <Sprite>> threadLimitSprites_;
+  std::vector<std::unique_ptr <Sprite>> threadCountSprites_;
+  std::vector<std::unique_ptr <Sprite>> nestMaterialSprites_;
+  std::vector<std::unique_ptr <Sprite>> nestCountSprites_;
+  std::unique_ptr<Sprite> slashSprite_;
+  std::unique_ptr<Sprite> slashNestSprite_;
 };

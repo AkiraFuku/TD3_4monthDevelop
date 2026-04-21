@@ -82,17 +82,20 @@ void GameScene::Initialize() {
     terrain_ = new Terrain();
     terrain_->Initialize();*/
 
-    collisionMask_ = CollisionMask::GetInstance();
-    collisionMask_->Initialize();
-    playerPos_ = collisionMask_->GetStartPos();
-    eggPos = collisionMask_->GetEggStartPos();
-    goalPos = collisionMask_->GetGoalPos();
+    CollisionMask::GetInstance()->Initialize();
+    playerPos_ = CollisionMask::GetInstance()->GetStartPos();
+    eggPos = CollisionMask::GetInstance()->GetEggStartPos();
+    goalPos = CollisionMask::GetInstance()->GetGoalPos();
     for (int i = 0; i < enemyPositions_.size(); ++i)
     {
-        enemyPositions_[i] = collisionMask_->GetEnemyStartPos(i);
+        enemyPositions_[i] = CollisionMask::GetInstance()->GetEnemyStartPos(i);
     }
-    nestMaterialPos_ = collisionMask_->GetNestMaterialPos(0);
 
+    for (int i = 0; i < nestMaterialPositions_.size(); ++i)
+    {
+        nestMaterialPositions_[i] = CollisionMask::GetInstance()->GetNestMaterialPos(i);
+    }
+  
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
@@ -118,7 +121,7 @@ void GameScene::Initialize() {
 
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
-    goal_->SetNeedNestCount(1);
+    goal_->SetNeedNestCount(2);
 
 
     
@@ -138,13 +141,17 @@ void GameScene::Initialize() {
 
 
     // 巣の素材の初期化
-    nestMaterial_ = std::make_unique<NestMaterial>();
-    nestMaterial_->Initialize(nestMaterialPos_);
-
+    for (const auto& pos : nestMaterialPositions_)
+    {
+        auto nestMaterial = std::make_unique<NestMaterial>();
+        nestMaterial->Initialize(pos);
+        nestMaterial_.push_back(std::move(nestMaterial));
+    }
+   
     // ... 一方通行オブジェクトの生成 ...
     auto oneWay = std::make_unique<OneWayObject>();
     // 床
-    oneWay->Initialize({ 0.0f, -1.0f, 0.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
+    oneWay->Initialize({ 100.0f, -1.0f, 100.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
     oneWayObjects_.push_back(std::move(oneWay));
 
     // 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
@@ -172,6 +179,44 @@ void GameScene::Initialize() {
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
+    // UIの初期化
+    for (int i = 0; i < 10; ++i) {
+        std::string path = "resources/numbers/" + std::to_string(i) + ".png";
+
+        // 1つずつ生成する
+        auto threadLimit = std::make_unique<Sprite>(); 
+        threadLimit->Initialize(path);
+        threadLimit->SetPosition(Vector2{ 250.0f,500.0f });
+        threadLimitSprites_.push_back(std::move(threadLimit));
+
+        auto threadCount = std::make_unique<Sprite>(); 
+        threadCount->Initialize(path);
+        threadCount->SetPosition(Vector2{ 0.0f,500.0f });
+        threadCountSprites_.push_back(std::move(threadCount));
+
+        auto nestLimit = std::make_unique<Sprite>(); 
+        nestLimit->Initialize(path);
+        nestLimit->SetPosition(Vector2{ 850.0f,500.0f });
+        nestMaterialSprites_.push_back(std::move(nestLimit));
+
+        auto nestCount = std::make_unique<Sprite>(); 
+        nestCount->Initialize(path);
+        nestCount->SetPosition(Vector2{ 600.0f,500.0f });
+        nestCountSprites_.push_back(std::move(nestCount));
+    }
+
+    slashSprite_ = std::make_unique<Sprite>();
+    slashSprite_->Initialize("resources/numbers/slash.png");
+    slashNestSprite_ = std::make_unique<Sprite>();
+    slashNestSprite_->Initialize("resources/numbers/slash.png");
+
+    threadLimit_ = player_->GetThreadCount();
+    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 0.0f,500.0f });
+    slashSprite_->SetPosition(Vector2{ 150.0f,500.0f });
+    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 250.0f,500.0f });
+    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 600.0f,500.0f });
+    slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
 }
 void GameScene::Finalize() {
 
@@ -179,7 +224,7 @@ void GameScene::Finalize() {
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
-    collisionMask_->Finalize();
+    CollisionMask::GetInstance()->Finalize();
 
     Audio::GetInstance()->StopAudio(handle_);
 
@@ -360,7 +405,7 @@ void GameScene::Update()
 
 #endif // USE_IMGUI
 
-    collisionMask_->Update();
+    CollisionMask::GetInstance()->Update();
 
     // Rキーを押したらリセット
     if (Input::GetInstance()->PushedKeyDown(DIK_R))
@@ -408,19 +453,36 @@ void GameScene::Update()
 		}
 	}
 
+    // 1. すでに捕まっている敵のキーを収集
+    std::vector<uint64_t> occupiedKeys;
+    for (auto& enemy : enemies_) {
+        if (enemy->IsTrapped()) {
+            occupiedKeys.push_back(enemy->GetTrappedWebKey());
+        }
+    }
+
+    //// 2. 敵の更新（リストを渡す）
+    //for (auto& enemy : enemies_) {
+    //    // 第5引数に occupiedKeys を渡す
+    //    enemy->Update(playerPos_, thread_.get(), oneWayObjects_, brokenBlocks_, occupiedKeys);
+    //}
+
 	// 【変更】すべての敵のUpdateを呼ぶ
 	for (auto& enemy : enemies_) {
         if(enemy->GetCanMove())
         {
-            enemy->Update(targetPos, thread_.get(),oneWayObjects_,brokenBlocks_);
+            enemy->Update(targetPos, thread_.get(),oneWayObjects_,brokenBlocks_, occupiedKeys);
         }
 	}
   
    // 巣の素材の更新処理
-    nestMaterial_->Update();
-
-
-    
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            nestMaterial->Update();
+        }
+    }
 
     // 壊れるブロックの更新処理
     for (auto& brokenBlock : brokenBlocks_)
@@ -428,6 +490,13 @@ void GameScene::Update()
         brokenBlock->Update();
     }
 
+    // UIの更新
+    threadCountSprites_[player_->GetThreadCount()]->Update();
+    slashSprite_->Update();
+    threadLimitSprites_[threadLimit_]->Update();
+    nestCountSprites_[player_->GetNestMaterial()]->Update();
+    slashNestSprite_->Update();
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
 
     // 当たり判定の確認
     CheckAllCollisions();
@@ -465,7 +534,13 @@ void GameScene::Draw() {
 	}
 
     // 巣の素材の描画処理
-    nestMaterial_->Draw();
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            nestMaterial->Draw();
+        }
+    }
 
     // 一方通行オブジェクトの描画
     for (auto& ow : oneWayObjects_) {
@@ -490,8 +565,15 @@ void GameScene::Draw() {
 
     if(isVisibleCollisionMask_)
     {
-        collisionMask_->Draw();
+        CollisionMask::GetInstance()->Draw();
     }
+
+    threadCountSprites_[player_->GetThreadCount()]->Draw();
+    slashSprite_->Draw();
+    threadLimitSprites_[threadLimit_]->Draw();
+    nestCountSprites_[player_->GetNestMaterial()]->Draw();
+    slashNestSprite_->Draw();
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
 }
 
 void GameScene::CheckAllCollisions() {
@@ -519,20 +601,23 @@ void GameScene::CheckAllCollisions() {
 	}
   
   // 巣の素材の座標
-    AABB nestAABB = nestMaterial_->GetAABB();
-
-    if (isCollision(nestAABB, playerAABB))
+    for (auto& nestMaterial : nestMaterial_)
     {
-        //　巣の素材がなかったらリターン
-        if (nestMaterial_->IsDead())
+        if (!nestMaterial->IsDead())
         {
-            return;
-        }
+            AABB nestAABB = nestMaterial->GetAABB();
 
-        // プレイヤーが素材に接触していたら
-        nestMaterial_->OnCollision();
-        player_->SetNestMaterial(1);
+            if (isCollision(nestAABB, playerAABB))
+            {
+                // プレイヤーが素材に接触していたら
+                nestMaterial->OnCollision();
+                player_->SetNestMaterial(1);
+            }
+        }
     }
+    
+
+    
 }
 
 bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
@@ -660,13 +745,13 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
 
 void GameScene::LoadStageData()
 {
-    player_->SetPosition(collisionMask_->GetStartPos());
-    egg_->SetTranslate(collisionMask_->GetEggStartPos());
-    goal_->SetTranslate(collisionMask_->GetGoalPos());
+    player_->SetPosition(CollisionMask::GetInstance()->GetStartPos());
+    egg_->SetTranslate(CollisionMask::GetInstance()->GetEggStartPos());
+    goal_->SetTranslate(CollisionMask::GetInstance()->GetGoalPos());
     size_t i = 0;
     for(auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
     {
-        (*itEnemy)->SetPosition(collisionMask_->GetEnemyStartPos(i));
+        (*itEnemy)->SetPosition(CollisionMask::GetInstance()->GetEnemyStartPos(i));
         ++i;
     }
    /* i = 0;
@@ -676,12 +761,16 @@ void GameScene::LoadStageData()
         ++i;
     }*/
 
-    nestMaterial_->SetTranslate(collisionMask_->GetNestMaterialPos(0));
-
+    for (auto itNestMaterial = nestMaterial_.begin(); itNestMaterial != nestMaterial_.end(); ++itNestMaterial)
+     {
+         (*itNestMaterial)->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(i));
+         ++i;
+     }
+    
     i = 0;
     for (auto itOnWayObject = oneWayObjects_.begin(); itOnWayObject != oneWayObjects_.end(); ++itOnWayObject)
     {
-        (*itOnWayObject)->SetTranslate(collisionMask_->GetOneWayObjectPos(i));
+        (*itOnWayObject)->SetTranslate(CollisionMask::GetInstance()->GetOneWayObjectPos(i));
         ++i;
     }
   

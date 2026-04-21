@@ -23,12 +23,12 @@ void CollisionMask::Finalize()
     instance_.reset();
 }
 
-void CollisionMask::Initialize() 
+void CollisionMask::Initialize()
 {
    
-    stageDatas_.resize(4);
+    stageDatas_.resize(5);
 
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < 5; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -52,7 +52,7 @@ void CollisionMask::Initialize()
         stageDatas_[i]->oneWayObjectPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
     }
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
         CreateJsonData(i);
         LoadJsonData(i);
@@ -86,7 +86,7 @@ void CollisionMask::Initialize()
         stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
     }*/
     
-    currentStageID_ = CollisionMask::StageID::Map1;
+    currentStageID_ = static_cast<StageID>(stageID_);
 
     LoadJsonData(static_cast<int>(currentStageID_));
 
@@ -203,7 +203,7 @@ void CollisionMask::Initialize()
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
 
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < 5; i++)
     {
         stageDatas_[i]->maskData_.get()->object->SetPsoName("MaskMap");
     }

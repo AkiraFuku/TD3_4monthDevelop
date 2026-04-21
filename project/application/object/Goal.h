@@ -32,6 +32,8 @@ public:
 
     // ゴールに必要な素材数のsetter
     void SetNeedNestCount(int num) { needNestMaterialCount_ = num; }
+    // getter
+    int GetNeedNestCount() const { return needNestMaterialCount_; }
 
 public: // 外部入出力
 

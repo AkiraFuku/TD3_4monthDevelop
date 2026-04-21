@@ -148,7 +148,7 @@ void OneWayObject::ResolveCollision(Vector3& currentPos, Vector3& moveVel) const
     }
 }
 
-OneWayObject::AABB OneWayObject::GetAABB() const {
+AABB OneWayObject::GetAABB() const {
     float realWidth = width_;
     float realDepth = depth_;
     if (allowedDir_ == Direction::PositiveX || allowedDir_ == Direction::NegativeX) {
