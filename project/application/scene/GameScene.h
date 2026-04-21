@@ -119,11 +119,16 @@ private:
   std::unique_ptr<Sprite> slashSprite_;
   std::unique_ptr<Sprite> slashNestSprite_;
 
+
   // フェード機能
   std::unique_ptr<Fade> fade_;
 
   // フェードアウトしてからリセットするためのフラグ
   bool isResetWaiting_ = false;
+
+  // 背景
+  std::unique_ptr<Object3d> backgroundModel_;
+
 
   // リセットフラグ
   bool isReset_ = false;

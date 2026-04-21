@@ -130,7 +130,7 @@ void GameScene::Initialize() {
 
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
-    goal_->SetNeedNestCount(2);
+    goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
 
 
     
@@ -264,9 +264,19 @@ void GameScene::Initialize() {
     slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
     nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
 
+
     fade_ = std::make_unique<Fade>();
     fade_->Initialize();
     fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
+
+    // 背景の初期化
+    ModelManager::GetInstance()->LoadModel("resources", "backGround.obj");
+    backgroundModel_ = std::make_unique<Object3d>();
+    backgroundModel_->Initialize();
+    backgroundModel_->SetModel("backGround.obj");
+    backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
+    backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
+
 }
 void GameScene::Finalize() {
 
@@ -537,6 +547,7 @@ void GameScene::Update()
     nestCountSprites_[player_->GetNestMaterial()]->Update();
     slashNestSprite_->Update();
     nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
+    backgroundModel_->Update();
 
     // 当たり判定の確認
     CheckAllCollisions();
@@ -587,6 +598,8 @@ void GameScene::Update()
 }
 
 void GameScene::Draw() {
+
+    backgroundModel_->Draw();
 
     if (isReset_)
     {
