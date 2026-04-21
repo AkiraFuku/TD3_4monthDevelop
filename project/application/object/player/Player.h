@@ -124,7 +124,9 @@ public:
     /// </summary>
     void SetCanDrawPrediction(bool canDraw) { canDrawPrediction_ = canDraw; }
 
-    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWayObjects) { oneWayObjects_ = oneWayObjects; }
+    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWays) {
+        oneWayObjects_ = oneWays;
+    }
     // OneWayObjectに乗っているかどうかのゲッターとセッター
     void SetCurrentOneWay(OneWayObject* oneWay) { currentOneWay_ = oneWay; }
     OneWayObject* GetCurrentOneWay() const { return currentOneWay_; }

@@ -157,23 +157,60 @@ void GameScene::Initialize() {
         nestMaterial_.push_back(std::move(nestMaterial));
     }
    
-    // ... 一方通行オブジェクトの生成 ...
-    auto oneWay = std::make_unique<OneWayObject>();
-    // 床
-    oneWay->Initialize({ 100.0f, -1.0f, 100.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
-    oneWayObjects_.push_back(std::move(oneWay));
+    //// ... 一方通行オブジェクトの生成 ...
+    //auto oneWay = std::make_unique<OneWayObject>();
+    //// 床
+    //oneWay->Initialize({ 100.0f, -1.0f, 100.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
+    //oneWayObjects_.push_back(std::move(oneWay));
 
-    // 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
-    std::vector<OneWayObject*> rawPtrs;
-    for (auto& obj : oneWayObjects_) {
-        rawPtrs.push_back(obj.get());
+    //// 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
+    //std::vector<OneWayObject*> rawPtrs;
+    //for (auto& obj : oneWayObjects_) {
+    //    rawPtrs.push_back(obj.get());
+    //}
+    //player_->SetOneWayObjects(rawPtrs);
+
+    // ========================================================
+    // ▼ ここから下（関数の最後）に以下のコードを丸ごと追加！ ▼
+    // ========================================================
+    stageOneWays_.clear();
+    std::vector<OneWayObject*> playerOneWayPtrs;
+
+    // CollisionMaskからJSONの登録数を取得
+    size_t oneWayCount = CollisionMask::GetInstance()->GetOneWayObjectCount();
+
+    // GameScene.cpp の LoadStageData() のループ内
+
+    for (size_t j = 0; j < oneWayCount; ++j) {
+        // JSONから座標とサイズを取得
+        Vector3 pos = CollisionMask::GetInstance()->GetOneWayObjectPos(j);
+        Vector3 scale = CollisionMask::GetInstance()->GetOneWayObjectScale(j);
+
+        // ▼① JSONから向き（整数）を取得する ▼
+        int32_t dirInt = CollisionMask::GetInstance()->GetOneWayObjectDir(j);
+
+        // ▼② 整数(int32_t)を OneWayObject::Direction 型に変換(キャスト)する ▼
+        OneWayObject::Direction dir = static_cast<OneWayObject::Direction>(dirInt);
+
+        // OneWayObjectの実体を作る
+        auto oneWay = std::make_unique<OneWayObject>();
+
+        // ▼③ 固定値だった引数を、変換した dir に変更！ ▼
+        oneWay->Initialize(pos, dir, scale.x, scale.z);
+
+        // ポインタをリストにまとめる
+        playerOneWayPtrs.push_back(oneWay.get());
+        // 実体はシーンに保存する
+        stageOneWays_.push_back(std::move(oneWay));
     }
-    player_->SetOneWayObjects(rawPtrs);
+
+    // まとめてプレイヤーにポインタを渡す！
+    player_->SetOneWayObjects(playerOneWayPtrs);
 
     // 数回渡ったら壊れるオブジェクトの生成
     brokenBlockPos_ =
     {
-        {-4.0f,-2.0f,8.0f}
+        //{-4.0f,-2.0f,8.0f}
     };
 
     for (const auto& pos : brokenBlockPos_)
@@ -426,7 +463,7 @@ void GameScene::Update()
     spiderWeb_->Update(*thread_);
 
     // 一方通行オブジェクトの更新
-    for (auto& ow : oneWayObjects_) {
+    for (auto& ow : stageOneWays_) {
         ow->Update();
     }
 
@@ -470,7 +507,7 @@ void GameScene::Update()
 	for (auto& enemy : enemies_) {
         if(enemy->GetCanMove())
         {
-            enemy->Update(targetPos, thread_.get(),oneWayObjects_,brokenBlocks_, occupiedKeys);
+            enemy->Update(targetPos, thread_.get(),stageOneWays_,brokenBlocks_, occupiedKeys);
         }
 	}
   
@@ -560,7 +597,7 @@ void GameScene::Draw() {
     }
 
     // 一方通行オブジェクトの描画
-    for (auto& ow : oneWayObjects_) {
+    for (auto& ow : stageOneWays_) {
         ow->Draw();
     }
 
@@ -785,7 +822,7 @@ void GameScene::LoadStageData()
      }
     
     i = 0;
-    for (auto itOnWayObject = oneWayObjects_.begin(); itOnWayObject != oneWayObjects_.end(); ++itOnWayObject)
+    for (auto itOnWayObject = stageOneWays_.begin(); itOnWayObject != stageOneWays_.end(); ++itOnWayObject)
     {
         (*itOnWayObject)->SetTranslate(CollisionMask::GetInstance()->GetOneWayObjectPos(i));
         ++i;

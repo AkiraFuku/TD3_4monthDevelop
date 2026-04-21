@@ -34,6 +34,8 @@ public:
         std::vector<Vector3> enemyStartPos_;
         std::vector<Vector3> nestMaterialPos_;
         std::vector<Vector3> oneWayObjectPos_;
+        std::vector<Vector3> oneWayObjectScale_;
+        std::vector<int32_t> oneWayObjectDir_;
     };
 
     struct RayResult {
@@ -160,6 +162,31 @@ public: // 外部入出力
             return defaultPos;
         }
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_[i]; 
+    }
+
+    // 一方通行の道のサイズ
+    const Vector3& GetOneWayObjectScale(const size_t i) {
+        if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectScale_.size())
+        {
+            // エラー処理: インデックスが範囲外、またはJSONにサイズデータがない場合はデフォルトサイズ(幅5, 奥行き15)を返す
+            static Vector3 defaultScale = {5.0f, 1.0f, 15.0f};
+            return defaultScale;
+        }
+        return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectScale_[i];
+    }
+    // 一方通行の道の向き
+    int32_t GetOneWayObjectDir(const size_t i) {
+        if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectDir_.size())
+        {
+            // エラー処理: インデックスが範囲外、またはJSONにデータがない場合はデフォルトの向き(PositiveZ)の値を返す
+            // OneWayObject::Direction::PositiveZ は上から3番目なので「2」になります
+            return 2;
+        }
+        return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectDir_[i];
+    }
+
+    size_t GetOneWayObjectCount() const {
+        return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_.size();
     }
 
 private:
