@@ -86,6 +86,15 @@ void GameScene::Initialize() {
     playerPos_ = CollisionMask::GetInstance()->GetStartPos();
     eggPos = CollisionMask::GetInstance()->GetEggStartPos();
     goalPos = CollisionMask::GetInstance()->GetGoalPos();
+    // JSONから座標リストのサイズを取得する
+    size_t enemyCount = CollisionMask::GetInstance()->GetEnemyCount(); // サイズを返す関数を定義しておく
+    size_t nestMaterialCount = CollisionMask::GetInstance()->GetNestMaterialCount(); // サイズを返す関数を定義しておく
+
+    // vectorをJSONの数に合わせてリサイズ
+    enemyPositions_.resize(enemyCount);
+    nestMaterialPositions_.resize(nestMaterialCount);
+
+    // 3. 一致したサイズ分だけループして代入
     for (int i = 0; i < enemyPositions_.size(); ++i)
     {
         enemyPositions_[i] = CollisionMask::GetInstance()->GetEnemyStartPos(i);
@@ -224,7 +233,7 @@ void GameScene::Finalize() {
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
-    CollisionMask::GetInstance()->Finalize();
+    //CollisionMask::GetInstance()->Finalize();
 
     Audio::GetInstance()->StopAudio(handle_);
 
@@ -407,16 +416,6 @@ void GameScene::Update()
 
     CollisionMask::GetInstance()->Update();
 
-    // Rキーを押したらリセット
-    if (Input::GetInstance()->PushedKeyDown(DIK_R))
-    {
-
-        Audio::GetInstance()->StopAudio(BGMhandle_);
-
-        // シーン遷移
-        SceneManager::GetInstance()->ChangeScene("GameScene");
-    }
-
     sprite->Update();
 
     // 卵の更新処理
@@ -502,8 +501,8 @@ void GameScene::Update()
     CheckAllCollisions();
 
     // ゴールクリアの判定
-    goal_->Clear();
-    egg_->Death();
+   /* goal_->Clear();
+    egg_->Death();*/
 
     // 破壊フラグの立ったブロックを削除
     // 破壊フラグの立ったブロックを削除
@@ -515,9 +514,27 @@ void GameScene::Update()
         brokenBlocks_.end()
     );
 
+    // Rキーを押したらリセット
+    if (Input::GetInstance()->PushedKeyDown(DIK_R))
+    {
+
+        Audio::GetInstance()->StopAudio(BGMhandle_);
+
+        // シーン遷移
+        CollisionMask::GetInstance()->SetCurrentStageID(3);
+        SceneManager::GetInstance()->ChangeScene("GameScene");
+        isReset_ = true;
+        return;
+    }
+
 }
 
 void GameScene::Draw() {
+
+    if (isReset_)
+    {
+        return;
+    }
 
     // player_->Draw();
     // terrain_->Draw();
