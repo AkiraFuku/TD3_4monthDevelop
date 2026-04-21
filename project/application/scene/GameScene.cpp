@@ -453,11 +453,25 @@ void GameScene::Update()
 		}
 	}
 
+    // 1. すでに捕まっている敵のキーを収集
+    std::vector<uint64_t> occupiedKeys;
+    for (auto& enemy : enemies_) {
+        if (enemy->IsTrapped()) {
+            occupiedKeys.push_back(enemy->GetTrappedWebKey());
+        }
+    }
+
+    //// 2. 敵の更新（リストを渡す）
+    //for (auto& enemy : enemies_) {
+    //    // 第5引数に occupiedKeys を渡す
+    //    enemy->Update(playerPos_, thread_.get(), oneWayObjects_, brokenBlocks_, occupiedKeys);
+    //}
+
 	// 【変更】すべての敵のUpdateを呼ぶ
 	for (auto& enemy : enemies_) {
         if(enemy->GetCanMove())
         {
-            enemy->Update(targetPos, thread_.get(),oneWayObjects_,brokenBlocks_);
+            enemy->Update(targetPos, thread_.get(),oneWayObjects_,brokenBlocks_, occupiedKeys);
         }
 	}
   

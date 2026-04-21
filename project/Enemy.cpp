@@ -4,6 +4,20 @@
 #include "ThreadManager.h"
 #include "Egg.h"
 
+// キー生成関数 (SpiderWebManager.cpp と同じアルゴリズム)
+static uint64_t GenerateWebKey(const ThreadManager::ThreadIntersection& intersect) {
+    uint64_t key = 1469598103934665603ULL;
+    auto mix = [&key](uint64_t v) {
+        key ^= v;
+        key *= 1099511628211ULL;
+        };
+    mix(static_cast<uint64_t>(intersect.threadIndexA));
+    mix(static_cast<uint64_t>(intersect.threadIndexB));
+    mix(static_cast<uint64_t>(intersect.segmentIndexA));
+    mix(static_cast<uint64_t>(intersect.segmentIndexB));
+    return key;
+}
+
 void Enemy::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
@@ -151,10 +165,13 @@ bool Enemy::IsPathClear(const Vector3& start, const Vector3& end, ThreadManager*
 }
 
 void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
-    const std::vector<std::unique_ptr<OneWayObject>>& oneWays, const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock) {
+    const std::vector<std::unique_ptr<OneWayObject>>& oneWays,
+    const std::vector<std::unique_ptr<BrokenBlock>>& brokenBlock,
+    std::vector<uint64_t>& occupiedWebKeys) {
 
-    if (isHit_) {
-        // 卵に接触していたら何もしない
+    // 卵に当たっている、または既に巣に捕まっている場合は移動計算をスキップ
+    if (isHit_ || isTrapped_) 
+    {
         return;
     }
 
@@ -226,37 +243,39 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     // 2. 交差点（トラップ）での捕縛判定
     // ==========================================
     if (tm && isMoving) {
-        bool isTrapped = false;
+        for (const auto& intersect : tm->GetIntersections()) {
 
-        for (const auto& intersection : tm->GetIntersections()) {
-            // 「現在の座標」が交差点の範囲に踏み込んでいるかチェック
-            Vector3 diff = {
-                currentPos.x - intersection.position.x,
-                0.0f,
-                currentPos.z - intersection.position.z
-            };
+            // ① この交差点のキー（ID）を生成
+            uint64_t key = GenerateWebKey(intersect);
 
+            // ② すでに他の敵がこのWeb(交差点)を占有していたら無視して次の交差点へ
+            bool alreadyOccupied = false;
+            for (uint64_t occupied : occupiedWebKeys) {
+                if (key == occupied) {
+                    alreadyOccupied = true;
+                    break;
+                }
+            }
+            if (alreadyOccupied) continue;
+
+            // ③ 距離判定 (XZ平面)
+            Vector3 diff = {currentPos.x - intersect.position.x, 0.0f, currentPos.z - intersect.position.z};
             float distSq = diff.x * diff.x + diff.z * diff.z;
 
-            // 敵の半径を足さずに、交差点の範囲(0.8f)に入り込んだら捕まるようにする
-            float trapRadius = intersection.radius;
+            // 交差点の半径内に入ったかチェック
+            if (distSq <= intersect.radius * intersect.radius) {
+                // 捕獲成功！
+                isTrapped_ = true;      // 蜘蛛の巣フラグをON
+                canMove_ = false;       // 移動不可にする
+                trappedWebKey_ = key;   // どの巣に捕まったか記録
 
-            // 交差点の中に足を踏み入れた！
-            if (distSq <= trapRadius * trapRadius) {
-                isTrapped = true;
-                canMove_ = false;
-                break; // 1つでも捕まっていればOK
+                // 占有リストに追加（このフレームの後の敵が引っかからなくなる）
+                occupiedWebKeys.push_back(key);
+
+                // 移動をキャンセルしてその場に留める
+                expectedPos = currentPos;
+                break;
             }
-        }
-
-        // 罠に捕まっている場合は移動をキャンセル（その場から動けなくなる）
-        if (isTrapped) {
-            expectedPos = currentPos;
-
-
-
-            // ※もし「捕まった瞬間に交差点のド真ん中に引きずり込みたい」場合は
-            // ここで expectedPos = intersection.position; などにすることもできます
         }
     }
 
