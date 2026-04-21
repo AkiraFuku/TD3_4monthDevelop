@@ -4,6 +4,7 @@
 #include "Sprite.h"
 #include "Scene.h"
 #include "DebugCamera.h"
+#include "Fade.h"
 
 static const float kStickMax = 32767.0f;
 static const float kDeadZone = 0.3f;
@@ -37,5 +38,10 @@ private:
 
     // スティック
     bool isStickPushed = false;
+
+    // フェード機能
+    std::unique_ptr<Fade> fade_;
+
+    bool isFinished_ = false;
 };
 

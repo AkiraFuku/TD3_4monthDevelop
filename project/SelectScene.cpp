@@ -48,6 +48,10 @@ void SelectScene::Initialize()
     select_ = Audio::GetInstance()->LoadAudio("resources/sounds/select.wav");
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
+
+    fade_ = std::make_unique<Fade>();
+    fade_->Initialize();
+    fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
 }
 
 void SelectScene::Finalize()
@@ -120,8 +124,15 @@ void SelectScene::Update()
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
     }
-    else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+    else if (!isFinished_ && Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
     {
+        fade_->StartFadeOut(0.05f);
+        isFinished_ = true;
+
+        
+    }
+
+    if (isFinished_ && fade_->IsFinished()) {
         // ゲームシーンに移行
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
         CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 3);
@@ -143,10 +154,12 @@ void SelectScene::Update()
 
     arrowSprite_->Update();
 
+    fade_->Update();
 }
 
 void SelectScene::Draw()
 {
+    background_->Draw();
     
     for (const std::unique_ptr <Sprite>& sprite : sprites_)
     {
@@ -155,5 +168,5 @@ void SelectScene::Draw()
 
     arrowSprite_->Draw();
 
-    background_->Draw();
+    fade_->Draw();
 }

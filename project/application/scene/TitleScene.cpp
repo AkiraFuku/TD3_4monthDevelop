@@ -19,6 +19,9 @@ void TitleScene::Initialize() {
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
+    fade_ = std::make_unique<Fade>();
+    fade_->Initialize();
+    fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
 }
 void TitleScene::Finalize() {
     Audio::GetInstance()->StopAudio(handle_);
@@ -27,19 +30,23 @@ void TitleScene::Update() {
 
     sprite_->Update();
 
-    // スペースキーを押していたら
-    if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0,XINPUT_GAMEPAD_A)) {
-        // サウンド再生
+    if (!isFinished_ &&
+        (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) ||
+            Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))) {
+
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
-
-        
-        // ゲームシーンに戻る
-        SceneManager::GetInstance()->ChangeScene("SelectScene");
-
+        fade_->StartFadeOut(0.05f);
+        isFinished_ = true;
     }
 
+    fade_->Update();
 
+    if (isFinished_ && fade_->IsFinished()) {
+        SceneManager::GetInstance()->ChangeScene("SelectScene");
+    }
 }
 void TitleScene::Draw() {
     sprite_->Draw();
+
+    fade_->Draw();
 }

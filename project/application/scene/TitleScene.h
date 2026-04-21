@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "DebugCamera.h"
+#include "Fade.h"
 
 #include <Anima.h>
 class TitleScene :public Scene
@@ -24,4 +25,9 @@ private:
     Audio::SoundHandle handle_ = 0;
     Audio::SoundHandle enter_ = 0;
     std::unique_ptr<Sprite> sprite_;
+
+    // フェード機能
+    std::unique_ptr<Fade> fade_;
+
+    bool isFinished_ = false;
 };

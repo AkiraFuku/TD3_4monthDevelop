@@ -48,8 +48,6 @@ void CollisionMask::Initialize()
         stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
         stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
         stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
-        stageDatas_[i]->oneWayObjectPos_.push_back(Vector3 {0.0f, 0.0f, 0.0f});
-        stageDatas_[i]->oneWayObjectScale_.push_back(Vector3 {1.0f, 1.0f, 1.0f});
     }
 
     for (int i = 0; i < 5; i++)

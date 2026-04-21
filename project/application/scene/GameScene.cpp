@@ -263,6 +263,10 @@ void GameScene::Initialize() {
     nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 600.0f,500.0f });
     slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
     nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
+
+    fade_ = std::make_unique<Fade>();
+    fade_->Initialize();
+    fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
 }
 void GameScene::Finalize() {
 
@@ -538,8 +542,8 @@ void GameScene::Update()
     CheckAllCollisions();
 
     // ゴールクリアの判定
-   /* goal_->Clear();
-    egg_->Death();*/
+    goal_->Clear();
+    egg_->Death();
 
     // 破壊フラグの立ったブロックを削除
     // 破壊フラグの立ったブロックを削除
@@ -551,18 +555,34 @@ void GameScene::Update()
         brokenBlocks_.end()
     );
 
-    // Rキーを押したらリセット
-    if (Input::GetInstance()->PushedKeyDown(DIK_R))
+    // ① Rキーを押したらフェードアウト開始
+    if (Input::GetInstance()->PushedKeyDown(DIK_R) &&
+        fade_->GetStatus() == Fade::Status::None &&
+        !isResetWaiting_)
     {
-
-        Audio::GetInstance()->StopAudio(BGMhandle_);
-
-        // シーン遷移
-        CollisionMask::GetInstance()->SetCurrentStageID(3);
-        SceneManager::GetInstance()->ChangeScene("GameScene");
-        isReset_ = true;
-        return;
+        fade_->StartFadeOut(0.02f);
+        isResetWaiting_ = true; // リセット待機状態にする
     }
+
+    // ② フェードアウトが完了（画面が真っ黒）になった瞬間の処理
+    if (isResetWaiting_ && fade_->IsFinished())
+    {
+        // 1. オブジェクトの位置を初期状態に戻す（既存の関数を呼び出す）
+        LoadStageData();
+
+        // ※補足：位置以外の変数（体力、発射回数、スコアなど）をリセットする必要があればここに書きます
+        // threadLimit_ = 0; 
+        // player_->ResetHP(); // 例
+
+        // 2. リセットが完了したら、フェードインを開始する
+        fade_->StartFadeIn(0.02f);
+
+        // 3. リセット待機フラグを解除して、通常のゲーム状態に戻す
+        isResetWaiting_ = false;
+    }
+
+    // フェードの更新 (必ずUpdateの最後の方で呼ぶ)
+    fade_->Update();
 
 }
 
@@ -628,6 +648,8 @@ void GameScene::Draw() {
     nestCountSprites_[player_->GetNestMaterial()]->Draw();
     slashNestSprite_->Draw();
     nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
+
+    fade_->Draw();
 }
 
 void GameScene::CheckAllCollisions() {
@@ -805,7 +827,7 @@ void GameScene::LoadStageData()
     size_t i = 0;
     for(auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
     {
-        (*itEnemy)->SetPosition(CollisionMask::GetInstance()->GetEnemyStartPos(i));
+        (*itEnemy)->Reset(CollisionMask::GetInstance()->GetEnemyStartPos(i));
         ++i;
     }
    /* i = 0;
@@ -829,4 +851,5 @@ void GameScene::LoadStageData()
     }
   
     std::vector<Vector3> oneWayObjectPos_;
+    thread_->ClearThreads();
 }

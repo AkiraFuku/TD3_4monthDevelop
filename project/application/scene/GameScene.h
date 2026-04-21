@@ -22,6 +22,7 @@
 #include "SpiderWebManager.h"
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
+#include "Fade.h"
 
 class GameScene : public Scene {
 public:
@@ -117,6 +118,12 @@ private:
   std::vector<std::unique_ptr <Sprite>> nestCountSprites_;
   std::unique_ptr<Sprite> slashSprite_;
   std::unique_ptr<Sprite> slashNestSprite_;
+
+  // フェード機能
+  std::unique_ptr<Fade> fade_;
+
+  // フェードアウトしてからリセットするためのフラグ
+  bool isResetWaiting_ = false;
 
   // リセットフラグ
   bool isReset_ = false;
