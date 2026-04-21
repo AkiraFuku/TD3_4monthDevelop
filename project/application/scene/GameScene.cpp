@@ -263,6 +263,14 @@ void GameScene::Initialize() {
     nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 600.0f,500.0f });
     slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
     nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
+
+    // 背景の初期化
+    ModelManager::GetInstance()->LoadModel("resources", "backGround.obj");
+    backgroundModel_ = std::make_unique<Object3d>();
+    backgroundModel_->Initialize();
+    backgroundModel_->SetModel("backGround.obj");
+    backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
+    backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
 }
 void GameScene::Finalize() {
 
@@ -533,6 +541,7 @@ void GameScene::Update()
     nestCountSprites_[player_->GetNestMaterial()]->Update();
     slashNestSprite_->Update();
     nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
+    backgroundModel_->Update();
 
     // 当たり判定の確認
     CheckAllCollisions();
@@ -568,6 +577,8 @@ void GameScene::Update()
 }
 
 void GameScene::Draw() {
+
+    backgroundModel_->Draw();
 
     if (isReset_)
     {

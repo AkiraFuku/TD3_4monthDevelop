@@ -25,9 +25,9 @@ void CollisionMask::Finalize()
 
 void CollisionMask::Initialize()
 {
-    stageDatas_.resize(5);
+    stageDatas_.resize(6);
 
-    for (size_t i = 0; i < 5; i++)
+    for (size_t i = 0; i < 6; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -43,7 +43,7 @@ void CollisionMask::Initialize()
         
     }
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 6; i++)
     {
         CreateJsonData(i);
         LoadJsonData(i);
@@ -194,7 +194,7 @@ void CollisionMask::Initialize()
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
 
-    for (size_t i = 0; i < 5; i++)
+    for (size_t i = 0; i < 6; i++)
     {
         stageDatas_[i]->maskData_.get()->object->SetPsoName("MaskMap");
     }
@@ -214,7 +214,7 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentStageID_);
-    const char* items[] = {"Map0", "Map1", "Map2", "Map3","Map4"};
+    const char* items[] = {"Map0", "Map1", "Map2", "Map3","Map4","Map5"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<StageID>(maskMapIndex));

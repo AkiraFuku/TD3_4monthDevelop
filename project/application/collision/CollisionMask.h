@@ -51,6 +51,7 @@ public:
         Map2,
         Map3,
         Map5,
+        Map6,
 
         Unknown,
     };
@@ -224,7 +225,7 @@ private:
 
     Vector3 translate_ = { 0.0f, -1.0f, 0.0f };
 
-    StageID currentStageID_ = StageID::Map5;
+    StageID currentStageID_ = StageID::Map0;
 
     StageID stageChangeRequest_ = StageID::Unknown;
 

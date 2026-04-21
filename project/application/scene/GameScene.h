@@ -118,6 +118,9 @@ private:
   std::unique_ptr<Sprite> slashSprite_;
   std::unique_ptr<Sprite> slashNestSprite_;
 
+  // 背景
+  std::unique_ptr<Object3d> backgroundModel_;
+
   // リセットフラグ
   bool isReset_ = false;
 };
