@@ -121,6 +121,10 @@ public: // 外部入出力
     const Vector3 GetStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->startPos_; }
     const Vector3 GetEggStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->eggStartPos_; }
     const Vector3 GetGoalPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->goalPos_; }
+    const size_t GetEnemyCount() {
+        // enemyStartPos の配列サイズを返す
+        return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size();
+    }
     const Vector3& GetEnemyStartPos(const size_t i)
     {
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size())
@@ -131,6 +135,10 @@ public: // 外部入出力
         }
 
         return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_[i]; 
+    }
+    const size_t GetNestMaterialCount() {
+        // nestMaterialPos の配列サイズを返す
+        return stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_.size();
     }
     const Vector3& GetNestMaterialPos(const size_t i)
     { 

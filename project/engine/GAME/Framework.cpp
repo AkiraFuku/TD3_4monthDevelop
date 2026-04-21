@@ -16,6 +16,7 @@
 #include <iostream> 
 #include "PSOManager.h"
 #include "LightManager.h"
+#include "CollisionMask.h"
 static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception) {
     //ダンプファイルの作成
     SYSTEMTIME time;
@@ -107,6 +108,7 @@ PSOManager::GetInstance()->Initialize();
 
 void Framework::Finalize()
 {
+    CollisionMask::GetInstance()->Finalize();
     LightManager::GetInstance()->Finalize();
     SrvManager::GetInstance()->Finalize();
     SceneManager::GetInstance()->Finalize();

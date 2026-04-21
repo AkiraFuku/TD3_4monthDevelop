@@ -92,18 +92,12 @@ private:
   //Vector3 enemyPos_ = { 3.0f,0.0f,10.0f };
 
   std::vector<std::unique_ptr<Enemy>> enemies_; // 敵のリスト
-  std::vector<Vector3> enemyPositions_
-  {
-             {3.0f, 0.0f, 10.0f},
-             {3.0f, 0.0f, 10.0f},
-             {3.0f, 0.0f, 10.0f}
-  };
-      // 複数体の初期位置リスト
+  std::vector<Vector3> enemyPositions_; // 複数体の初期位置リスト
 
   // 巣の素材
   std::vector<std::unique_ptr<NestMaterial>> nestMaterial_;
   // 素材の位置
-  std::vector<Vector3> nestMaterialPositions_ = { { 3.0f,0.0f,8.0f },{ 3.0f,0.0f,8.0f } };
+  std::vector<Vector3> nestMaterialPositions_;
 
   // 一方通行のオブジェクト
   std::vector<std::unique_ptr<OneWayObject>> oneWayObjects_;
@@ -123,4 +117,7 @@ private:
   std::vector<std::unique_ptr <Sprite>> nestCountSprites_;
   std::unique_ptr<Sprite> slashSprite_;
   std::unique_ptr<Sprite> slashNestSprite_;
+
+  // リセットフラグ
+  bool isReset_ = false;
 };
