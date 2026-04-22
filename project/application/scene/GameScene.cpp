@@ -337,7 +337,7 @@ void GameScene::Update()
 
     // マウスホイールの入力取得
 
-    if (Input::GetInstance()->GetMouseMove().z) {
+    /*if (Input::GetInstance()->GetMouseMove().z) {
         Vector3 cameraTranslate = camera->GetTranslate();
         cameraTranslate =
             Add(cameraTranslate,
@@ -345,7 +345,7 @@ void GameScene::Update()
                 static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
                 0.1f });
         camera->SetTranslate(cameraTranslate);
-    }
+    }*/
     /*if (Input::GetInstance()->TriggerMouseDown(0))
     {
         if (!Audio::GetInstance()->IsPlaying(handle_))

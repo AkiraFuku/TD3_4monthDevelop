@@ -77,7 +77,7 @@ private:
     static inline const float kHeight = 1.6f;
 
     // 卵への攻撃タイマー
-    int attackTimer_ = 360;
+    int attackTimer_ = 60;
 
     // 当たり判定フラグ
     bool isHit_ = false;

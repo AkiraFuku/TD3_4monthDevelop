@@ -327,7 +327,7 @@ void Enemy::OnCollision(Egg* egg)
         isHit_=true;
         // 一定間隔で卵のHPを減らす
         egg->SetHP(1.0f);
-        attackTimer_ = 360;
+        attackTimer_ = 60;
         // サウンド再生
         Audio::GetInstance()->PlayAudio(attack_, false, 1.0f);
 
