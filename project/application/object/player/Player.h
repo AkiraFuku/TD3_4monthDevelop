@@ -117,6 +117,7 @@ public:
 
     // 巣の素材の回収数の getter/setter
     void SetNestMaterial(int num) { nestMaterialNum_ += num; }
+    void ResetNestMaterial() { nestMaterialNum_ = 0; }
     int GetNestMaterial() const { return nestMaterialNum_; }
 
     /// <summary>

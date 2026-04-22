@@ -12,31 +12,31 @@
 void GameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
-    camera->SetRotate({0.80f, 0.0f, 0.0f});
-    camera->SetTranslate({0.0f, 30.0f, -30.0f});
+    camera->SetRotate({ 0.80f, 0.0f, 0.0f });
+    camera->SetTranslate({ 0.0f, 30.0f, -30.0f });
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->Setcamera(camera.get());
 
-  //  BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
+    //  BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
-//    Audio::GetInstance()->PlayAudio(BGMhandle_, true);
-    // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
-    // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
-    // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
+  //    Audio::GetInstance()->PlayAudio(BGMhandle_, true);
+      // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
+      // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
+      // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
     LightManager::GetInstance()->AddSpotLight(
-        {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
-        Normalize(Vector3 {-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.0f, 1.25f, 0.0f }, 4.0f,
+        Normalize(Vector3{ -1.0f, -1.0f, 0.0f }), 7.0f, 2.0f,
         std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
     LightManager::GetInstance()->AddSpotLight(
-        {1.0f, 1.0f, 1.0f, 1.0f}, {2.0f, 1.25f, 0.0f}, 4.0f,
-        Normalize(Vector3 {-1.0f, -1.0f, 0.0f}), 7.0f, 2.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.0f, 1.25f, 0.0f }, 4.0f,
+        Normalize(Vector3{ -1.0f, -1.0f, 0.0f }), 7.0f, 2.0f,
         std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
 
-    Vector3 point1 = {0, 0, 0};
-    LightManager::GetInstance()->AddPointLight({1.0f, 1.0f, 1.0f, 1.0f}, point1,
+    Vector3 point1 = { 0, 0, 0 };
+    LightManager::GetInstance()->AddPointLight({ 1.0f, 1.0f, 1.0f, 1.0f }, point1,
         4.0f, 2.0f, 0.1f);
-    LightManager::GetInstance()->AddPointLight({1.0f, 1.0f, 1.0f, 1.0f},
-        {0, 0, 0}, 4.0f, 2.0f, 0.1f);
+    LightManager::GetInstance()->AddPointLight({ 1.0f, 1.0f, 1.0f, 1.0f },
+        { 0, 0, 0 }, 4.0f, 2.0f, 0.1f);
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 
     ParticleManager::GetInstance()->CreateParticleGroup(
@@ -48,11 +48,11 @@ void GameScene::Initialize() {
     // sprite->Initialize("resources/monsterBall.png");
     sprite->Initialize("resources/uvChecker.png");
 
-    sprite->SetPosition(Vector2 {25.0f + 100.0f, 100.0f});
+    sprite->SetPosition(Vector2{ 25.0f + 100.0f, 100.0f });
     // sprite->SetSize(Vector2{ 100.0f,100.0f });
     // sprites.push_back(sprite);
 
-    sprite->SetAnchorPoint(Vector2 {0.5f, 0.5f});
+    sprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
 
     //}
 
@@ -73,7 +73,7 @@ void GameScene::Initialize() {
 
     /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
     camera->SetFarCrip(1000.0f);
-    EulerTransform M = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+    EulerTransform M = { {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
     emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
 
     /*player_ = new Player();
@@ -104,7 +104,7 @@ void GameScene::Initialize() {
     {
         nestMaterialPositions_[i] = CollisionMask::GetInstance()->GetNestMaterialPos(i);
     }
-  
+
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
@@ -133,20 +133,20 @@ void GameScene::Initialize() {
     goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
 
 
-    
+
 
     // 敵の初期化
 
     /*enemy_ = std::make_unique<Enemy>();
     enemy_->Initialize(enemyPos_);*/
 
-	
 
-	for (const auto& pos : enemyPositions_) {
-		auto enemy = std::make_unique<Enemy>();
-		enemy->Initialize(pos);
-		enemies_.push_back(std::move(enemy)); // リストに追加
-	}
+
+    for (const auto& pos : enemyPositions_) {
+        auto enemy = std::make_unique<Enemy>();
+        enemy->Initialize(pos);
+        enemies_.push_back(std::move(enemy)); // リストに追加
+    }
 
 
     // 巣の素材の初期化
@@ -156,7 +156,7 @@ void GameScene::Initialize() {
         nestMaterial->Initialize(pos);
         nestMaterial_.push_back(std::move(nestMaterial));
     }
-   
+
     //// ... 一方通行オブジェクトの生成 ...
     //auto oneWay = std::make_unique<OneWayObject>();
     //// 床
@@ -230,22 +230,22 @@ void GameScene::Initialize() {
         std::string path = "resources/numbers/" + std::to_string(i) + ".png";
 
         // 1つずつ生成する
-        auto threadLimit = std::make_unique<Sprite>(); 
+        auto threadLimit = std::make_unique<Sprite>();
         threadLimit->Initialize(path);
         threadLimit->SetPosition(Vector2{ 250.0f,500.0f });
         threadLimitSprites_.push_back(std::move(threadLimit));
 
-        auto threadCount = std::make_unique<Sprite>(); 
+        auto threadCount = std::make_unique<Sprite>();
         threadCount->Initialize(path);
         threadCount->SetPosition(Vector2{ 0.0f,500.0f });
         threadCountSprites_.push_back(std::move(threadCount));
 
-        auto nestLimit = std::make_unique<Sprite>(); 
+        auto nestLimit = std::make_unique<Sprite>();
         nestLimit->Initialize(path);
         nestLimit->SetPosition(Vector2{ 850.0f,500.0f });
         nestMaterialSprites_.push_back(std::move(nestLimit));
 
-        auto nestCount = std::make_unique<Sprite>(); 
+        auto nestCount = std::make_unique<Sprite>();
         nestCount->Initialize(path);
         nestCount->SetPosition(Vector2{ 600.0f,500.0f });
         nestCountSprites_.push_back(std::move(nestCount));
@@ -341,9 +341,9 @@ void GameScene::Update()
         Vector3 cameraTranslate = camera->GetTranslate();
         cameraTranslate =
             Add(cameraTranslate,
-                Vector3 {0.0f, 0.0f,
+                Vector3{ 0.0f, 0.0f,
                 static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
-                0.1f});
+                0.1f });
         camera->SetTranslate(cameraTranslate);
     }
     /*if (Input::GetInstance()->TriggerMouseDown(0))
@@ -354,43 +354,43 @@ void GameScene::Update()
         }
 
     }*/
-   /* if (Input::GetInstance()->TriggerMouseDown(0)) {
-        if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
-            Audio::GetInstance()->PauseAudio(BGMhandle_);
-        }
-        else {
-            Audio::GetInstance()->ResumeAudio(BGMhandle_);
-        }
-    }*/
-    //if (Input::GetInstance()->GetJoyStick(0, state)) {
-    //    {
-    //        // 左スティックの値を取得
-    //        float x = (float) state.Gamepad.sThumbLX;
-    //        float y = (float) state.Gamepad.sThumbLY;
+    /* if (Input::GetInstance()->TriggerMouseDown(0)) {
+         if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
+             Audio::GetInstance()->PauseAudio(BGMhandle_);
+         }
+         else {
+             Audio::GetInstance()->ResumeAudio(BGMhandle_);
+         }
+     }*/
+     //if (Input::GetInstance()->GetJoyStick(0, state)) {
+     //    {
+     //        // 左スティックの値を取得
+     //        float x = (float) state.Gamepad.sThumbLX;
+     //        float y = (float) state.Gamepad.sThumbLY;
 
-    //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-    //        float normalizedX = x / 32767.0f;
-    //        float normalizedY = y / 32767.0f;
-    //        Vector3 cameraTranslate = camera->GetTranslate();
-    //        cameraTranslate =
-    //            Add(cameraTranslate,
-    //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-    //        camera->SetTranslate(cameraTranslate);
-    //    }
-    //    {
-    //        //// 左スティックの値を取得
-    //        float x = (float) state.Gamepad.sThumbRX;
-    //        float y = (float) state.Gamepad.sThumbRY;
-    //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-    //        float normalizedX = x / 32767.0f;
-    //        float normalizedY = y / 32767.0f;
+     //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+     //        float normalizedX = x / 32767.0f;
+     //        float normalizedY = y / 32767.0f;
+     //        Vector3 cameraTranslate = camera->GetTranslate();
+     //        cameraTranslate =
+     //            Add(cameraTranslate,
+     //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+     //        camera->SetTranslate(cameraTranslate);
+     //    }
+     //    {
+     //        //// 左スティックの値を取得
+     //        float x = (float) state.Gamepad.sThumbRX;
+     //        float y = (float) state.Gamepad.sThumbRY;
+     //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
+     //        float normalizedX = x / 32767.0f;
+     //        float normalizedY = y / 32767.0f;
 
-    //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-    //        point =
-    //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-    //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
-    //    }
-    //}
+     //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
+     //        point =
+     //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
+     //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
+     //    }
+     //}
 
     if (isDebugCamera_)
     {
@@ -429,7 +429,7 @@ void GameScene::Update()
 
     ImGui::End();
 
-   
+
 
     ImGui::Begin("DebugCamera Setting");
 
@@ -486,22 +486,23 @@ void GameScene::Update()
     // ゴールの更新処理
     goal_->Update();
 
-	// 敵の目的地を決定する
-	Vector3 targetPos;
-	if (egg_->IsOnPlayer()) {
-		targetPos = player_->GetPosition();
-	} else {
-		targetPos = egg_->GetWorldPosition();
-	}
+    // 敵の目的地を決定する
+    Vector3 targetPos;
+    if (egg_->IsOnPlayer()) {
+        targetPos = player_->GetPosition();
+    }
+    else {
+        targetPos = egg_->GetWorldPosition();
+    }
 
-	// プレイヤーが糸を撃った瞬間を検知
-	if (player_->GetAndResetDidFireThread()) {
-		OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
-		// 【変更】すべての敵に経路再計算をリクエスト
-		for (auto& enemy : enemies_) {
-			enemy->RequestPathReplan();
-		}
-	}
+    // プレイヤーが糸を撃った瞬間を検知
+    if (player_->GetAndResetDidFireThread()) {
+        OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+        // 【変更】すべての敵に経路再計算をリクエスト
+        for (auto& enemy : enemies_) {
+            enemy->RequestPathReplan();
+        }
+    }
 
     // 1. すでに捕まっている敵のキーを収集
     std::vector<uint64_t> occupiedKeys;
@@ -517,15 +518,15 @@ void GameScene::Update()
     //    enemy->Update(playerPos_, thread_.get(), oneWayObjects_, brokenBlocks_, occupiedKeys);
     //}
 
-	// 【変更】すべての敵のUpdateを呼ぶ
-	for (auto& enemy : enemies_) {
-        if(enemy->GetCanMove())
+    // 【変更】すべての敵のUpdateを呼ぶ
+    for (auto& enemy : enemies_) {
+        if (enemy->GetCanMove())
         {
-            enemy->Update(targetPos, thread_.get(),stageOneWays_,brokenBlocks_, occupiedKeys);
+            enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
         }
-	}
-  
-   // 巣の素材の更新処理
+    }
+
+    // 巣の素材の更新処理
     for (auto& nestMaterial : nestMaterial_)
     {
         if (!nestMaterial->IsDead())
@@ -567,12 +568,14 @@ void GameScene::Update()
     );
 
     // ① Rキーを押したらフェードアウト開始
-    if (Input::GetInstance()->PushedKeyDown(DIK_R) &&
-        fade_->GetStatus() == Fade::Status::None &&
-        !isResetWaiting_)
+    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER) ||
+        Input::GetInstance()->PushedKeyDown(DIK_R))
     {
-        fade_->StartFadeOut(0.02f);
-        isResetWaiting_ = true; // リセット待機状態にする
+        if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)
+        {
+            fade_->StartFadeOut(0.02f);
+            isResetWaiting_ = true; // リセット待機状態にする
+        }
     }
 
     // ② フェードアウトが完了（画面が真っ黒）になった瞬間の処理
@@ -580,6 +583,23 @@ void GameScene::Update()
     {
         // 1. オブジェクトの位置を初期状態に戻す（既存の関数を呼び出す）
         LoadStageData();
+
+        // プレイヤーデータをリセット
+        // ファイルを読み込む
+        JSONManager::GetInstance()->LoadFile("Player");
+
+        int32_t remaining;
+        if (JSONManager::GetInstance()->TryGetInt("Player", "remainingThreadCount", remaining)) {
+            player_->SetMaxThreadCount(remaining);
+        }
+
+        // 巣の素材データをリセット
+        for (auto& nestMaterial : nestMaterial_)
+        {
+            nestMaterial->SetDead(false); // デスフラグをリセット
+        }
+
+        player_->ResetNestMaterial();
 
         // ※補足：位置以外の変数（体力、発射回数、スコアなど）をリセットする必要があればここに書きます
         // threadLimit_ = 0; 
@@ -616,9 +636,9 @@ void GameScene::Draw() {
     goal_->Draw();
 
     // 敵の描画処理
-	for (auto& enemy : enemies_) {
-		enemy->Draw();
-	}
+    for (auto& enemy : enemies_) {
+        enemy->Draw();
+    }
 
     // 巣の素材の描画処理
     for (auto& nestMaterial : nestMaterial_)
@@ -650,7 +670,7 @@ void GameScene::Draw() {
 
     spiderWeb_->Draw();
 
-    if(isVisibleCollisionMask_)
+    if (isVisibleCollisionMask_)
     {
         CollisionMask::GetInstance()->Draw();
     }
@@ -666,30 +686,32 @@ void GameScene::Draw() {
 }
 
 void GameScene::CheckAllCollisions() {
-	// プレイヤーと卵の判定（ここはそのまま）
-	AABB playerAABB = player_->GetAABB();
-	AABB eggAABB = egg_->GetAABB();
+    // プレイヤーと卵の判定（ここはそのまま）
+    AABB playerAABB = player_->GetAABB();
+    AABB eggAABB = egg_->GetAABB();
 
-	if (isCollision(playerAABB, eggAABB)) {
-		egg_->OnCollision(player_.get());
-		ResolveCollision(player_.get(), playerAABB, eggAABB);
-	} else {
-		egg_->SetHitFlag(false);
-	}
+    if (isCollision(playerAABB, eggAABB)) {
+        egg_->OnCollision(player_.get());
+        ResolveCollision(player_.get(), playerAABB, eggAABB);
+    }
+    else {
+        egg_->SetHitFlag(false);
+    }
 
-	// 【変更】すべての敵と卵の判定
-	for (auto& enemy : enemies_) {
-		AABB enemyAABB = enemy->GetAABB();
+    // 【変更】すべての敵と卵の判定
+    for (auto& enemy : enemies_) {
+        AABB enemyAABB = enemy->GetAABB();
 
-		if (isCollision(enemyAABB, eggAABB)) {
-			enemy->OnCollision(egg_.get());
-			ResolveCollision(enemy.get(), enemyAABB, eggAABB);
-		} else {
-			enemy->SetHitFlag(false);
-		}
-	}
-  
-  // 巣の素材の座標
+        if (isCollision(enemyAABB, eggAABB)) {
+            enemy->OnCollision(egg_.get());
+            ResolveCollision(enemy.get(), enemyAABB, eggAABB);
+        }
+        else {
+            enemy->SetHitFlag(false);
+        }
+    }
+
+    // 巣の素材の座標
     for (auto& nestMaterial : nestMaterial_)
     {
         if (!nestMaterial->IsDead())
@@ -704,9 +726,9 @@ void GameScene::CheckAllCollisions() {
             }
         }
     }
-    
 
-    
+
+
 }
 
 bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
@@ -779,7 +801,7 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             }
         }
     }
-   
+
     // 修正した座標を反映
     player->SetPosition(currentPos);
 }
@@ -838,31 +860,31 @@ void GameScene::LoadStageData()
     egg_->SetTranslate(CollisionMask::GetInstance()->GetEggStartPos());
     goal_->SetTranslate(CollisionMask::GetInstance()->GetGoalPos());
     size_t i = 0;
-    for(auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
+    for (auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
     {
         (*itEnemy)->Reset(CollisionMask::GetInstance()->GetEnemyStartPos(i));
         ++i;
     }
-   /* i = 0;
-    for (auto itNestMaterial = nestMaterials_.begin(); itNestMaterial != nestMaterials_.end(); ++itNestMaterial)
-    {
-        (*itNestMaterial)->SetTranslate(collisionMask_->GetNestMaterialPos(i));
-        ++i;
-    }*/
+    /* i = 0;
+     for (auto itNestMaterial = nestMaterials_.begin(); itNestMaterial != nestMaterials_.end(); ++itNestMaterial)
+     {
+         (*itNestMaterial)->SetTranslate(collisionMask_->GetNestMaterialPos(i));
+         ++i;
+     }*/
 
     for (auto itNestMaterial = nestMaterial_.begin(); itNestMaterial != nestMaterial_.end(); ++itNestMaterial)
-     {
-         (*itNestMaterial)->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(i));
-         ++i;
-     }
-    
+    {
+        (*itNestMaterial)->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(i));
+        ++i;
+    }
+
     i = 0;
     for (auto itOnWayObject = stageOneWays_.begin(); itOnWayObject != stageOneWays_.end(); ++itOnWayObject)
     {
         (*itOnWayObject)->SetTranslate(CollisionMask::GetInstance()->GetOneWayObjectPos(i));
         ++i;
     }
-  
+
     std::vector<Vector3> oneWayObjectPos_;
     thread_->ClearThreads();
 }

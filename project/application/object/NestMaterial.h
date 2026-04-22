@@ -30,6 +30,8 @@ public:
 
     // デスフラグのgetter
     bool IsDead() { return isDead_; }
+    // デスフラグのsetter
+    void SetDead(bool isDead) { isDead_ = isDead; }
 
 public: // 外部入出力
     
