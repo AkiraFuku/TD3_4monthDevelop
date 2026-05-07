@@ -554,6 +554,7 @@ void CollisionMask::CreateJsonData(int stageID)
    stageGroup_.itemVector["enemyStartPos"] = std::vector<JSONManager::Item> { };
    stageGroup_.itemVector["nestMaterialPos"] = std::vector<JSONManager::Item>{ };
    stageGroup_.itemVector["oneWayObjectPos"] = std::vector<JSONManager::Item>{ };
+   stageGroup_.itemVector["brokenBlockPos"] = std::vector<JSONManager::Item>{ };
 
    JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
 }
@@ -605,6 +606,12 @@ void CollisionMask::LoadJsonData(int stageID)
 
     JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "oneWayObjectDir", stageDatas_[stageID]->oneWayObjectDir_);
 
+    std::vector<Vector3> brokenBlockPos;
+    if (JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "brokenBlockPos", brokenBlockPos))
+    {
+        stageDatas_[stageID]->brokenBlockPos_ = brokenBlockPos;
+    }
+
     LoadFromFile(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->maskData_->textureData);
     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->texturePass_);
 
@@ -634,6 +641,8 @@ void CollisionMask::SaveJsonData(int stageID)
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectScale_);
     stageGroup_.itemVector["oneWayObjectDir"] =
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectDir_);
+    stageGroup_.itemVector["brokenBlockPos"] =
+        JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->brokenBlockPos_);
 
     JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
     JSONManager::GetInstance()->SaveFile("Stage" + std::to_string(stageID));

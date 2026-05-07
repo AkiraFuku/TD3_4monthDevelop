@@ -89,10 +89,12 @@ void GameScene::Initialize() {
     // JSONから座標リストのサイズを取得する
     size_t enemyCount = CollisionMask::GetInstance()->GetEnemyCount(); // サイズを返す関数を定義しておく
     size_t nestMaterialCount = CollisionMask::GetInstance()->GetNestMaterialCount(); // サイズを返す関数を定義しておく
+    size_t brokenBlockCount = CollisionMask::GetInstance()->GetBrokenBlockCount(); // サイズを返す関数を定義しておく
 
     // vectorをJSONの数に合わせてリサイズ
     enemyPositions_.resize(enemyCount);
     nestMaterialPositions_.resize(nestMaterialCount);
+    brokenBlockPos_.resize(brokenBlockCount);
 
     // 3. 一致したサイズ分だけループして代入
     for (int i = 0; i < enemyPositions_.size(); ++i)
@@ -103,6 +105,11 @@ void GameScene::Initialize() {
     for (int i = 0; i < nestMaterialPositions_.size(); ++i)
     {
         nestMaterialPositions_[i] = CollisionMask::GetInstance()->GetNestMaterialPos(i);
+    }
+
+    for (int i = 0; i < brokenBlockPos_.size(); ++i)
+    {
+        brokenBlockPos_[i] = CollisionMask::GetInstance()->GetBrokenBlockPos(i);
     }
 
     // ----- Thread -----
@@ -208,11 +215,6 @@ void GameScene::Initialize() {
     player_->SetOneWayObjects(playerOneWayPtrs);
 
     // 数回渡ったら壊れるオブジェクトの生成
-    brokenBlockPos_ =
-    {
-        //{-4.0f,-2.0f,8.0f}
-    };
-
     for (const auto& pos : brokenBlockPos_)
     {
         auto brokenBlock = std::make_unique<BrokenBlock>();
@@ -557,7 +559,6 @@ void GameScene::Update()
     goal_->Clear();
     egg_->Death();
 
-    // 破壊フラグの立ったブロックを削除
     // 破壊フラグの立ったブロックを削除
     brokenBlocks_.erase(
         std::remove_if(brokenBlocks_.begin(), brokenBlocks_.end(),
