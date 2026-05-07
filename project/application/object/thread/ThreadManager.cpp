@@ -649,9 +649,19 @@ void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllN
         // ※ Y軸のたわみだけを連動させたい場合は、diff.x と diff.z を 0.0f にしても良いです
         Vector3 pullForce = diff * kIntersectionPullStiffness;
 
-        // お互いを引き寄せるように位置を補正する（質量が同じと仮定して半分ずつ動かす）
-        physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
-        physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+        //// お互いを引き寄せるように位置を補正する（質量が同じと仮定して半分ずつ動かす）
+        //physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
+        //physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+
+        // =========================================================
+        // ノードが壁に固定されていない（mass > 0.0f）場合のみ動かす！
+        // =========================================================
+        if (physicsA->GetNodes()[nodeIndexA].mass > 0.0f) {
+            physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
+        }
+        if (physicsB->GetNodes()[nodeIndexB].mass > 0.0f) {
+            physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+        }
     }
 }
 
