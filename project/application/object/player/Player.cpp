@@ -3,6 +3,7 @@
 #include "ModelManager.h"
 #include "imgui.h"
 #include "CollisionMask.h"
+#include "BrokenBlock.h"
 
 #include"ThreadManager.h"
 #include "Egg.h"
@@ -209,6 +210,57 @@ void Player::IsCollisionSDF() {
     float hW = kWidth * 0.5f;
     float hH = kHeight * 0.5f;
 
+    // =========================================================
+    // ★ 追加: BrokenBlock から意図せず壁の中に落ちないようにする制限処理
+    // =========================================================
+    BrokenBlock* activeBlock = nullptr;
+    // 現在、プレイヤーの中心がどのブロックに乗っているかを取得
+    for (auto* block : brokenBlocks_) {
+        if (block && !block->IsBroken() && block->IsInside(translate_)) {
+            activeBlock = block;
+            break;
+        }
+    }
+
+    if (activeBlock) {
+        AABB bAABB = activeBlock->GetAABB();
+
+        // プレイヤーの中心座標がブロックの範囲内に収まるための限界値（キャラクターの幅を考慮）
+        float limitMinX = bAABB.min.x + hW;
+        float limitMaxX = bAABB.max.x - hW;
+        float limitMinZ = bAABB.min.z + hH;
+        float limitMaxZ = bAABB.max.z - hH;
+
+        // --- X軸の制限 ---
+        if (nextPos.x < limitMinX) {
+            // ブロックから出ようとしている先が「壁」なら、ブロックの端に留める
+            if (CollisionMask::GetInstance()->GetSDFValue(limitMinX - hW, nextPos.z) < 0.075f) {
+                moveVel_.x = limitMinX - translate_.x;
+            }
+        } else if (nextPos.x > limitMaxX) {
+            if (CollisionMask::GetInstance()->GetSDFValue(limitMaxX + hW, nextPos.z) < 0.075f) {
+                moveVel_.x = limitMaxX - translate_.x;
+            }
+        }
+
+        // --- Z軸の制限（X軸の補正を反映した上で判定） ---
+        nextPos.x = translate_.x + moveVel_.x;
+        if (nextPos.z < limitMinZ) {
+            if (CollisionMask::GetInstance()->GetSDFValue(nextPos.x, limitMinZ - hH) < 0.075f) {
+                moveVel_.z = limitMinZ - translate_.z;
+            }
+        } else if (nextPos.z > limitMaxZ) {
+            if (CollisionMask::GetInstance()->GetSDFValue(nextPos.x, limitMaxZ + hH) < 0.075f) {
+                moveVel_.z = limitMaxZ - translate_.z;
+            }
+        }
+
+        // 制限をかけた後の速度で nextPos を更新
+        nextPos.x = translate_.x + moveVel_.x;
+        nextPos.z = translate_.z + moveVel_.z;
+    }
+    // =========================================================
+
     // 四隅の座標リスト
     Vector2 corners[4] = {
         {nextPos.x - hW, nextPos.z - hH}, // 左下
@@ -242,6 +294,27 @@ void Player::IsCollisionSDF() {
 
     // ★修正点: 4つの頂点「すべて」に対して順番にめり込み判定と押し戻しを行う
     for (const auto& corner : corners) {
+        // =========================================================
+        // ★ 修正: この頂点が BrokenBlock の中にあるか判定する
+        // =========================================================
+        bool isCornerOnBrokenBlock = false;
+        for (auto* block : brokenBlocks_) {
+            if (block && !block->IsBroken()) {
+                // corner は Vector2 なので Vector3 に変換して判定
+                Vector3 corner3D = {corner.x, translate_.y, corner.y};
+                if (block->IsInside(corner3D)) {
+                    isCornerOnBrokenBlock = true;
+                    break;
+                }
+            }
+        }
+
+        // ★ ブロックの中にある頂点は、壁(SDF)の押し戻しをスキップする！
+        if (isCornerOnBrokenBlock) {
+            continue;
+        }
+
+        // 以降は既存の押し戻し処理
         float d = CollisionMask::GetInstance()->GetSDFValue(corner.x, corner.y);
 
         // 衝突判定（この頂点が壁にめり込んでいる場合）
