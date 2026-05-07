@@ -23,10 +23,20 @@ void OneWayObject::Initialize(const Vector3& pos, Direction dir, float width, fl
     // 許可方向（allowedDir_）に合わせてモデルを回転させる
     float pi = std::numbers::pi_v<float>;
     switch (allowedDir_) {
-    case Direction::PositiveX: object_->SetRotate({ 0.0f, pi, 0.0f }); break;  // 90度
-    case Direction::NegativeX: object_->SetRotate({ 0.0f, 0.0f, 0.0f }); break; // -90度
-    case Direction::PositiveZ: object_->SetRotate({ 0.0f, pi / 2.0f, 0.0f }); break;       // 0度（正面）
-    case Direction::NegativeZ: object_->SetRotate({ 0.0f, -pi / 2.0f, 0.0f }); break;          // 180度
+    case Direction::PositiveX: 
+        object_->SetRotate({ 0.0f, pi, 0.0f }); 
+        break;  // 90度
+    case Direction::NegativeX: 
+        object_->SetRotate({ 0.0f, 0.0f, 0.0f }); 
+        break; // -90度
+    case Direction::PositiveZ: 
+        object_->SetRotate({ 0.0f, pi / 2.0f, 0.0f });
+        object_->SetScale({ depth_, 1.0f, width_ });
+        break;       // 0度（正面）
+    case Direction::NegativeZ: 
+        object_->SetRotate({ 0.0f, -pi / 2.0f, 0.0f }); 
+        object_->SetScale({ depth_, 1.0f, width_ });
+        break;          // 180度
     }
 }
 
@@ -60,18 +70,10 @@ bool OneWayObject::IsInside(const Vector3& pos) const {
     float sizeX = width_;
     float sizeZ = depth_;
 
-    // 90度または-90度回転している場合、判定上のXとZのサイズを入れ替える
-    if (allowedDir_ == Direction::PositiveZ || allowedDir_ == Direction::NegativeZ) {
-        sizeX = depth_;  // 回転後のワールドXサイズ
-        sizeZ = width_;  // 回転後のワールドZサイズ
-    }
-
     float minX = position_.x - (sizeX / 2.0f);
     float maxX = position_.x + (sizeX / 2.0f);
     float minZ = position_.z - (sizeZ / 2.0f);
     float maxZ = position_.z + (sizeZ / 2.0f);
-
-    // デバッグ用のSetScaleは削除（副作用を防ぐため）
 
     return (pos.x >= minX && pos.x <= maxX && pos.z >= minZ && pos.z <= maxZ);
 }
@@ -143,11 +145,6 @@ void OneWayObject::ResolveCollision(Vector3& currentPos, Vector3& moveVel) const
 AABB OneWayObject::GetAABB() const {
     float sizeX = width_;
     float sizeZ = depth_;
-
-    if (allowedDir_ == Direction::PositiveZ || allowedDir_ == Direction::NegativeZ) {
-        sizeX = depth_;
-        sizeZ = width_;
-    }
 
     return {
         {position_.x - sizeX / 2.0f, position_.y - 0.5f, position_.z - sizeZ / 2.0f},

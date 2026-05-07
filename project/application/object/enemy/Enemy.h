@@ -89,6 +89,8 @@ private:
 
     bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
 
+    bool isOnBridge_ = false; // 橋の上にいるかどうかの状態保持
+
     // サウンド
     Audio::SoundHandle attack_ = 0;
 
