@@ -439,9 +439,9 @@ void Player::FireThread()
         dir.x /= len;
         dir.z /= len;
 
-        const float extend = 0.2f;
+        /*const float extend = 0.2f;
         start.x -= dir.x * extend;
-        start.z -= dir.z * extend;
+        start.z -= dir.z * extend;*/
         //end.x += dir.x * extend;
         //end.z += dir.z * extend;
     }
