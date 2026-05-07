@@ -20,7 +20,8 @@
 /// </summary>
 /// <param name="pos">初期位置</param>
 /// <param name="threadManager">ThreadManagerのポインタ</param>
-void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
+void Player::Initialize(const Vector3& pos, ThreadManager* thread)
+{
 
     //ThreadManagerを借りる
     thread_ = thread;
@@ -63,17 +64,19 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     // サウンド読み込み
     threadSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/thread.wav");
-    
+
 }
 /// <summary>
 /// 終了
 /// </summary>
-void Player::Finalize() {
+void Player::Finalize()
+{
 }
 /// <summary>
 /// 更新
 /// </summary>
-void Player::Update() {
+void Player::Update()
+{
     moveVel_ = {0.0f, 0.0f, 0.0f};
 
     UpdatePredictionLine();
@@ -162,7 +165,8 @@ void Player::Update() {
 /// <summary>
 /// 描画
 /// </summary>
-void Player::Draw() {
+void Player::Draw()
+{
     // モデルの描画
     object_->Draw();
 
@@ -181,7 +185,8 @@ void Player::Draw() {
 /// <summary>
 /// 移動処理
 /// </summary>
-void Player::Move(const Vector3& moveDirection) {
+void Player::Move(const Vector3& moveDirection)
+{
     //  moveDirectionは既にState側で計算・正規化されている前提
 
     // 先にThread移動を試す
@@ -196,12 +201,14 @@ void Player::Move(const Vector3& moveDirection) {
     moveVel_.z += moveDirection.z * velocity_.z;
 }
 
-void Player::ResultMove() {
+void Player::ResultMove()
+{
     translate_ += moveVel_;
     object_->SetTranslate(translate_);
 }
 
-void Player::IsCollisionSDF() {
+void Player::IsCollisionSDF()
+{
     Vector3 nextPos = {};
     nextPos.x = translate_.x + moveVel_.x;
     nextPos.z = translate_.z + moveVel_.z;
@@ -382,14 +389,16 @@ void Player::IsCollisionSDF() {
 /// 状態遷移
 /// </summary>
 /// <param name="newState">次の状態</param>
-void Player::ChangeState(std::unique_ptr<IPlayerState> newState) {
+void Player::ChangeState(std::unique_ptr<IPlayerState> newState)
+{
     state_ = std::move(newState);
     state_->Initialize(this);
 }
 
 /// <summary>
 /// 糸を発射する処理
-void Player::FireThread() {
+void Player::FireThread()
+{
     // ★追加：残り回数が0なら張れずにリターンする
     if (remainingThreadCount_ <= 0) {
         return;
@@ -417,6 +426,13 @@ void Player::FireThread() {
     Vector3 start = {rayResult_.hitPos.x, targetY, rayResult_.hitPos.y};
     Vector3 end = {rayResult_.exitPos.x, targetY, rayResult_.exitPos.y};
 
+    // =========================================================
+    // ★ 追加: 既存の糸と近すぎないか（重複しないか）チェック
+    // =========================================================
+    if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) {
+        return; // 近すぎる場合はここで処理を抜け、予測線を描画しない
+    }
+
     Vector3 dir = end - start;
     float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
     if (len > 0.0001f) {
@@ -439,7 +455,8 @@ void Player::FireThread() {
     remainingThreadCount_--;
 }
 
-void Player::CreatePSO() {
+void Player::CreatePSO()
+{
     PsoConfig config {};
     config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
     config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
@@ -465,7 +482,8 @@ void Player::CreatePSO() {
 
 
         // Enum定義 (可読性のため)
-        enum {
+        enum
+        {
             kMaterial, kTransform, kTexture, DirLight, PointLight, SpotLight, Count, kCamera
         };
 
@@ -552,17 +570,20 @@ void Player::CreatePSO() {
     object_->SetPsoName("PLayer");
 }
 
-void Player::SetPosition(const Vector3& pos) {
+void Player::SetPosition(const Vector3& pos)
+{
     translate_ = pos;
     object_->SetTranslate(translate_);
 }
 
 // 向いている方向
-Vector3 Player::GetForward() const {
+Vector3 Player::GetForward() const
+{
     return {std::sin(rotationY_), 0.0f, std::cos(rotationY_)};
 }
 
-AABB Player::GetAABB() const {
+AABB Player::GetAABB() const
+{
     Vector3 worldPos = GetPosition();
     AABB aabb;
 
@@ -572,12 +593,14 @@ AABB Player::GetAABB() const {
     return aabb;
 }
 
-Matrix4x4 Player::GetWorldMatrix() const {
+Matrix4x4 Player::GetWorldMatrix() const
+{
     Matrix4x4 worldMatrix = MakeAfineMatrix(scale_, rotate_, translate_);
     return worldMatrix;
 }
 
-bool Player::CanFireThread() const {
+bool Player::CanFireThread() const
+{
     if (!egg_) {
         return true;
     }
@@ -590,7 +613,8 @@ bool Player::CanFireThread() const {
     return true;
 }
 
-OneWayObject* Player::CheckOnOneWayObject() const {
+OneWayObject* Player::CheckOnOneWayObject() const
+{
     Vector3 pos = GetPosition();
     for (auto* oneWay : oneWayObjects_) {
         if (oneWay && oneWay->IsInside(pos)) {
@@ -600,7 +624,8 @@ OneWayObject* Player::CheckOnOneWayObject() const {
     return nullptr;
 }
 
-void Player::TurnToDirection(const Vector3& direction) {
+void Player::TurnToDirection(const Vector3& direction)
+{
     if (std::abs(direction.x) < 0.0001f && std::abs(direction.z) < 0.0001f) {
         return;
     }
@@ -621,7 +646,8 @@ void Player::TurnToDirection(const Vector3& direction) {
     object_->SetRotate(rotate_);
 }
 
-void Player::UpdatePredictionLine() {
+void Player::UpdatePredictionLine()
+{
     // ★追加: 照準の位置を計算して更新
     const float kAimDistance = 5.0f; // プレイヤーから照準までの距離
     Vector3 forward = GetForward();
@@ -646,6 +672,13 @@ void Player::UpdatePredictionLine() {
 
             Vector3 start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
             Vector3 end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
+
+            // =========================================================
+            // ★ 追加: 既存の糸と近すぎないか（重複しないか）チェック
+            // =========================================================
+            if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) {
+                return; // 近すぎる場合は発射をキャンセルする
+            }
 
             Vector3 dir = end - start;
             float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
@@ -674,7 +707,8 @@ void Player::UpdatePredictionLine() {
     }
 }
 
-void Player::IsCollisionOneWay() {
+void Player::IsCollisionOneWay()
+{
     // 登録されている全ての OneWayObject に対して補正をかける
     for (auto* oneWay : oneWayObjects_) {
         if (oneWay) {
@@ -683,7 +717,8 @@ void Player::IsCollisionOneWay() {
     }
 }
 
-void Player::InitializeModel() {
+void Player::InitializeModel()
+{
 
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
     ModelManager::GetInstance()->LoadModel("resources", "player/Arm/playerArm.obj");
@@ -699,7 +734,8 @@ void Player::InitializeModel() {
 
 }
 
-void Player::SaveJson() {
+void Player::SaveJson()
+{
     playerGroup_.items["position"] = JSONManager::Item {translate_};
     playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
     playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
@@ -709,7 +745,8 @@ void Player::SaveJson() {
     JSONManager::GetInstance()->SaveFile("Player");
 }
 
-void Player::LoadJson() {
+void Player::LoadJson()
+{
     // ファイルを読み込む
     JSONManager::GetInstance()->LoadFile("Player");
 
@@ -727,7 +764,8 @@ void Player::LoadJson() {
     ResultMove();
 }
 
-bool Player::TryMoveOnThread(const Vector3& moveDirection) {
+bool Player::TryMoveOnThread(const Vector3& moveDirection)
+{
     if (!thread_) {
         return false;
     }
@@ -871,7 +909,8 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     return true;
 }
 
-void Player::ResolveThreadMove() {
+void Player::ResolveThreadMove()
+{
     if (!thread_) {
         onThread_ = false;
         IsCollisionSDF();
