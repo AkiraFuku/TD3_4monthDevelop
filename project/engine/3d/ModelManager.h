@@ -19,6 +19,16 @@ public:
 
     void CreatePlaneFromTex(const std::string& modelName, const std::string& textureFilePath);
 
+    void CreateDynamicModel(
+        const std::string& modelName,
+        const std::vector<Model::VertexData>& vertices,
+        const std::string& textureFilePath);
+
+    void RemoveModel(const std::string& modelName) 
+    {
+        models.erase(modelName);
+    }
+
 private:
   
 

@@ -5,6 +5,8 @@
 #include "DrawFunction.h"
 #include "JSONManager.h"
 
+#include "StageModel.h"
+
 class CollisionMask
 {
 public:

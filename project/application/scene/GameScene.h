@@ -23,6 +23,7 @@
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
 #include "Fade.h"
+#include "StageModel.h"
 
 class GameScene : public Scene {
 public:
@@ -79,6 +80,8 @@ private:
 
     CollisionMask* collisionMask_;
     bool isVisibleCollisionMask_ = true;
+
+    std::unique_ptr<StageModel> stageModel_ = nullptr;
 
   // ----- Player -----
   std::unique_ptr<Player> player_;
