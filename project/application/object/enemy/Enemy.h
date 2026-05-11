@@ -12,6 +12,7 @@
 
 class ThreadManager;
 class Egg;
+class GameScene;
 
 class Enemy {
 public:
@@ -61,6 +62,9 @@ public:
 
     void Reset(const Vector3& pos);
 
+    // ゲームシーンのポインタをセット
+    void SetGameScene(GameScene* scene) { gameScene_ = scene; }
+
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);
@@ -93,5 +97,8 @@ private:
 
     // サウンド
     Audio::SoundHandle attack_ = 0;
+
+    // ゲームシーンのポインタ
+    GameScene* gameScene_ = nullptr;
 
 };

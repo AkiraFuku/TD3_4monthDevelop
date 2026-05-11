@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "CollisionMask.h"
 #include "SceneManager.h"
+#include "GameScene.h"
 
 void Egg::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();
@@ -38,72 +39,66 @@ void Egg::Update() {
 
     Vector3 translate = object_->GetTranslate();
 
-    // プレイヤーに持ち上げられていたら
-    if (onPlayer_)
+    if (!gameScene_->IsClear())
     {
-        // スペースキーで卵を置く
-        if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+
+        // プレイヤーに持ち上げられていたら
+        if (onPlayer_)
         {
-            // プレイヤーのワールド行列を取得
-            Matrix4x4 worldMatrix = player_->GetWorldMatrix();
-            Vector3 velocity_ = { 0.0f, -2.0f, 1.0f };
-            velocity_ = TransformNormal(velocity_, worldMatrix);
-            translate += velocity_;
-
-            // 置いた先が壁だったら
-            if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z, kWidth))
-            {
-                // プレイヤーと同じ場所に置く
-                translate = player_->GetPosition();
-            }
-
-            onPlayer_ = false;
-
-            // サウンド再生
-            Audio::GetInstance()->PlayAudio(down_, false, 1.0f);
-
-            // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
-            player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
-            object_->SetTranslate(translate);
-            return;
-        }
-
-        // 座標をプレイヤーと同期する
-        translate = player_->GetPosition();
-        translate.y += 2.0f;
-
-    } else
-    {
-        // プレイヤーと接触していたら
-        if (isHit_)
-        {
-            // スペースキーで卵を持ち上げる
+            // スペースキーで卵を置く
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
-                onPlayer_ = true;
+                // プレイヤーのワールド行列を取得
+                Matrix4x4 worldMatrix = player_->GetWorldMatrix();
+                Vector3 velocity_ = { 0.0f, -2.0f, 1.0f };
+                velocity_ = TransformNormal(velocity_, worldMatrix);
+                translate += velocity_;
+
+                // 置いた先が壁だったら
+                if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z, kWidth))
+                {
+                    // プレイヤーと同じ場所に置く
+                    translate = player_->GetPosition();
+                }
+
+                onPlayer_ = false;
+
                 // サウンド再生
-                Audio::GetInstance()->PlayAudio(up_, false, 1.0f);
-                // キャリーアニメーションを再生
-                player_->ChangeAnimation(PlayerAnima::AnimationState::Carry);
-                translate = player_->GetPosition();
-                translate.y += 2.0f;
+                Audio::GetInstance()->PlayAudio(down_, false, 1.0f);
+
+                // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
+                player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
+                object_->SetTranslate(translate);
+                return;
             }
+
+            // 座標をプレイヤーと同期する
+            translate = player_->GetPosition();
+            translate.y += 2.0f;
+
         }
-        //else
-        //{
-        //    // ゴール判定確認用の移動処理
-        //    if (Input::GetInstance()->PushedKeyDown(DIK_UP))
-        //    {
-        //        // 奥に進む
-        //        translate.z += 0.1f;
-        //    }
-        //    else if (Input::GetInstance()->PushedKeyDown(DIK_DOWN))
-        //    {
-        //        // 手前に進む
-        //        translate.z -= 0.1f;
-        //    }
-        //}
+        else
+        {
+            // プレイヤーと接触していたら
+            if (isHit_)
+            {
+                // スペースキーで卵を持ち上げる
+                if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+                {
+                    onPlayer_ = true;
+                    // サウンド再生
+                    Audio::GetInstance()->PlayAudio(up_, false, 1.0f);
+                    // キャリーアニメーションを再生
+                    player_->ChangeAnimation(PlayerAnima::AnimationState::Carry);
+                    translate = player_->GetPosition();
+                    translate.y += 2.0f;
+                }
+            }
+
+        }
+
     }
+
     // --- 色の演出処理 ---
     flickerCounter_ += 1.0f / 60.0f; // フレーム進捗（60FPS想定）
     Vector4 finalColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // 基本は白

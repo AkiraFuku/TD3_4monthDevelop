@@ -8,6 +8,7 @@
 #include"ThreadManager.h"
 #include "Egg.h"
 #include "OneWayObject.h"
+#include "GameScene.h"
 
 #include <cmath>
 #include <numbers>
@@ -79,10 +80,15 @@ void Player::Update()
 {
     moveVel_ = {0.0f, 0.0f, 0.0f};
 
-    UpdatePredictionLine();
+    if (!gameScene_->IsClear())
+    {
 
-    if (state_) {
-        state_->Update(this);
+        UpdatePredictionLine();
+
+        if (state_) {
+            state_->Update(this);
+        }
+
     }
 
     // ★これを追加！！
@@ -580,6 +586,11 @@ void Player::SetPosition(const Vector3& pos)
 Vector3 Player::GetForward() const
 {
     return {std::sin(rotationY_), 0.0f, std::cos(rotationY_)};
+}
+
+void Player::SetForward(const Vector3& forward)
+{
+    object_->SetRotate(forward);
 }
 
 AABB Player::GetAABB() const

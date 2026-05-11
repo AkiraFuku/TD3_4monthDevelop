@@ -15,6 +15,7 @@ class ThreadManager;
 class Egg;
 class OneWayObject;
 class BrokenBlock;
+class GameScene;
 
 class Player {
 public:
@@ -91,6 +92,7 @@ public:
 
     // 向いている方向
     Vector3 GetForward()const;
+    void SetForward(const Vector3& forward);
 
     // 糸の上を歩いているか？
     bool OnThread()const { return onThread_; }
@@ -144,6 +146,9 @@ public:
     // 糸の生成回数のgetter
     int GetThreadCount() const { return remainingThreadCount_; }
 
+    // ゲームシーンのポインタをセット
+    void SetGameScene(GameScene* scene) { gameScene_ = scene; }
+
 private:
     // 現在乗っているOneWayObjectのポインタ
     OneWayObject* currentOneWay_ = nullptr;
@@ -193,6 +198,8 @@ private:
 
     // ThreadManager
     ThreadManager* thread_ = nullptr;
+    // ゲームシーンのポインタ
+    GameScene* gameScene_ = nullptr;
 
 private:
     bool TryMoveOnThread(const Vector3& moveDirection);
