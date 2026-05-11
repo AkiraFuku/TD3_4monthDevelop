@@ -4,6 +4,7 @@
 #include "Egg.h"
 #include "Player.h"
 #include "SceneManager.h"
+#include "GameScene.h"
 
 void Goal::Initialize(const Vector3& pos)
 {
@@ -71,7 +72,7 @@ void Goal::Clear()
     // 卵がゴールの真上にあったら
     if (goalPos.x - 1.0f < eggPos.x && eggPos.x < goalPos.x + 1.0f &&
         goalPos.z - 1.0f < eggPos.z && eggPos.z < goalPos.z + 1.0f) {
-        // シーン遷移
-        SceneManager::GetInstance()->ChangeScene("TitleScene");
+        // クリアフラグを立てる
+        gameScene_->SetClear(true);
     }
 }

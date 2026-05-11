@@ -6,6 +6,7 @@
 
 class Egg;
 class Player;
+class GameScene;
 
 class Goal
 {
@@ -26,6 +27,9 @@ public:
 
     // プレイヤーのポインタを取得
     void SetPlayer(Player* player) { player_ = player; }
+
+    // ゲームシーンのポインタを取得
+    void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
 
     // ゴール判定関数
     void Clear();
@@ -54,6 +58,8 @@ private:
     Egg* egg_ = nullptr;
     // プレイヤーのポインタ
     Player* player_ = nullptr;
+    // ゲームシーンのポインタ
+    GameScene* gameScene_ = nullptr;
 
     // ゴールに必要な素材の数
     int needNestMaterialCount_ = 0;
