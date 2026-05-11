@@ -31,7 +31,7 @@ private:
     // 壁の1面（四角形）を頂点リストに追加する
     void AddWallPanel(
         float x1, float z1, float x2, float z2,
-        float height, std::vector<Model::VertexData>& vertices);
+        float height, std::vector<Model::VertexData>& vertices, bool flipNormal = false);
 
     void AddCeilingPanel(float x1, float z1, float x2, float z2, float height,
     std::vector<Model::VertexData>& vertices);

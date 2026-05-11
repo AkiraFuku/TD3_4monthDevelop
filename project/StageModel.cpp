@@ -71,6 +71,7 @@ void StageModel::Create(float wallHeight)
                 int startX = x;
                 while (x + 1 < w && data[z * w + (x + 1)] >= 128 && (z == 0 || data[(z - 1) * w + (x + 1)] < 128)) x++;
                 AddWallPanel((float)startX, (float)z, (float)x + 1, (float)z, wallHeight, verticesWall);
+
             }
         }
     }
@@ -81,7 +82,8 @@ void StageModel::Create(float wallHeight)
             if (data[z * w + x] >= 128 && (z == h - 1 || data[(z + 1) * w + x] < 128)) {
                 int startX = x;
                 while (x + 1 < w && data[z * w + (x + 1)] >= 128 && (z == h - 1 || data[(z + 1) * w + (x + 1)] < 128)) x++;
-                AddWallPanel((float)x + 1, (float)z + 1, (float)startX, (float)z + 1, wallHeight, verticesWall);
+                AddWallPanel((float)startX, (float)z + 1, (float)x + 1, (float)z + 1, wallHeight, verticesWall, true);
+
             }
         }
     }
@@ -93,6 +95,7 @@ void StageModel::Create(float wallHeight)
                 int startZ = z;
                 while (z + 1 < h && data[(z + 1) * w + x] >= 128 && (x == w - 1 || data[(z + 1) * w + (x + 1)] < 128)) z++;
                 AddWallPanel((float)x + 1, (float)startZ, (float)x + 1, (float)z + 1, wallHeight, verticesWall);
+
             }
         }
     }
@@ -103,7 +106,7 @@ void StageModel::Create(float wallHeight)
             if (data[z * w + x] >= 128 && (x == 0 || data[z * w + (x - 1)] < 128)) {
                 int startZ = z;
                 while (z + 1 < h && data[(z + 1) * w + x] >= 128 && (x == 0 || data[(z + 1) * w + (x - 1)] < 128)) z++;
-                AddWallPanel((float)x, (float)z + 1, (float)x, (float)startZ, wallHeight, verticesWall);
+                AddWallPanel((float)x, (float)startZ, (float)x, (float)z + 1, wallHeight, verticesWall, true);
             }
         }
     }
@@ -173,7 +176,7 @@ void StageModel::Release()
 }
 
 void StageModel::AddWallPanel(float x1, float z1, float x2, float z2, float height, 
-   std::vector<Model::VertexData>&vertices)
+   std::vector<Model::VertexData>&vertices, bool flipNormal)
 {
     CollisionMask* collisionMask = CollisionMask::GetInstance();
     auto mask = collisionMask->GetMaskData(collisionMask->GetCurrentStageID());
@@ -186,28 +189,36 @@ void StageModel::AddWallPanel(float x1, float z1, float x2, float z2, float heig
         return Vector3{ wx, 0.0f, wz };
         };
 
-    Vector3 p1 = ScreenToWorld(x1, z1); // 呼び出し時の始点
-    Vector3 p2 = ScreenToWorld(x2, z2); // 呼び出し時の終点
+    Vector3 p1 = ScreenToWorld(x1, z1);
+    Vector3 p2 = ScreenToWorld(x2, z2);
 
-    // --- 法線の計算 ---
-    // 進行方向 (p1->p2) に対して右 90 度方向 = 道の外側（奈落側）を向く
     Vector3 edge = { p2.x - p1.x, 0.0f, p2.z - p1.z };
-    Vector3 normal = { edge.z, 0.0f, -edge.x };
-    // ※もしこれで壁が真っ暗なら、normal = { edge.z, 0.0f, -edge.x } に反転させてください
+    Vector3 normal = flipNormal
+        ? Vector3{ -edge.z, 0.0f,  edge.x }
+    : Vector3{ edge.z, 0.0f, -edge.x };
 
-   
-    Model::VertexData lt = { {p1.x, 0.0f,    p1.z, 1.0f}, {1.0f, 0.0f}, normal };
-    Model::VertexData rt = { {p2.x, 0.0f,    p2.z, 1.0f}, {0.0f, 0.0f}, normal };
-    Model::VertexData lb = { {p1.x, -height, p1.z, 1.0f}, {1.0f, 1.0f}, normal };
-    Model::VertexData rb = { {p2.x, -height, p2.z, 1.0f}, {0.0f, 1.0f}, normal };
+    Model::VertexData lt = { {p1.x,    0.0f, p1.z, 1.0f}, {0.0f, 0.0f}, normal };
+    Model::VertexData rt = { {p2.x,    0.0f, p2.z, 1.0f}, {1.0f, 0.0f}, normal };
+    Model::VertexData lb = { {p1.x, -height, p1.z, 1.0f}, {0.0f, 1.0f}, normal };
+    Model::VertexData rb = { {p2.x, -height, p2.z, 1.0f}, {1.0f, 1.0f}, normal };
 
-    vertices.push_back(lt);
-    vertices.push_back(lb);
-    vertices.push_back(rt);
-
-    vertices.push_back(rt);
-    vertices.push_back(lb);
-    vertices.push_back(rb);
+    if (!flipNormal) {
+        // 北・東: 現状カリング正常なので巻き順そのまま、UVだけ直す
+        vertices.push_back(lt);
+        vertices.push_back(lb);
+        vertices.push_back(rt);
+        vertices.push_back(rt);
+        vertices.push_back(lb);
+        vertices.push_back(rb);
+    } else {
+        // 南・西: 巻き順を反転してカリングを修正
+        vertices.push_back(rt);
+        vertices.push_back(lb);
+        vertices.push_back(lt);
+        vertices.push_back(rb);
+        vertices.push_back(lb);
+        vertices.push_back(rt);
+    }
 }
 
 void StageModel::AddCeilingPanel(float x1, float z1, float x2, float z2, float height,
