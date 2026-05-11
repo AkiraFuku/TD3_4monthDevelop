@@ -77,3 +77,17 @@ void ModelManager::CreatePlaneFromTex(const std::string& modelName, const std::s
 
     
 }
+
+void ModelManager::CreateDynamicModel(
+    const std::string& modelName, 
+    const std::vector<Model::VertexData>& vertices, 
+    const std::string& textureFilePath)
+{
+    if (models.contains(modelName)) return;
+
+    std::shared_ptr<Model> model(Model::CreateDynamicModel(vertices, textureFilePath));
+
+    model->SetName(modelName);
+
+    models.insert(std::make_pair(modelName, std::move(model)));
+}

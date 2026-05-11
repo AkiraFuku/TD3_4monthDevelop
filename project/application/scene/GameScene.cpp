@@ -83,6 +83,10 @@ void GameScene::Initialize() {
     terrain_->Initialize();*/
 
     CollisionMask::GetInstance()->Initialize();
+    stageModel_ = std::make_unique<StageModel>();
+    stageModel_->Initialize();
+    stageModel_->Create(10.0f);
+
     playerPos_ = CollisionMask::GetInstance()->GetStartPos();
     eggPos = CollisionMask::GetInstance()->GetEggStartPos();
     goalPos = CollisionMask::GetInstance()->GetGoalPos();
@@ -282,6 +286,8 @@ void GameScene::Initialize() {
 }
 void GameScene::Finalize() {
 
+    stageModel_->Finalize();
+
     LightManager::GetInstance()->ClearLights();
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
@@ -408,6 +414,8 @@ void GameScene::Update()
     camera->UpdateViewProjection();
     object3d->Update();
     object3d2->Update();
+
+    stageModel_->Update();
 
 #ifdef USE_IMGUI
 
@@ -706,6 +714,8 @@ void GameScene::Draw() {
 
     // player_->Draw();
     // terrain_->Draw();
+
+    stageModel_->Draw();
 
     // 卵の描画処理
     egg_->Draw();

@@ -87,6 +87,7 @@
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
     <ClCompile Include="SelectScene.cpp" />
     <ClCompile Include="SpiderWebManager.cpp" />
+    <ClCompile Include="StageModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="application\object\player\PlayerAnima.h" />
     <ClInclude Include="SelectScene.h" />
     <ClInclude Include="SpiderWebManager.h" />
+    <ClInclude Include="StageModel.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
