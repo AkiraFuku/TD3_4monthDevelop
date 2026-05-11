@@ -41,8 +41,8 @@ public:
     // 卵の状況を取得
     bool IsOnPlayer() const { return onPlayer_; }
 
-    // HPをセット
-    void SetHP(float hp) { HP_ -= hp; }
+    // HPを減らす
+    void SetHP(float hp) ;
 
     // 死亡判定
     void Death();
@@ -78,5 +78,11 @@ private:
     // サウンド
     Audio::SoundHandle up_ = 0;
     Audio::SoundHandle down_ = 0;
+
+    float maxHP_ = 10.0f;           // 最大HP
+    float damageEffectTimer_ = 0.0f; // ダメージ点滅タイマー
+    const float kDamageEffectTime = 0.5f; // 点滅させる合計時間
+    float flickerCounter_ = 0.0f;    // 明滅用カウンター
+    bool isDamage=false;
 };
 

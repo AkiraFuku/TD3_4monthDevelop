@@ -107,6 +107,34 @@ public:
     void SetPsoName(const std::string& psoName) {
         psoName_ = psoName;
     }
+    void SetColor(const Vector4& color) {
+        if (model_) {
+            model_->SetColor(color);
+        }
+    }
+     Vector4 GetColor() const {
+        if (model_) {
+            return model_->GetColor();
+        }
+        return {1.0f, 1.0f, 1.0f, 1.0f}; // デフォルトの白色
+     }
+     void SetModelInstanceColor(const std::string& instanceName, const Vector4& color) {
+         for (const auto& instance : models_) {
+             if (instance->name == instanceName) {
+                 instance->model->SetColor(color);
+                 break;
+             }
+         }
+     }
+     Vector4 GetModelInstanceColor(const std::string& instanceName) const {
+         for (const auto& instance : models_) {
+             if (instance->name == instanceName) {
+                 return instance->model->GetColor();
+             }
+         }
+         return {1.0f, 1.0f, 1.0f, 1.0f}; // デフォルトの白色
+     }
+
 
     ///モデルインスタンスのゲッター
     const std::vector<std::unique_ptr<ModelInstance>>& GetModelInstances() const {

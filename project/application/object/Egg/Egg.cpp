@@ -12,8 +12,8 @@ void Egg::Initialize(const Vector3& pos) {
 
 
     ModelManager::GetInstance()->LoadModel("resources", "egg/egg.obj");
-    object_->AddModel("egg/egg.obj","egg");
- //   object_->FindInstance("egg")->transform.scale = { 0.5f, 0.5f, 0.5f };
+    object_->AddModel("egg/egg.obj", "egg");
+    //   object_->FindInstance("egg")->transform.scale = { 0.5f, 0.5f, 0.5f };
     object_->FindInstance("egg")->transform.translate = { 0.0f, 0.5f, 0.0f };
 
     object_->SetTranslate(pos);
@@ -21,7 +21,7 @@ void Egg::Initialize(const Vector3& pos) {
     // サウンド読み込み
     up_ = Audio::GetInstance()->LoadAudio("resources/sounds/up.wav");
     down_ = Audio::GetInstance()->LoadAudio("resources/sounds/down.wav");
-    
+
     anima_ = std::make_unique<EggAnima>();
     anima_->Initialize(object_.get());
     anima_->Play();
@@ -46,7 +46,7 @@ void Egg::Update() {
         {
             // プレイヤーのワールド行列を取得
             Matrix4x4 worldMatrix = player_->GetWorldMatrix();
-            Vector3 velocity_ = {0.0f, -2.0f, 1.0f};
+            Vector3 velocity_ = { 0.0f, -2.0f, 1.0f };
             velocity_ = TransformNormal(velocity_, worldMatrix);
             translate += velocity_;
 
@@ -104,6 +104,37 @@ void Egg::Update() {
         //    }
         //}
     }
+    // --- 色の演出処理 ---
+    flickerCounter_ += 1.0f / 60.0f; // フレーム進捗（60FPS想定）
+    Vector4 finalColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // 基本は白
+
+    // 1. HP低下による常時明滅 (HP 30%以下などで発動)
+    float hpRatio = HP_ / maxHP_;
+    if (hpRatio <= 0.3f) {
+        // HPが低いほど明滅を速くする (周期を短くする)
+        float speed = (hpRatio <= 0.1f) ? 15.0f : 8.0f;
+        float sinValue = (sinf(flickerCounter_ * speed) + 1.0f) * 0.5f; // 0.0 ~ 1.0
+
+        // 赤っぽく明滅させる
+        finalColor.y = 0.2f + (sinValue * 0.8f);
+        finalColor.z = 0.2f + (sinValue * 0.8f);
+    }
+if (damageEffectTimer_ > 0.0f) {
+    damageEffectTimer_ -= 1.0f / 60.0f;
+
+    // sin波を使って 0.0 ～ 1.0 の値を計算 (15.0fは遷移スピード)
+    float t = (sinf(damageEffectTimer_ * 15.0f) + 1.0f) * 0.5f;
+    
+    // 赤 {1,0,0,1} とデフォルト色を線形補間(Lerp)する
+    finalColor.x =1.0f; // R成分を 0.0(黒) ～ 1.0(赤) で遷移
+    finalColor.y = Lerp(1.0f, 0.0f, t); // G成分を 0.0(黒) ～ 0.0(赤) で遷移
+    finalColor.z = Lerp(1.0f, 0.0f, t); // B成分を 0.0(黒) ～ 0.0(赤) で遷移
+    
+    finalColor.w = 1.0f;
+} else {
+    isDamage = false;
+}    // 最終的な色を適用
+    object_->SetModelInstanceColor("egg", finalColor);
 
     object_->SetTranslate(translate);
 
@@ -113,6 +144,10 @@ void Egg::Update() {
 }
 
 void Egg::Draw() {
+
+
+
+
     object_->Draw();
 }
 
@@ -128,17 +163,26 @@ AABB Egg::GetAABB() const {
     Vector3 worldPos = GetWorldPosition();
     AABB aabb;
 
-    aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
-    aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
+    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
+    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
 
     return aabb;
 }
 
 void Egg::OnCollision(const Player* player_) {
-    (void) player_;
+    (void)player_;
     isHit_ = true;
 }
 
+void Egg::SetHP(float hp)
+{
+    HP_ -= hp;
+   if (hp > 0.0f) {
+        isDamage = true;
+        damageEffectTimer_ = kDamageEffectTime; // 常に最新のダメージでタイマーをリセット
+    }
+
+}
 void Egg::Death() {
     // HPがなくなったら
     if (HP_ <= 0.0f)

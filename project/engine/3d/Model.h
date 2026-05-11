@@ -86,12 +86,20 @@ public:
 
     static Node ReadNode(aiNode*node );
 
+    
+
 public: // 外部入出力
 
     void SetName(const std::string& name) { name_ = name; }
+    void SetColor(const Vector4& color) {
+        materialData_->color = color;
+    }
+    Vector4 GetColor() const {
+        return materialData_->color;
+    }
+
 
 private:
-
 
     ModelData modelData_;
 
