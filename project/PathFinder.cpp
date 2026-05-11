@@ -102,7 +102,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
 
             if (tm) {
                 // ThreadManager内の全糸ノードをチェック
-                float checkRadiusSq = 2.25f; // 半径3.0の2乗。広めに設定
+                float checkRadiusSq = 0.64f; // 半径0.8の2乗。広めに設定
 
                 for (auto& physics : tm->GetPhysicsList()) {
                     for (const auto& node : physics->GetNodes()) {
@@ -135,7 +135,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             // --- ここで優先度をつける ---
             if (hasThread) {
                 // 糸の上は最優先（コストをそのまま、あるいは少し下げる）
-                moveCost *= 1.0f;
+                moveCost *= 0.5f;
             }
             else if (!isWall) {
                 // 地面の上は次点
