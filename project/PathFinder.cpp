@@ -148,7 +148,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             else if (onOneWay) {
                 // 橋の上は「糸がない場合の最終手段」としてコストを高く設定する
                 // これにより、糸があるなら糸を、なければ橋を通るようになる
-                moveCost *= 2.1f;
+                moveCost *= 2.0f;
             }
 
             int newG = current->g + static_cast<int>(moveCost * 10.0f);
@@ -182,5 +182,8 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
 }
 
 int PathFinder::CalcH(Point a, Point b) {
-    return std::abs(a.x - b.x) + std::abs(a.y - b.y);
+    int dx = std::abs(a.x - b.x);
+    int dy = std::abs(a.y - b.y);
+    // 斜めを 14, 直進を 10 とする整数計算が一般的
+    return 10 * (dx + dy) + (14 - 2 * 10) * std::min(dx, dy);
 }

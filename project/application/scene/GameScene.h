@@ -37,6 +37,12 @@ public:
   void ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB); // プレイヤーを押し戻す関数
   void ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB); // 敵を押し戻す関数
 
+  // クリアフラグ
+  bool IsClear() const { return isClear_; }
+  void SetClear(bool isClear) { isClear_ = isClear; }
+  // クリア時の処理
+  void Clear();
+
 public:
 
     void LoadStageData();
@@ -132,4 +138,11 @@ private:
 
   // リセットフラグ
   bool isReset_ = false;
+  // クリアフラグ
+  bool isClear_ = false;
+
+  // カメラのオフセット
+  Vector3 cameraOffset_ = { 0.0f, 5.0f, -10.0f };
+  // 線形補間用の係数
+  float t_ = 0.0f;
 };

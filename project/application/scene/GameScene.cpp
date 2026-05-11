@@ -134,6 +134,7 @@ void GameScene::Initialize() {
     // ゴールの初期化
     goal_ = std::make_unique<Goal>();
     goal_->Initialize(goalPos);
+    goal_->SetGameScene(this);
 
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
@@ -320,80 +321,6 @@ void GameScene::Update()
 
     Input::GetInstance()->GetJoyStick(0, state);
 
-    // Aボタンを押していたら
-
-    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
-
-    //    // Aボタンを押したときの処理
-
-
-    //    if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
-
-      //      Audio::GetInstance()->StopAudio(BGMhandle_);
-        //}
-
-    //    GetSceneManager()->ChangeScene("TitleScene");
-    //}
-    //if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B)) {
-    //}
-
-    // マウスホイールの入力取得
-
-    /*if (Input::GetInstance()->GetMouseMove().z) {
-        Vector3 cameraTranslate = camera->GetTranslate();
-        cameraTranslate =
-            Add(cameraTranslate,
-                Vector3{ 0.0f, 0.0f,
-                static_cast<float>(Input::GetInstance()->GetMouseMove().z) *
-                0.1f });
-        camera->SetTranslate(cameraTranslate);
-    }*/
-    /*if (Input::GetInstance()->TriggerMouseDown(0))
-    {
-        if (!Audio::GetInstance()->IsPlaying(handle_))
-        {
-            Audio::GetInstance()->PlayAudio(handle_);
-        }
-
-    }*/
-    /* if (Input::GetInstance()->TriggerMouseDown(0)) {
-         if (Audio::GetInstance()->IsPlaying(BGMhandle_)) {
-             Audio::GetInstance()->PauseAudio(BGMhandle_);
-         }
-         else {
-             Audio::GetInstance()->ResumeAudio(BGMhandle_);
-         }
-     }*/
-     //if (Input::GetInstance()->GetJoyStick(0, state)) {
-     //    {
-     //        // 左スティックの値を取得
-     //        float x = (float) state.Gamepad.sThumbLX;
-     //        float y = (float) state.Gamepad.sThumbLY;
-
-     //        // 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-     //        float normalizedX = x / 32767.0f;
-     //        float normalizedY = y / 32767.0f;
-     //        Vector3 cameraTranslate = camera->GetTranslate();
-     //        cameraTranslate =
-     //            Add(cameraTranslate,
-     //                Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-     //        camera->SetTranslate(cameraTranslate);
-     //    }
-     //    {
-     //        //// 左スティックの値を取得
-     //        float x = (float) state.Gamepad.sThumbRX;
-     //        float y = (float) state.Gamepad.sThumbRY;
-     //        //// 数値が大きいので正規化（-1.0 ～ 1.0）して使うのが一般的
-     //        float normalizedX = x / 32767.0f;
-     //        float normalizedY = y / 32767.0f;
-
-     //        Vector3 point = LightManager::GetInstance()->GetSpotLight(0).direction;
-     //        point =
-     //            Add(point, Vector3 {normalizedX / 60.0f, normalizedY / 60.0f, 0.0f});
-     //        LightManager::GetInstance()->SetSpotLightDirection(0, point);
-     //    }
-     //}
-
     if (isDebugCamera_)
     {
         debugCamera_.Update(camera->GetTransform());
@@ -534,6 +461,13 @@ void GameScene::Update()
     // =========================================================
 
 #endif // USE_IMGUI
+
+    // クリアフラグが立っている場合
+    if (isClear_)
+    {
+
+    }
+
 
     CollisionMask::GetInstance()->Update();
 
@@ -936,6 +870,11 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
     }
     // 修正した座標を反映
     enemy->SetPosition(currentPos);
+}
+
+void GameScene::Clear()
+{
+    // カメラをプレイヤーの前へ
 }
 
 void GameScene::LoadStageData()

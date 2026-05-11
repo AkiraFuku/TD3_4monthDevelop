@@ -76,7 +76,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
                     float dx = node.currentPos.x - worldP.x;
                     float dz = node.currentPos.z - worldP.z;
                     // 糸の判定（少し広めに 1.5マス分 = 2.25f）
-                    if ((dx * dx + dz * dz) < 2.25f) {
+                    if ((dx * dx + dz * dz) < 0.64f) {
                         hasThread = true; break;
                     }
                 }
