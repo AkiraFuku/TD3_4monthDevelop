@@ -33,18 +33,20 @@ private:
         float x1, float z1, float x2, float z2,
         float height, std::vector<Model::VertexData>& vertices);
 
-    void AddCeilingPanel(float x, float z, float height,
-        std::vector<Model::VertexData>& vertices);
+    void AddCeilingPanel(float x1, float z1, float x2, float z2, float height,
+    std::vector<Model::VertexData>& vertices);
 
 private:
-    std::unique_ptr<Object3d> object3d_;
+    std::unique_ptr<Object3d> object3dFloor_;
+    std::unique_ptr<Object3d> object3dWall_;
 
-    std::string modelName_;
+    std::string modelNameFloor_;
+    std::string modelNameWall_;
 
     std::string psoName_ = "StageModel";
 
-    std::string textureFilePath_ = "resources/uvChecker.png";
-   
+    std::string textureFilePathFloor_ = "resources/uvChecker.png";
+    std::string textureFilePathWall_ = "resources/uvChecker.png";
 
 };
 

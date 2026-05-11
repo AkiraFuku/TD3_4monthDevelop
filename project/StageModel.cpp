@@ -14,17 +14,25 @@ void StageModel::Finalize()
 
 void StageModel::Update()
 {
-    if (object3d_)
+    if (object3dFloor_)
     {
-        object3d_->Update();
+        object3dFloor_->Update();
+    }
+    if (object3dWall_)
+    {
+        object3dWall_->Update();
     }
 }
 
 void StageModel::Draw()
 {
-    if (object3d_)
+    if (object3dFloor_)
     {
-        object3d_->Draw();
+        object3dFloor_->Draw();
+    }
+    if (object3dWall_)
+    {
+        object3dWall_->Draw();
     }
 }
 
@@ -40,60 +48,127 @@ void StageModel::Create(float wallHeight)
     int h = mask->textureData.widthZ;
     auto& data = mask->textureData.data;
 
-    std::vector<Model::VertexData> vertices;
+    std::vector<Model::VertexData> verticesFloor;
+    std::vector<Model::VertexData> verticesWall;
 
-    // 全ピクセルを走査して「道(白)」と「壁(黒)」の境界を探す
+    // --- 1. 蓋 (道ピクセルを埋める) ---
     for (int z = 0; z < h; ++z) {
         for (int x = 0; x < w; ++x) {
-            // 現在のピクセルが壁（黒：<128）なら処理
-            if (data[z * w + x] < 128) {
-
-                // 右隣をチェック：右が範囲外、または道なら、そこに「右側の壁面」を作る
-                if (x + 1 >= w || data[z * w + (x + 1)] >= 128) {
-                    AddWallPanel((float)x + 1, (float)z, (float)x + 1, (float)z + 1, wallHeight, vertices);
-                }
-                // 左隣をチェック
-                if (x - 1 < 0 || data[z * w + (x - 1)] >= 128) {
-                    AddWallPanel((float)x, (float)z + 1, (float)x, (float)z, wallHeight, vertices);
-                }
-                // 下隣（奥）をチェック
-                if (z + 1 >= h || data[(z + 1) * w + x] >= 128) {
-                    AddWallPanel((float)x + 1, (float)z + 1, (float)x, (float)z + 1, wallHeight, vertices);
-                }
-                // 上隣（手前）をチェック
-                if (z - 1 < 0 || data[(z - 1) * w + x] >= 128) {
-                    AddWallPanel((float)x, (float)z, (float)x + 1, (float)z, wallHeight, vertices);
-                }
-            }
-            else
-            {
-                // 壁ピクセルの真上に水平なパネルを置く
-                AddCeilingPanel((float)x, (float)z, wallHeight, vertices);
+            if (data[z * w + x] >= 128) { // 白＝道
+                int startX = x;
+                while (x + 1 < w && data[z * w + (x + 1)] >= 128) x++;
+                AddCeilingPanel((float)startX, (float)z, (float)x + 1, (float)z + 1, wallHeight, verticesFloor);
             }
         }
     }
 
-    if (vertices.empty()) return;
+    // --- 2. 壁 (道と奈落の境界に壁を作る) ---
+
+    // 北向きの壁 (上が奈落)
+    for (int z = 0; z < h; ++z) {
+        for (int x = 0; x < w; ++x) {
+            if (data[z * w + x] >= 128 && (z == 0 || data[(z - 1) * w + x] < 128)) {
+                int startX = x;
+                while (x + 1 < w && data[z * w + (x + 1)] >= 128 && (z == 0 || data[(z - 1) * w + (x + 1)] < 128)) x++;
+                AddWallPanel((float)startX, (float)z, (float)x + 1, (float)z, wallHeight, verticesWall);
+            }
+        }
+    }
+
+    // 南向きの壁 (下が奈落)
+    for (int z = 0; z < h; ++z) {
+        for (int x = 0; x < w; ++x) {
+            if (data[z * w + x] >= 128 && (z == h - 1 || data[(z + 1) * w + x] < 128)) {
+                int startX = x;
+                while (x + 1 < w && data[z * w + (x + 1)] >= 128 && (z == h - 1 || data[(z + 1) * w + (x + 1)] < 128)) x++;
+                AddWallPanel((float)x + 1, (float)z + 1, (float)startX, (float)z + 1, wallHeight, verticesWall);
+            }
+        }
+    }
+
+    // 東向きの壁 (右が奈落)
+    for (int x = 0; x < w; ++x) {
+        for (int z = 0; z < h; ++z) {
+            if (data[z * w + x] >= 128 && (x == w - 1 || data[z * w + (x + 1)] < 128)) {
+                int startZ = z;
+                while (z + 1 < h && data[(z + 1) * w + x] >= 128 && (x == w - 1 || data[(z + 1) * w + (x + 1)] < 128)) z++;
+                AddWallPanel((float)x + 1, (float)startZ, (float)x + 1, (float)z + 1, wallHeight, verticesWall);
+            }
+        }
+    }
+
+    // 西向きの壁 (左が奈落)
+    for (int x = 0; x < w; ++x) {
+        for (int z = 0; z < h; ++z) {
+            if (data[z * w + x] >= 128 && (x == 0 || data[z * w + (x - 1)] < 128)) {
+                int startZ = z;
+                while (z + 1 < h && data[(z + 1) * w + x] >= 128 && (x == 0 || data[(z + 1) * w + (x - 1)] < 128)) z++;
+                AddWallPanel((float)x, (float)z + 1, (float)x, (float)startZ, wallHeight, verticesWall);
+            }
+        }
+    }
+
+
+    //// 現在のピクセルが壁（黒：<128）なら処理
+    //if (data[z * w + x] < 128) {
+
+    //    // 右隣をチェック：右が範囲外、または道なら、そこに「右側の壁面」を作る
+    //    if (x + 1 >= w || data[z * w + (x + 1)] >= 128) {
+    //        AddWallPanel((float)x + 1, (float)z, (float)x + 1, (float)z + 1, wallHeight, vertices);
+    //    }
+    //    // 左隣をチェック
+    //    if (x - 1 < 0 || data[z * w + (x - 1)] >= 128) {
+    //        AddWallPanel((float)x, (float)z + 1, (float)x, (float)z, wallHeight, vertices);
+    //    }
+    //    // 下隣（奥）をチェック
+    //    if (z + 1 >= h || data[(z + 1) * w + x] >= 128) {
+    //        AddWallPanel((float)x + 1, (float)z + 1, (float)x, (float)z + 1, wallHeight, vertices);
+    //    }
+    //    // 上隣（手前）をチェック
+    //    if (z - 1 < 0 || data[(z - 1) * w + x] >= 128) {
+    //        AddWallPanel((float)x, (float)z, (float)x + 1, (float)z, wallHeight, vertices);
+    //    }
+    //} else
+    //{
+    //    // 壁ピクセルの真上に水平なパネルを置く
+    //    AddCeilingPanel((float)x, (float)z, wallHeight, vertices);
+    //}
+
+
+    if (verticesWall.empty()) return;
 
     // ModelManagerに動的メッシュとして登録
     // ※お使いのModelManagerに「頂点配列からモデルを作る」機能がある想定です
-    modelName_ = "GeneratedStage_" + std::to_string(collisionMask->GetCurrentStageID());
-    ModelManager::GetInstance()->CreateDynamicModel(modelName_, vertices, textureFilePath_);
+    modelNameFloor_ = "StageModelFloor_" + std::to_string(collisionMask->GetCurrentStageID());
+    ModelManager::GetInstance()->CreateDynamicModel(modelNameFloor_, verticesFloor, textureFilePathFloor_);
 
-    object3d_ = std::make_unique<Object3d>();
-    object3d_->Initialize();
-    object3d_->SetModel(modelName_);
-    object3d_->SetPsoName("MaskMap"); // 既存のPSOを流用
-    object3d_->SetTranslate({ 0.0f, -0.5f, 0.0f });
+    object3dFloor_ = std::make_unique<Object3d>();
+    object3dFloor_->Initialize();
+    object3dFloor_->SetModel(modelNameFloor_);
+    object3dFloor_->SetTranslate({ 0.0f, -1.0f, 0.0f });
+
+    modelNameWall_ = "StageModelWall_" + std::to_string(collisionMask->GetCurrentStageID());
+    ModelManager::GetInstance()->CreateDynamicModel(modelNameWall_, verticesWall, textureFilePathWall_);
+
+    object3dWall_ = std::make_unique<Object3d>();
+    object3dWall_->Initialize();
+    object3dWall_->SetModel(modelNameWall_);
+    object3dWall_->SetTranslate({ 0.0f, -1.0f, 0.0f });
 
 }
 
 void StageModel::Release()
 {
-    if (object3d_)
+    if (object3dFloor_)
     {
-        ModelManager::GetInstance()->RemoveModel(modelName_);
-        object3d_.reset();
+        ModelManager::GetInstance()->RemoveModel(modelNameFloor_);
+        object3dFloor_.reset();
+    }
+
+    if (object3dWall_)
+    {
+        ModelManager::GetInstance()->RemoveModel(modelNameWall_);
+        object3dWall_.reset();
     }
 }
 
@@ -102,90 +177,79 @@ void StageModel::AddWallPanel(float x1, float z1, float x2, float z2, float heig
 {
     CollisionMask* collisionMask = CollisionMask::GetInstance();
     auto mask = collisionMask->GetMaskData(collisionMask->GetCurrentStageID());
+    float texW = (float)mask->textureData.widthX;
+    float texZ = (float)mask->textureData.widthZ;
 
-    uint32_t baseIdx = (uint32_t)vertices.size();
-
-    // ピクセル座標からワールド座標への変換関数（CollisionMask内のロジックを流用）
     auto ScreenToWorld = [&](float px, float pz){
-        float wx = mask->min_.x + (px / (float)mask->textureData.widthX) * (mask->max_.x - mask->min_.x);
-        float wz = mask->min_.y + (pz / (float)mask->textureData.widthZ) * (mask->max_.y - mask->min_.y);
+        float wx = mask->min_.x + (px / texW) * (mask->max_.x - mask->min_.x);
+        float wz = mask->min_.y + (pz / texZ) * (mask->max_.y - mask->min_.y);
         return Vector3{ wx, 0.0f, wz };
         };
 
-    Vector3 p1 = ScreenToWorld(x1, z1);
-    Vector3 p2 = ScreenToWorld(x2, z2);
+    Vector3 p1 = ScreenToWorld(x1, z1); // 呼び出し時の始点
+    Vector3 p2 = ScreenToWorld(x2, z2); // 呼び出し時の終点
 
-    // 法線の計算（壁の向き）
-    Vector3 edge = { p2.x - p1.x, 0, p2.z - p1.z };
-    Vector3 normal = { -edge.z, 0, edge.x }; // 90度回転
-    // normal.Normalize(); // 必要に応じて正規化
+    // --- 法線の計算 ---
+    // 進行方向 (p1->p2) に対して右 90 度方向 = 道の外側（奈落側）を向く
+    Vector3 edge = { p2.x - p1.x, 0.0f, p2.z - p1.z };
+    Vector3 normal = { edge.z, 0.0f, -edge.x };
+    // ※もしこれで壁が真っ暗なら、normal = { edge.z, 0.0f, -edge.x } に反転させてください
 
-    //// 4頂点の作成（下2つ、上2つ）
-    //vertices.push_back({ {p1.x, 0.0f, p1.z, 1.0f}, {0,1}, normal }); // 下左
-    //vertices.push_back({ {p2.x, 0.0f, p2.z, 1.0f}, {1,1}, normal }); // 下右
-    //vertices.push_back({ {p1.x, height, p1.z, 1.0f}, {0,0}, normal }); // 上左
-    //vertices.push_back({ {p2.x, height, p2.z, 1.0f}, {1,0}, normal }); // 上右
+   
+    Model::VertexData lt = { {p1.x, 0.0f,    p1.z, 1.0f}, {1.0f, 0.0f}, normal };
+    Model::VertexData rt = { {p2.x, 0.0f,    p2.z, 1.0f}, {0.0f, 0.0f}, normal };
+    Model::VertexData lb = { {p1.x, -height, p1.z, 1.0f}, {1.0f, 1.0f}, normal };
+    Model::VertexData rb = { {p2.x, -height, p2.z, 1.0f}, {0.0f, 1.0f}, normal };
 
-    //// インデックス設定（時計回り）
-    /*indices.push_back(baseIdx + 0); indices.push_back(baseIdx + 2); indices.push_back(baseIdx + 1);
-    indices.push_back(baseIdx + 1); indices.push_back(baseIdx + 2); indices.push_back(baseIdx + 3);*/
-
-
-    // 頂点定義
-    Model::VertexData lt = { {p1.x, 0.0f,   p1.z, 1.0f}, {0.0f, 1.0f}, normal }; // 左下(LowerLeft)
-    Model::VertexData rt = { {p2.x, 0.0f,   p2.z, 1.0f}, {1.0f, 1.0f}, normal }; // 右下(LowerRight)
-    Model::VertexData lb = { {p1.x, -height, p1.z, 1.0f}, {0.0f, 0.0f}, normal }; // 左上(UpperLeft)
-    Model::VertexData rb = { {p2.x, -height, p2.z, 1.0f}, {1.0f, 0.0f}, normal }; // 右上(UpperRight)
-
-    // --- インデックスを使わず、三角形2枚分（計6頂点）を直接追加 ---
-
-    // 三角形1: 左下 -> 左上 -> 右下
+    vertices.push_back(lt);
     vertices.push_back(lb);
-    vertices.push_back(lt);
-    vertices.push_back(rb);
-
-    // 三角形2: 右下 -> 左上 -> 右上
-    vertices.push_back(rb);
-    vertices.push_back(lt);
     vertices.push_back(rt);
+
+    vertices.push_back(rt);
+    vertices.push_back(lb);
+    vertices.push_back(rb);
 }
 
-void StageModel::AddCeilingPanel(float x, float z, float height,
-    std::vector<Model::VertexData>& vertices) 
-{
+void StageModel::AddCeilingPanel(float x1, float z1, float x2, float z2, float height,
+    std::vector<Model::VertexData>& vertices) {
 
     CollisionMask* collisionMask = CollisionMask::GetInstance();
     auto mask = collisionMask->GetMaskData(collisionMask->GetCurrentStageID());
 
+    // ステージ全体のピクセルサイズ
+    float texW = (float)mask->textureData.widthX;
+    float texZ = (float)mask->textureData.widthZ;
+
     auto ScreenToWorld = [&](float px, float pz){
-        float wx = mask->min_.x + (px / (float)mask->textureData.widthX) * (mask->max_.x - mask->min_.x);
-        float wz = mask->min_.y + (pz / (float)mask->textureData.widthZ) * (mask->max_.y - mask->min_.y);
-        return Vector3{ wx, 0.0f, wz }; // 指定の高さで座標計算
-        };
+        float wx = mask->min_.x + (px / texW) * (mask->max_.x - mask->min_.x);
+        float wz = mask->min_.y + (pz / texZ) * (mask->max_.y - mask->min_.y);
+        return Vector3{ wx, 0.0f, wz }; // 蓋の高さ(y=0)
+    };
 
-    // 1ピクセルに相当する4角の座標を計算
-    Vector3 pLT = ScreenToWorld(x, z);           // 左上
-    Vector3 pRT = ScreenToWorld(x + 1.0f, z);    // 右上
-    Vector3 pLB = ScreenToWorld(x, z + 1.0f);    // 左下
-    Vector3 pRB = ScreenToWorld(x + 1.0f, z + 1.0f); // 右下
+    Vector3 pLT = ScreenToWorld(x1, z1);
+    Vector3 pRT = ScreenToWorld(x2, z1);
+    Vector3 pLB = ScreenToWorld(x1, z2);
+    Vector3 pRB = ScreenToWorld(x2, z2);
 
-    Vector3 normal = { 0.0f, 1.0f, 0.0f }; // 法線は上向き
+    // --- UV計算: ステージ全体を (0,0)〜(1,1) とする ---
+    float u1 = x1 / texW;
+    float u2 = x2 / texW;
+    float v1 = z1 / texZ;
+    float v2 = z2 / texZ;
 
-    // 頂点データ作成 (UVの向きも調整)
-    Model::VertexData vLT = { {pLT.x, pLT.y, pLT.z, 1.0f}, {0,0}, normal };
-    Model::VertexData vRT = { {pRT.x, pRT.y, pRT.z, 1.0f}, {1,0}, normal };
-    Model::VertexData vLB = { {pLB.x, pLB.y, pLB.z, 1.0f}, {0,1}, normal };
-    Model::VertexData vRB = { {pRB.x, pRB.y, pRB.z, 1.0f}, {1,1}, normal };
+    Vector3 normal = { 0.0f, 1.0f, 0.0f };
 
-    // --- 頂点の結び順を「時計回り」に再構成 ---
-    // ※もしこれで出なければ、逆順（vLT, vLB, vRTなど）を試してください
+    // 頂点データ
+    Model::VertexData vLT = { {pLT.x, pLT.y, pLT.z, 1.0f}, {u1, v1}, normal };
+    Model::VertexData vRT = { {pRT.x, pRT.y, pRT.z, 1.0f}, {u2, v1}, normal };
+    Model::VertexData vLB = { {pLB.x, pLB.y, pLB.z, 1.0f}, {u1, v2}, normal };
+    Model::VertexData vRB = { {pRB.x, pRB.y, pRB.z, 1.0f}, {u2, v2}, normal };
 
-    // 三角形1: 左上 -> 右上 -> 右下
+    // 時計回りで追加（上が見えるように）
     vertices.push_back(vLT);
     vertices.push_back(vRT);
     vertices.push_back(vRB);
 
-    // 三角形2: 左上 -> 右下 -> 左下
     vertices.push_back(vLT);
     vertices.push_back(vRB);
     vertices.push_back(vLB);
