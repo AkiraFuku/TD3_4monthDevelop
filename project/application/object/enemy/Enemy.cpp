@@ -60,6 +60,15 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
         Vector3 worldP = GridToWorld(p);
         bool isWall = CollisionMask::GetInstance()->IsWall(worldP.x, worldP.z);
 
+        // ブロックの判定
+        bool hasBlock = false;
+        for (const auto& br : brokenBlock) {
+            if (br->IsInside(worldP) && !br->IsBroken()) {
+                hasBlock = true;
+                break;
+            }
+        }
+
         bool hasThread = false;
         if (tm) {
             for (auto& physics : tm->GetPhysicsList()) {
@@ -74,7 +83,7 @@ void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
                 if (hasThread) break;
             }
         }
-        return isWall && !hasThread;
+        return isWall && !hasThread && !hasBlock;
         };
 
     // --- 【強化】スタートとゴールを確実に「道」へ引きずり出す ---
@@ -138,13 +147,49 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     // ==========================================
 
 
-    recalculateTimer_++;
+    // 現在位置が橋（OneWayObject）の上かどうかを判定
+    bool currentlyOnBridge = false;
+    for (const auto& ow : oneWays) {
+        if (ow->IsInside(currentPos)) {
+            currentlyOnBridge = true;
+            break;
+        }
+    }
 
-    // タイマーが満了したか、外部からリクエストがあった場合に再計算
-    if (recalculateTimer_ > 60 || shouldReplanNextUpdate_) {
+    // 橋に乗った瞬間の判定（フラグの切り替わり）
+    if (currentlyOnBridge && !isOnBridge_) {
+        isOnBridge_ = true;
+        // 橋に乗った瞬間、一度だけ「橋の先」を見据えた最新のパスを計算する
         RecalculatePath(eggPos, tm, oneWays, brokenBlock);
         recalculateTimer_ = 0;
-        shouldReplanNextUpdate_ = false; // フラグを戻す
+    }
+    // 橋から降りた瞬間の判定
+    else if (!currentlyOnBridge && isOnBridge_) {
+        isOnBridge_ = false;
+        // 橋を降りたので、改めて状況（糸の有無など）を確認して再計算
+        shouldReplanNextUpdate_ = true;
+    }
+
+    recalculateTimer_++;
+
+    // 再計算の実行条件
+    bool timeToReplan = (recalculateTimer_ > 60);
+
+    // 【重要】橋の上にいる間は、時間が経っても再計算を「させない」
+    // ただし、外部からの強制リプランニング(shouldReplanNextUpdate_)がある場合は例外
+    if (!isOnBridge_) {
+        if (timeToReplan || shouldReplanNextUpdate_) {
+            RecalculatePath(eggPos, tm, oneWays, brokenBlock);
+            recalculateTimer_ = 0;
+            shouldReplanNextUpdate_ = false;
+        }
+    }
+    else {
+        // 橋の上で詰まった時のための保険：パスが空になったら再計算
+        if (path_.empty() || shouldReplanNextUpdate_) {
+            RecalculatePath(eggPos, tm, oneWays, brokenBlock);
+            shouldReplanNextUpdate_ = false;
+        }
     }
 
     if (!path_.empty()) {

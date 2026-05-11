@@ -14,6 +14,7 @@
 class ThreadManager;
 class Egg;
 class OneWayObject;
+class BrokenBlock;
 
 class Player {
 public:
@@ -135,12 +136,19 @@ public:
     // 現在足元にOneWayObjectがあるか確認して返す関数
     OneWayObject* CheckOnOneWayObject() const;
 
+    void SetBrokenBlocks(const std::vector<BrokenBlock*>& blocks)
+    {
+        brokenBlocks_ = blocks;
+    }
+
     // 糸の生成回数のgetter
     int GetThreadCount() const { return remainingThreadCount_; }
 
 private:
     // 現在乗っているOneWayObjectのポインタ
     OneWayObject* currentOneWay_ = nullptr;
+
+    std::vector<BrokenBlock*> brokenBlocks_;
 
 private:
     // 現在の状態
@@ -209,6 +217,9 @@ private:
     static inline const float kThreadWeightRadius = 0.90f;
     static inline const float kThreadWeight = 0.06f;
     static inline const float kThreadExitThreshold = 0.00f;
+
+    // 糸を生成する際、既存の糸とどれくらい離れていれば生成可能とするかの距離
+    static inline const float kMinThreadCreateDistance = 1.0f;
 
     // Threadを生成できる回数
     int remainingThreadCount_ = 0;

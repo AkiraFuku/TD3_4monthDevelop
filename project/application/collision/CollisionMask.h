@@ -36,6 +36,7 @@ public:
         std::vector<Vector3> oneWayObjectPos_;
         std::vector<Vector3> oneWayObjectScale_;
         std::vector<int32_t> oneWayObjectDir_;
+        std::vector<Vector3> brokenBlockPos_;
     };
 
     struct RayResult {
@@ -189,6 +190,21 @@ public: // 外部入出力
 
     size_t GetOneWayObjectCount() const {
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_.size();
+    }
+
+    // 壊れるブロックの位置
+    const Vector3& GetBrokenBlockPos(const size_t i) {
+        if (i >= stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_.size())
+        {
+            // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+            return defaultPos;
+        }
+        return stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_[i];
+    }
+
+    size_t GetBrokenBlockCount() const {
+        return stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_.size();
     }
 
 private:

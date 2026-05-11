@@ -424,6 +424,78 @@ void ThreadManager::ApplyWeight(const Vector3& pos, float radius, float weight) 
     }
 }
 
+bool ThreadManager::CanCreateThread(const Vector3& startPos, const Vector3& endPos, float minDistance) const
+{
+    if (physicsList_.empty()) return true;
+
+    // 新しい糸の方向ベクトルを計算
+    Vector3 newDir = {endPos.x - startPos.x, 0.0f, endPos.z - startPos.z};
+    float newLenSq = newDir.x * newDir.x + newDir.z * newDir.z;
+    if (newLenSq < 0.0001f) return false;
+
+    float newLen = std::sqrt(newLenSq);
+    newDir.x /= newLen;
+    newDir.z /= newLen;
+
+    // 距離をチェックするポイント（始点、中間点、終点）
+    Vector3 points[3] = {
+        startPos,
+        {(startPos.x + endPos.x) * 0.5f, startPos.y, (startPos.z + endPos.z) * 0.5f},
+        endPos
+    };
+
+    for (const auto& physics : physicsList_) {
+        const auto& nodes = physics->GetNodes();
+        if (nodes.size() < 2) continue;
+
+        // 既存の糸の全体方向
+        Vector3 oldStart = nodes.front().currentPos;
+        Vector3 oldEnd = nodes.back().currentPos;
+
+        Vector3 oldDir = {oldEnd.x - oldStart.x, 0.0f, oldEnd.z - oldStart.z};
+        float oldLen = std::sqrt(oldDir.x * oldDir.x + oldDir.z * oldDir.z);
+
+        if (oldLen > 0.0001f) {
+            oldDir.x /= oldLen;
+            oldDir.z /= oldLen;
+
+            // 1. 平行度のチェック（内積の絶対値が 1.0 に近いほど平行）
+            float dot = std::abs(newDir.x * oldDir.x + newDir.z * oldDir.z);
+
+            // 交差するような角度（X字など）は許容する。
+            // 0.85f は約31度。これより平行に近い（角度が浅い）場合のみ距離チェックを行う
+            if (dot > 0.85f) {
+                // 2. 距離のチェック
+                for (const auto& pt : points) {
+                    float dx = oldEnd.x - oldStart.x;
+                    float dz = oldEnd.z - oldStart.z;
+                    float lenSq = dx * dx + dz * dz;
+
+                    float t = 0.0f;
+                    if (lenSq > 0.0001f) {
+                        float px = pt.x - oldStart.x;
+                        float pz = pt.z - oldStart.z;
+                        t = std::clamp((px * dx + pz * dz) / lenSq, 0.0f, 1.0f);
+                    }
+
+                    // 既存の糸の線分上で最も近い点
+                    float closestX = oldStart.x + t * dx;
+                    float closestZ = oldStart.z + t * dz;
+
+                    float distSq = (pt.x - closestX) * (pt.x - closestX) +
+                        (pt.z - closestZ) * (pt.z - closestZ);
+
+                    // 指定した距離より近ければ生成不可
+                    if (distSq < minDistance * minDistance) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
 /// <summary>
 /// 進行方向を考慮して、最も移動に適した糸を検索する（交差点用）
 /// </summary>
@@ -577,9 +649,19 @@ void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllN
         // ※ Y軸のたわみだけを連動させたい場合は、diff.x と diff.z を 0.0f にしても良いです
         Vector3 pullForce = diff * kIntersectionPullStiffness;
 
-        // お互いを引き寄せるように位置を補正する（質量が同じと仮定して半分ずつ動かす）
-        physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
-        physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+        //// お互いを引き寄せるように位置を補正する（質量が同じと仮定して半分ずつ動かす）
+        //physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
+        //physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+
+        // =========================================================
+        // ノードが壁に固定されていない（mass > 0.0f）場合のみ動かす！
+        // =========================================================
+        if (physicsA->GetNodes()[nodeIndexA].mass > 0.0f) {
+            physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
+        }
+        if (physicsB->GetNodes()[nodeIndexB].mass > 0.0f) {
+            physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
+        }
     }
 }
 

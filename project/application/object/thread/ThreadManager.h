@@ -9,7 +9,8 @@
 
 class Camera;
 
-class ThreadManager {
+class ThreadManager
+{
 private:
     // ---------------------------------------------------------
     // 定数パラメータ（調整用）
@@ -56,7 +57,8 @@ public:
     // ---------------------------------------------------------
 
     // 糸同士の交差点情報
-    struct ThreadIntersection {
+    struct ThreadIntersection
+    {
         Vector3 position = {};
         float radius = 0.8f; // 交差点の判定半径
 
@@ -74,7 +76,8 @@ public:
     };
 
     // 糸との当たり判定結果
-    struct ThreadQueryResult {
+    struct ThreadQueryResult
+    {
         Vector3 closestPoint = {}; // 最も近い座標
         Vector3 startPoint = {};   // 該当する糸の始点
         Vector3 endPoint = {};     // 該当する糸の終点
@@ -85,7 +88,8 @@ public:
         float t = 0.0f;            // 糸全体におけるヒット位置の割合(0.0 ~ 1.0)
     };
 
-    struct ConstrainedMoveResult {
+    struct ConstrainedMoveResult
+    {
         Vector3 velocityCorrection; // 速度に足すべき補正ベクトル
         float edgeFade;             // 糸の端にいる度合い (端:0.0f ~ 中央:1.0f)
     };
@@ -177,6 +181,11 @@ public:
     /// <param name="radius">重さが影響を及ぼす判定半径</param>
     /// <param name="weight">適用する重さ（下方向への力の大きさ）</param>
     void ApplyWeight(const Vector3& pos, float radius, float weight);
+
+    /// <summary>
+    /// 新しく生成しようとしている糸が既存の糸と近すぎないか（重複防止）を判定する
+    /// </summary>
+    bool CanCreateThread(const Vector3& startPos, const Vector3& endPos, float minDistance) const;
 
     /// <summary>
     /// 進行方向を考慮して、最も移動に適した糸を検索する

@@ -89,10 +89,12 @@ void GameScene::Initialize() {
     // JSONから座標リストのサイズを取得する
     size_t enemyCount = CollisionMask::GetInstance()->GetEnemyCount(); // サイズを返す関数を定義しておく
     size_t nestMaterialCount = CollisionMask::GetInstance()->GetNestMaterialCount(); // サイズを返す関数を定義しておく
+    size_t brokenBlockCount = CollisionMask::GetInstance()->GetBrokenBlockCount(); // サイズを返す関数を定義しておく
 
     // vectorをJSONの数に合わせてリサイズ
     enemyPositions_.resize(enemyCount);
     nestMaterialPositions_.resize(nestMaterialCount);
+    brokenBlockPos_.resize(brokenBlockCount);
 
     // 3. 一致したサイズ分だけループして代入
     for (int i = 0; i < enemyPositions_.size(); ++i)
@@ -103,6 +105,11 @@ void GameScene::Initialize() {
     for (int i = 0; i < nestMaterialPositions_.size(); ++i)
     {
         nestMaterialPositions_[i] = CollisionMask::GetInstance()->GetNestMaterialPos(i);
+    }
+
+    for (int i = 0; i < brokenBlockPos_.size(); ++i)
+    {
+        brokenBlockPos_[i] = CollisionMask::GetInstance()->GetBrokenBlockPos(i);
     }
 
     // ----- Thread -----
@@ -208,15 +215,10 @@ void GameScene::Initialize() {
     player_->SetOneWayObjects(playerOneWayPtrs);
 
     // 数回渡ったら壊れるオブジェクトの生成
-    brokenBlockPos_ =
-    {
-        //{-4.0f,-2.0f,8.0f}
-    };
-
     for (const auto& pos : brokenBlockPos_)
     {
         auto brokenBlock = std::make_unique<BrokenBlock>();
-        brokenBlock->Initialize(pos, 8.0f, 9.0f);
+        brokenBlock->Initialize(pos, 10.0f, 9.0f);
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 
@@ -463,6 +465,74 @@ void GameScene::Update()
     }
     ImGui::End();
 
+    // =========================================================
+    // ★ 追加: Player と BrokenBlock の当たり判定デバッグウィンドウ
+    // =========================================================
+    ImGui::Begin("Collision Debug");
+
+    // 1. プレイヤーの情報
+    Vector3 pPos = player_->GetPosition();
+    AABB pAABB = player_->GetAABB();
+    float pWidth = pAABB.max.x - pAABB.min.x;
+    float pDepth = pAABB.max.z - pAABB.min.z;
+
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "--- Player Info ---");
+    ImGui::Text("Position: (%.2f, %.2f, %.2f)", pPos.x, pPos.y, pPos.z);
+    ImGui::Text("Size(W,D): %.2f, %.2f", pWidth, pDepth);
+    ImGui::Text("AABB Min: (%.2f, %.2f, %.2f)", pAABB.min.x, pAABB.min.y, pAABB.min.z);
+    ImGui::Text("AABB Max: (%.2f, %.2f, %.2f)", pAABB.max.x, pAABB.max.y, pAABB.max.z);
+    ImGui::Separator();
+
+    // 2. BrokenBlock の情報
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "--- BrokenBlocks Info ---");
+    if (brokenBlocks_.empty()) {
+        ImGui::Text("No BrokenBlocks.");
+    }
+    for (size_t i = 0; i < brokenBlocks_.size(); ++i) {
+        auto& block = brokenBlocks_[i];
+        if (block->IsBroken()) {
+            ImGui::Text("Block[%zu] : Broken!", i);
+            ImGui::Separator();
+            continue;
+        }
+
+        Vector3 bPos = block->GetPosition();
+        AABB bAABB = block->GetAABB();
+        float bWidth = bAABB.max.x - bAABB.min.x;
+        float bDepth = bAABB.max.z - bAABB.min.z;
+
+        // 判定結果の取得
+        bool isInside = block->IsInside(pPos);
+        bool isRider = block->IsRider(player_.get());
+        bool isImpassable = block->IsImpassable();
+
+        ImGui::Text("Block[%zu]", i);
+        ImGui::Text("  Position: (%.2f, %.2f, %.2f)", bPos.x, bPos.y, bPos.z);
+        ImGui::Text("  Size(W,D): %.2f, %.2f", bWidth, bDepth);
+
+        // IsInside (プレイヤーの中心座標がブロック内にあるか)
+        if (isInside) {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsInside: True (Player center is in block)");
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsInside: False");
+        }
+
+        // IsRider (ブロックがプレイヤーの乗降をどう認識しているか)
+        if (isRider) {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsRider : True (Player is riding)");
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsRider : False");
+        }
+
+        // isImpassable (次に降りたら壊れる状態かどうか)
+        ImGui::Text("  IsImpassable: %s", isImpassable ? "True" : "False");
+
+        ImGui::Separator();
+    }
+
+    ImGui::End();
+    // =========================================================
+
 #endif // USE_IMGUI
 
     CollisionMask::GetInstance()->Update();
@@ -480,6 +550,15 @@ void GameScene::Update()
     for (auto& ow : stageOneWays_) {
         ow->Update();
     }
+
+    // =========================================================
+    // ★ 追加: プレイヤーに現在の BrokenBlock リストを渡す
+    // =========================================================
+    std::vector<BrokenBlock*> blockPtrs;
+    for (auto& b : brokenBlocks_) {
+        blockPtrs.push_back(b.get());
+    }
+    player_->SetBrokenBlocks(blockPtrs);
 
     player_->Update();
 
@@ -557,7 +636,6 @@ void GameScene::Update()
     goal_->Clear();
     egg_->Death();
 
-    // 破壊フラグの立ったブロックを削除
     // 破壊フラグの立ったブロックを削除
     brokenBlocks_.erase(
         std::remove_if(brokenBlocks_.begin(), brokenBlocks_.end(),
@@ -727,7 +805,13 @@ void GameScene::CheckAllCollisions() {
         }
     }
 
-
+    // =========================================================
+    // ★ 追加: BrokenBlock とプレイヤーの乗降判定
+    // =========================================================
+    for (auto& brokenBlock : brokenBlocks_) {
+        // プレイヤーがブロックに乗っているかを毎フレームチェック
+        brokenBlock->CheckRiding(player_->GetPosition(), player_.get());
+    }
 
 }
 

@@ -59,6 +59,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             bool hasThread = false;
             Vector3 worldPos = { worldX, 0.0f, worldZ };
 
+
             // 1. 【追加】橋の判定（最優先）
             bool onOneWay = false;
             bool canPassOneWay = true;
@@ -72,11 +73,13 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                         break;
                     }
 
+                    isWall = false; // 壁を無視して通れるようにする
                     onOneWay = true;
                     break;
                 }
             }
 
+            
             // 壊れるブロックの判定
             bool onBrokenBlock = false;
             for (const auto& br : brokenBlock)
@@ -90,14 +93,16 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                         continue;
                     }
 
+                    isWall = false;
                     onBrokenBlock = true;
                     break;
                 }
             }
 
+
             if (tm) {
                 // ThreadManager内の全糸ノードをチェック
-                float checkRadiusSq = 0.8f; // 半径3.0の2乗。広めに設定
+                float checkRadiusSq = 2.25f; // 半径3.0の2乗。広めに設定
 
                 for (auto& physics : tm->GetPhysicsList()) {
                     for (const auto& node : physics->GetNodes()) {
@@ -113,10 +118,12 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 }
             }
 
+
             bool canPass = !isWall || hasThread || onOneWay || onBrokenBlock;
 
+            
             if (!canPass) {
-                continue; // 通れないなら次の方向へ
+               continue; // 通れないなら次の方向へ
             }
 
             bool inClosed = false;
@@ -141,7 +148,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             else if (onOneWay) {
                 // 橋の上は「糸がない場合の最終手段」としてコストを高く設定する
                 // これにより、糸があるなら糸を、なければ橋を通るようになる
-                moveCost *= 5.0f;
+                moveCost *= 2.1f;
             }
 
             int newG = current->g + static_cast<int>(moveCost * 10.0f);
