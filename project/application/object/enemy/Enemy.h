@@ -9,6 +9,7 @@
 #include "BrokenBlock.h"
 #include "Audio.h"
 #include "EnemyAnima.h"
+#include "EnemyWebEffect.h"
 
 class ThreadManager;
 class Egg;
@@ -73,9 +74,14 @@ private:
     std::unique_ptr<EnemyAnima> anima_;
     std::unique_ptr<Object3d> object_;
     std::deque<Point> path_;
+
     float moveSpeed_ = 0.08f;
     int recalculateTimer_ = 0;
 
+    std::unique_ptr<EnemyWebEffect> webEffect_;
+    float webEffectTimer_ = 0.0f;
+    Vector3 webEffectRot_ = {0.0f, 0.0f, 0.0f};
+    
     // キャラクターの当たり判定サイズ
     static inline const float kWidth = 1.6f;
     static inline const float kHeight = 1.6f;
