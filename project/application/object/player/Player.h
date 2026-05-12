@@ -17,7 +17,8 @@ class OneWayObject;
 class BrokenBlock;
 class GameScene;
 
-class Player {
+class Player
+{
 public:
     /// <summary>
     /// 初期化
@@ -76,6 +77,7 @@ public:
     }
 
     // 一回きりアニメーション終了後のリセット処理を行い、指定した状態に遷移する
+
     void ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState newState) {
         if (anima_) {
             anima_->ResetOneShotAnimation();
@@ -107,7 +109,9 @@ public:
     bool CanFireThread() const;
 
     // 糸を撃ったかどうかを確認し、確認したらフラグを折る関数
+
     bool GetAndResetDidFireThread() {
+
         if (didFireThread_) {
             didFireThread_ = false;
             return true;
@@ -128,7 +132,8 @@ public:
     /// </summary>
     void SetCanDrawPrediction(bool canDraw) { canDrawPrediction_ = canDraw; }
 
-    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWays) {
+    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWays)
+    {
         oneWayObjects_ = oneWays;
     }
     // OneWayObjectに乗っているかどうかのゲッターとセッター

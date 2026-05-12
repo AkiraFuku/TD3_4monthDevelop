@@ -41,7 +41,8 @@ public:
         std::vector<Vector3> brokenBlockPos_;
     };
 
-    struct RayResult {
+    struct RayResult
+    {
         bool hit = false;
         Vector2 hitPos;  // 壁の入り口
         Vector2 exitPos; // 壁の出口（貫通先）
@@ -59,7 +60,7 @@ public:
         Unknown,
     };
 
-public: 
+public:
 
     // シングルトンインスタンスの取得
     static CollisionMask* GetInstance();
@@ -74,8 +75,8 @@ public:
     /// 初期化
     /// </summary>
     void Initialize();
-    
-   
+
+
 
     /// <summary>
     /// 更新
@@ -97,7 +98,7 @@ public:
 
     float FindNearestWallDist(int startX, int startZ, MaskData* mask);
 
-    MaskData* GetMaskData(int num){ return stageDatas_[num]->maskData_.get(); }
+    MaskData* GetMaskData(int num) { return stageDatas_[num]->maskData_.get(); }
 
     float GetSDFValue(float worldX, float worldZ);
 
@@ -112,16 +113,17 @@ public:
 
     RayResult CastRayThroughWall(Vector3 start, Vector3 direction, float maxDist);
 
-   
 
-    const Vector3& GetTranslate() {
+
+    const Vector3& GetTranslate()
+    {
         return translate_;
     }
 
 
 public: // 外部入出力
 
-    void SetMaskMapRequest(const StageID& maskMapRequest){ stageChangeRequest_ = maskMapRequest; }
+    void SetMaskMapRequest(const StageID& maskMapRequest) { stageChangeRequest_ = maskMapRequest; }
     void SetCurrentStageID(const int& stageID) { stageID_ = stageID; }
     const int GetCurrentStageID() { return stageID_; }
 
@@ -129,6 +131,7 @@ public: // 外部入出力
     const Vector3 GetEggStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->eggStartPos_; }
     const Vector3 GetGoalPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->goalPos_; }
     const size_t GetEnemyCount() {
+
         // enemyStartPos の配列サイズを返す
         return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size();
     }
@@ -137,40 +140,50 @@ public: // 外部入出力
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+
             static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
 
-        return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_[i]; 
+        return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_[i];
     }
+
     const size_t GetNestMaterialCount() {
+
         // nestMaterialPos の配列サイズを返す
         return stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_.size();
     }
     const Vector3& GetNestMaterialPos(const size_t i)
-    { 
+    {
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+
             static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
 
-        return stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_[i]; 
+        return stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_[i];
     }
     const Vector3& GetOneWayObjectPos(const size_t i)
-    { 
+    {
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
+
             static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
-        return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_[i]; 
+        return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_[i];
     }
 
     // 一方通行の道のサイズ
+
     const Vector3& GetOneWayObjectScale(const size_t i) {
+
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectScale_.size())
         {
             // エラー処理: インデックスが範囲外、またはJSONにサイズデータがない場合はデフォルトサイズ(幅5, 奥行き15)を返す
@@ -180,7 +193,9 @@ public: // 外部入出力
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectScale_[i];
     }
     // 一方通行の道の向き
+
     int32_t GetOneWayObjectDir(const size_t i) {
+
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectDir_.size())
         {
             // エラー処理: インデックスが範囲外、またはJSONにデータがない場合はデフォルトの向き(PositiveZ)の値を返す
@@ -190,22 +205,26 @@ public: // 外部入出力
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectDir_[i];
     }
 
-    size_t GetOneWayObjectCount() const {
+    size_t GetOneWayObjectCount() const
+    {
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_.size();
     }
 
     // 壊れるブロックの位置
+
     const Vector3& GetBrokenBlockPos(const size_t i) {
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
             static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
         return stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_[i];
     }
 
-    size_t GetBrokenBlockCount() const {
+    size_t GetBrokenBlockCount() const
+    {
         return stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_.size();
     }
 
@@ -237,11 +256,11 @@ private: // シングルトンインスタンス
     CollisionMask(const CollisionMask&) = delete;
     CollisionMask& operator=(const CollisionMask&) = delete;
 
-private: 
+private:
 
     std::vector<std::unique_ptr<StageData>> stageDatas_;
 
-    Vector3 translate_ = { 0.0f, -1.0f, 0.0f };
+    Vector3 translate_ = {0.0f, -1.0f, 0.0f};
 
     StageID currentStageID_ = StageID::Map0;
 
@@ -254,4 +273,3 @@ private:
     JSONManager::Group stageGroup_;
 
 };
-

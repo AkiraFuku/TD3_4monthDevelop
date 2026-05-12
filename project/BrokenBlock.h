@@ -49,4 +49,3 @@ private:
     // サウンド
     Audio::SoundHandle broken_ = 0;
 };
-
