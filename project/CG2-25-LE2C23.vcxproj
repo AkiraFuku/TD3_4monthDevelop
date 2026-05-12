@@ -19,6 +19,7 @@
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
     <ClCompile Include="application\debugCamera\DebugCameraFunction.cpp" />
     <ClCompile Include="application\JSONManager\JSONManager.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyWebEffect.cpp" />
     <ClCompile Include="application\object\player\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
@@ -94,6 +95,7 @@
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />
     <ClInclude Include="application\JSONManager\JSONManager.h" />
+    <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
     <ClInclude Include="application\object\player\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
