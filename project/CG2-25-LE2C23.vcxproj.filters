@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <FxCompile Include="resources\shaders\Object3d\Object3d.PS.hlsl" />
@@ -79,7 +79,6 @@
     <ClCompile Include="SelectScene.cpp" />
     <ClCompile Include="application\object\Egg\Egg.cpp" />
     <ClCompile Include="application\object\enemy\Enemy.cpp" />
-    <ClCompile Include="application\object\enemy\EnemyWebEffect.cpp" />
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
     <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
     <ClCompile Include="Fade.cpp" />
@@ -156,7 +155,6 @@
     <ClInclude Include="SelectScene.h" />
     <ClInclude Include="application\object\Egg\Egg.h" />
     <ClInclude Include="application\object\enemy\Enemy.h" />
-    <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
     <ClInclude Include="application\object\Egg\EggAnima.h" />
     <ClInclude Include="application\object\enemy\EnemyAnima.h" />
     <ClInclude Include="Fade.h" />
