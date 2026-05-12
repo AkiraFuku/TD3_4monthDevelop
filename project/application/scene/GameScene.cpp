@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include <numbers>
 #include "Transform.h"
+#include "ParticleManager.h"
 
 void GameScene::Initialize() {
 
@@ -287,6 +288,7 @@ void GameScene::Initialize() {
     backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
     backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
 
+   
 }
 void GameScene::Finalize() {
 
@@ -475,6 +477,14 @@ void GameScene::Update()
 
 #endif // USE_IMGUI
 
+    if (egg_->IsDead())
+    {
+        // 卵の更新処理
+        egg_->Update();
+
+        return;
+    }
+
     // クリアフラグが立っている場合
     if (isClear_)
     {
@@ -482,8 +492,6 @@ void GameScene::Update()
     }
 
     CollisionMask::GetInstance()->Update();
-
-
 
     sprite->Update();
 
@@ -600,13 +608,16 @@ void GameScene::Update()
     );
 
     // ① Rキーを押したらフェードアウト開始
-    if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER) ||
-        Input::GetInstance()->PushedKeyDown(DIK_R))
+    if (!isClear_ && !isResetWaiting_)
     {
-        if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)
+        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER) ||
+            Input::GetInstance()->PushedKeyDown(DIK_R))
         {
-            fade_->StartFadeOut(0.02f);
-            isResetWaiting_ = true; // リセット待機状態にする
+            if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)
+            {
+                fade_->StartFadeOut(0.02f);
+                isResetWaiting_ = true; // リセット待機状態にする
+            }
         }
     }
 
