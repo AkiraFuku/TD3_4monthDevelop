@@ -45,8 +45,8 @@ private:
 
     std::string psoName_ = "StageModel";
 
-    std::string textureFilePathFloor_ = "resources/uvChecker.png";
-    std::string textureFilePathWall_ = "resources/uvChecker.png";
+    std::string textureFilePathFloor_ = "resources/stageFloor.png";
+    std::string textureFilePathWall_ = "resources/stageWall.png";
 
 };
 
