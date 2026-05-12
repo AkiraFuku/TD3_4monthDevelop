@@ -3,6 +3,8 @@
 #include "CollisionMask.h"
 #include "ThreadManager.h"
 #include "Egg.h"
+
+#include "Object3dCommon.h"
 #include "GameScene.h"
 
 // キー生成関数 (SpiderWebManager.cpp と同じアルゴリズム)
@@ -31,6 +33,10 @@ void Enemy::Initialize(const Vector3& pos) {
     anima_->Initialize(object_.get());
     anima_->Play();
     anima_->ChangeAnimation(EnemyAnima::AnimationState::Idle);
+
+    // 蜘蛛の巣のエフェクト初期化
+    webEffect_ = std::make_unique<EnemyWebEffect>();
+    webEffect_->Initialize();
 }
 
 void Enemy::RecalculatePath(const Vector3& eggPos, ThreadManager* tm,
@@ -136,6 +142,11 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     if (!isHit_ || !isTrapped_ || !gameScene_->IsClear())
     {
 
+        if (isTrapped_ && webEffect_) {
+            webEffect_->Update(object_->GetTranslate(), Object3dCommon::GetInstance()->GetDefaultCamera());
+        }
+        return;
+    }
 
         Vector3 currentPos = object_->GetTranslate();
         Vector3 expectedPos = currentPos;
@@ -260,12 +271,14 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
                 Vector3 diff = { currentPos.x - intersect.position.x, 0.0f, currentPos.z - intersect.position.z };
                 float distSq = diff.x * diff.x + diff.z * diff.z;
 
-                // 交差点の半径内に入ったかチェック
-                if (distSq <= intersect.radius * intersect.radius) {
-                    // 捕獲成功！
-                    isTrapped_ = true;      // 蜘蛛の巣フラグをON
-                    canMove_ = false;       // 移動不可にする
-                    trappedWebKey_ = key;   // どの巣に捕まったか記録
+
+            // 交差点の半径内に入ったかチェック
+            if (distSq <= intersect.radius * intersect.radius) {
+                // 捕獲成功！
+                isTrapped_ = true;      // 蜘蛛の巣フラグをON
+                if (webEffect_) webEffect_->Start();
+                canMove_ = false;       // 移動不可にする
+                trappedWebKey_ = key;   // どの巣に捕まったか記録
 
                     // 占有リストに追加（このフレームの後の敵が引っかからなくなる）
                     occupiedWebKeys.push_back(key);
@@ -300,16 +313,26 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     // ==========================================
     anima_->Update();
     object_->Update();
+
+    if (isTrapped_ && webEffect_) {
+        // 同フレームでトラップされた場合の初回の更新
+        webEffect_->Update(expectedPos, Object3dCommon::GetInstance()->GetDefaultCamera());
+    }
 }
 
 void Enemy::Draw() {
     object_->Draw();
+    if (isTrapped_ && webEffect_) {
+        // PSO をそのまま引き継ぐため、Object3dの描画の直後に呼ぶ
+        webEffect_->Draw();
+    }
 }
 
 void Enemy::Reset(const Vector3& pos) {
     object_->SetTranslate(pos);
     path_.clear();             // 保存されている古い経路を消去
     isTrapped_ = false;        // 捕縛状態を解除
+    if (webEffect_) webEffect_->Stop();
     canMove_ = true;           // 移動可能に戻す
     isHit_ = false;            // 当たり判定フラグをリセット
     recalculateTimer_ = 0;     // 再計算タイマーを戻す
