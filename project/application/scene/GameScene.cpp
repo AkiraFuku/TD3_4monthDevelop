@@ -709,6 +709,11 @@ void GameScene::CheckAllCollisions() {
 
     // 【変更】すべての敵と卵の判定
     for (auto& enemy : enemies_) {
+
+        if (enemy->IsTrapped()) {
+            continue;
+        }
+
         AABB enemyAABB = enemy->GetAABB();
 
         if (isCollision(enemyAABB, eggAABB)) {

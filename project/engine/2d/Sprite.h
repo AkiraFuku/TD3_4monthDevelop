@@ -9,7 +9,8 @@
 class Sprite
 {
 public:
-    struct VertexData {
+    struct VertexData
+    {
         Vector4 position; // 4D position vector
         Vector2 texcord; // 2D texture coordinate vector
         Vector3 normal;
@@ -19,7 +20,7 @@ public:
         Vector4 color;
         int32_t enableLighting;
         float padding[3]; // パディングを追加してサイズを揃える
-        Matrix4x4 uvTransform; // UV変換行�E
+        Matrix4x4 uvTransform; // UV変換行列
 
     };
     struct TransformationMatrix
@@ -29,107 +30,129 @@ public:
 
     };
 
-    void Initialize( std::string textureFilePath);
+    void Initialize(std::string textureFilePath);
     void Update();
     void Draw();
 
-    const Vector2& GetPosition() const {
+    const Vector2& GetPosition() const
+    {
         return position_;
     }
-    void SetPosition(const Vector2& position) {
+    void SetPosition(const Vector2& position)
+    {
         position_ = position;
     }
 
-    float GetRotation() const {
+    float GetRotation() const
+    {
         return rotation_;
     }
-    void SetRotation(const float rotation) {
+    void SetRotation(const float rotation)
+    {
         rotation_ = rotation;
     }
 
-    Vector4& GetColor() const {
+    Vector4& GetColor() const
+    {
         return materialData_->color;
     }
-    void SetColor(const Vector4& color) {
+    void SetColor(const Vector4& color)
+    {
         materialData_->color = color;
     }
 
-    Matrix4x4& GetUV()const {
+    Matrix4x4& GetUV()const
+    {
         return materialData_->uvTransform;
     }
-    void SetUV(Matrix4x4& uvTransform) {
+    void SetUV(Matrix4x4& uvTransform)
+    {
         materialData_->uvTransform = uvTransform;
     }
 
-    const Vector2& GetSize()const {
+    const Vector2& GetSize()const
+    {
         return size_;
     }
-    void SetSize(const Vector2& Size) {
+    void SetSize(const Vector2& Size)
+    {
         this->size_ = Size;
     }
 
-    const Vector2& GetAnchorPoint()const {
+    const Vector2& GetAnchorPoint()const
+    {
         return anchorPoint_;
     }
-    void SetAnchorPoint(const Vector2& anchorPoint) {
+    void SetAnchorPoint(const Vector2& anchorPoint)
+    {
         anchorPoint_ = anchorPoint;
     }
 
-    bool GetIsFlipX()const {
+    bool GetIsFlipX()const
+    {
         return isFlipX_;
     }
-    void SetIsFlipX(bool isFlipX) {
+    void SetIsFlipX(bool isFlipX)
+    {
         isFlipX_ = isFlipX;
     }
-    bool GetIsFlipY()const {
+    bool GetIsFlipY()const
+    {
         return isFlipY_;
     }
-    void SetIsFlipY(bool isFlipY) {
+    void SetIsFlipY(bool isFlipY)
+    {
         isFlipY_ = isFlipY;
     }
 
-    Vector2 GetTextureLeftTop()const {
+    Vector2 GetTextureLeftTop()const
+    {
         return textureLeftTop;
     }
-    void SetTextureLeftTop(const Vector2& textureLeftTop) {
+    void SetTextureLeftTop(const Vector2& textureLeftTop)
+    {
         this->textureLeftTop = textureLeftTop;
     }
-    Vector2 GetTextureSize()const {
+    Vector2 GetTextureSize()const
+    {
         return textureSize;
     }
-    void SetTextureSize(const Vector2& textureSize) {
+    void SetTextureSize(const Vector2& textureSize)
+    {
         this->textureSize = textureSize;
     }
-    void SetBlendMode(BlendMode blendMode) {
+    void SetBlendMode(BlendMode blendMode)
+    {
         blendMode_ = blendMode;
     }
-    BlendMode GetBlendMode() const {
+    BlendMode GetBlendMode() const
+    {
         return blendMode_;
     }
     void SetFillMode(FillMode fillMode) { fillMode_ = fillMode; }
-    //チE��スチャ変更
+    //テクスチャ変更
     void SetTextureByFilePath(const std::string& textureFilePath);
 
 private:
     void AdjustTextureSize();
     BlendMode blendMode_ = BlendMode::Normal;
 private:
-    
 
-    Vector2 position_ = { 0.0f,0.0f };
+
+    Vector2 position_ = {0.0f,0.0f};
     float rotation_ = 0.0f;
 
-    Vector2 size_ = { 10.0f,10.0f };
+    Vector2 size_ = {10.0f,10.0f};
 
-    Vector2 anchorPoint_ = { 0.0f,0.0f };
+    Vector2 anchorPoint_ = {0.0f,0.0f};
 
     bool isFlipX_ = false;
     bool isFlipY_ = false;
 
-    //チE��スチャ左丁E
-    Vector2 textureLeftTop = { 0.0f,0.0f };
-    //チE��スチャ刁E��出しサイズ
-    Vector2 textureSize{ 100.0f,100.0f };
+    //テクスチャ左上
+    Vector2 textureLeftTop = {0.0f,0.0f};
+    //テクスチャ切り出しサイズ
+    Vector2 textureSize {100.0f,100.0f};
 
 
     //buffer
@@ -137,8 +160,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> indexResource_;
     VertexData* vertexData_ = nullptr;
     uint32_t* indexData_ = nullptr;
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_{};
-    D3D12_INDEX_BUFFER_VIEW indexBufferView_{};
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_;
+    D3D12_INDEX_BUFFER_VIEW indexBufferView_;
     //マテリアル
     Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
     Material* materialData_ = nullptr;
@@ -149,4 +172,3 @@ private:
     std::string textureFilePath_;
     FillMode fillMode_ = FillMode::kSolid;
 };
-
