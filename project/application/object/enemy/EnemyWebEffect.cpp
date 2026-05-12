@@ -17,14 +17,18 @@ void EnemyWebEffect::Initialize() {
     cocoonObject_->Initialize();
     cocoonObject_->SetModel("cocoon/cocoon.obj");
     cocoonObject_->SetBlendMode(BlendMode::Normal); // アルファブレンド用
-    cocoonAlpha_ = 0.0f;
-    cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+    cocoonScale_ = 0.0f;
+    cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
     
     isActive_ = false;
 }
 
 void EnemyWebEffect::Update(const Vector3& targetPos, Camera* camera)
 {
+
+    cocoonObject_->SetTranslate(targetPos);
+    cocoonObject_->Update();
+
     if (state_ == WebState::None) return;
 
     if (state_ == WebState::Winding) {
@@ -97,21 +101,16 @@ void EnemyWebEffect::Update(const Vector3& targetPos, Camera* camera)
         renderer_->Update(allNodes, camera);
     }
 
-    // 徐々にアルファ値を上げていく
+    // ▼ 徐々にスケールを大きくしていく ▼
     if (state_ == WebState::Winding || state_ == WebState::Formed) {
-        if (cocoonAlpha_ < 1.0f) {
-            // Winding中に徐々に濃くなり、Formedで完全に表示されるような速度
-            cocoonAlpha_ += 0.01f; 
-            if (cocoonAlpha_ > 1.0f) {
-                cocoonAlpha_ = 1.0f;
+        if (cocoonScale_ < 1.0f) { // 最終的な大きさを1.0fとする場合
+            cocoonScale_ += 0.05f; // 大きくなるスピード（調整してください）
+            if (cocoonScale_ > 1.0f) {
+                cocoonScale_ = 1.0f;
             }
-            cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+            cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
         }
     }
-
-    // 位置をエネミーに追従させて更新
-    cocoonObject_->SetTranslate(targetPos);
-    cocoonObject_->Update();
 }
 
 void EnemyWebEffect::Draw()
@@ -125,8 +124,7 @@ void EnemyWebEffect::Draw()
     }
 
     // 繭のモデル描画
-    // アルファ値が0より大きければ描画する
-    if (cocoonAlpha_ > 0.0f) {
+    if (cocoonScale_ > 0.0f) {
         cocoonObject_->Draw();
     }
 }
@@ -141,8 +139,8 @@ void EnemyWebEffect::Start()
     wrapDir_ = 1.0f;
     totalGeneratedNodes_ = 0; // カウンターをリセット
     
-    cocoonAlpha_ = 0.0f;
-    if (cocoonObject_) cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+    cocoonScale_ = 0.0f;
+    if (cocoonObject_) cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
 }
 
 void EnemyWebEffect::Stop()
@@ -151,6 +149,6 @@ void EnemyWebEffect::Stop()
     state_ = WebState::None;
     nodes_.clear();
     
-    cocoonAlpha_ = 0.0f;
-    if (cocoonObject_) cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+    cocoonScale_ = 0.0f;
+    if (cocoonObject_) cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
 }

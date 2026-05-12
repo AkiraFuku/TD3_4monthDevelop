@@ -32,7 +32,7 @@ private:
     std::vector<PhysicsNode> nodes_;
 
     std::unique_ptr<Object3d> cocoonObject_; // 追加: 繭玉モデル
-    float cocoonAlpha_ = 0.0f;               // 追加: アルファ値
+    float cocoonScale_ = 0.0f;
 
     float wrapAngle_ = 0.0f;
     float wrapHeight_ = 0.0f;
