@@ -151,12 +151,6 @@ void GameScene::Initialize() {
 
 
     // 敵の初期化
-
-    /*enemy_ = std::make_unique<Enemy>();
-    enemy_->Initialize(enemyPos_);*/
-
-
-
     for (const auto& pos : enemyPositions_) {
         auto enemy = std::make_unique<Enemy>();
         enemy->Initialize(pos);
@@ -173,18 +167,6 @@ void GameScene::Initialize() {
         nestMaterial_.push_back(std::move(nestMaterial));
     }
 
-    //// ... 一方通行オブジェクトの生成 ...
-    //auto oneWay = std::make_unique<OneWayObject>();
-    //// 床
-    //oneWay->Initialize({ 100.0f, -1.0f, 100.0f }, OneWayObject::Direction::PositiveX, 2.0f, 26.0f); // Yを少し上げるとチラつき防止になる
-    //oneWayObjects_.push_back(std::move(oneWay));
-
-    //// 2. プレイヤーに「当たり判定対象」としてポインタのリストを渡す
-    //std::vector<OneWayObject*> rawPtrs;
-    //for (auto& obj : oneWayObjects_) {
-    //    rawPtrs.push_back(obj.get());
-    //}
-    //player_->SetOneWayObjects(rawPtrs);
 
     // ========================================================
     // ▼ ここから下（関数の最後）に以下のコードを丸ごと追加！ ▼
@@ -275,6 +257,23 @@ void GameScene::Initialize() {
     slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
     nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
 
+    // メニューUIの初期化
+    for (int i = 0; i < 3; i++)
+    {
+        std::string path = "resources/Menu/" + std::to_string(i + 1) + ".png";
+        auto pauseSprite = std::make_unique<Sprite>();
+        pauseSprite->Initialize(path);
+        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (230.0f * i))});
+        pauseSprite_.push_back(std::move(pauseSprite));
+    }
+
+
+    menuSprite_ = std::make_unique<Sprite>();
+    menuSprite_->Initialize("resources/Menu/backGround.png");
+    menuSprite_->SetPosition(Vector2{ 0.0f,0.0f });
+    cursorSprite_ = std::make_unique<Sprite>();
+    cursorSprite_->Initialize("resources/Menu/cursor.png");
+    cursorSprite_->SetPosition(pauseSprite_[2]->GetPosition());
 
     fade_ = std::make_unique<Fade>();
     fade_->Initialize();
@@ -483,6 +482,20 @@ void GameScene::Update()
         egg_->Update();
 
         return;
+    }
+
+    if (openPause_)
+    {
+        Pause();
+        return;
+    }
+    else
+    {
+        if (Input::GetInstance()->TriggerKeyDown(DIK_Q))
+        {
+            openPause_ = true;
+            return;
+        }
     }
 
     // クリアフラグが立っている場合
@@ -727,6 +740,17 @@ void GameScene::Draw() {
     slashNestSprite_->Draw();
     nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
 
+    if (openPause_)
+    {
+        menuSprite_->Draw();
+
+        for (auto& pauseSprite : pauseSprite_)
+        {
+            pauseSprite->Draw();
+        }
+        cursorSprite_->Draw();
+    }
+
     fade_->Draw();
 }
 
@@ -946,6 +970,86 @@ void GameScene::Clear()
         
     }
 
+}
+
+void GameScene::Pause()
+{
+    if (isFadeStart_)
+    {
+        // フェードの更新
+        fade_->Update();
+
+        if (fade_->IsFinished())
+        {
+            if (pauseIndex_ == 0)
+            {
+                SceneManager::GetInstance()->ChangeScene("TitleScene");
+            }
+            else if (pauseIndex_ == 1)
+            {
+                SceneManager::GetInstance()->ChangeScene("SelectScene");
+            }
+        }
+    }
+    else
+    {
+        if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) ||
+            Input::GetInstance()->TriggerKeyDown(DIK_S))
+        {
+            if (pauseIndex_ < 2)
+            {
+                pauseIndex_++;
+            }
+            else
+            {
+                pauseIndex_ = 0;
+            }
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) ||
+            Input::GetInstance()->TriggerKeyDown(DIK_W))
+        {
+            if (pauseIndex_ > 0)
+            {
+                pauseIndex_--;
+            }
+            else
+            {
+                pauseIndex_ = 2;
+            }
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_Q))
+        {
+            openPause_ = false;
+            return;
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+        {
+            if (pauseIndex_ == 2)
+            {
+                openPause_ = false;
+                return;
+            }
+            else
+            {
+                fade_->StartFadeOut(0.02f);
+                isFadeStart_ = true;
+            }
+
+        }
+    }
+
+
+    Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
+    pos.y -= 500.0f;
+    pos.x -= 200.0f;
+    cursorSprite_->SetPosition(pos);
+
+    for (auto& pauseSprite : pauseSprite_)
+    {
+        pauseSprite->Update();
+    }
+    menuSprite_->Update();
+    cursorSprite_->Update();
 }
 
 void GameScene::LoadStageData()

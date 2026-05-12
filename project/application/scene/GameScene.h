@@ -44,6 +44,9 @@ public:
   // クリア時の処理
   void Clear();
 
+  // ポーズメニュー処理
+  void Pause();
+
 public:
 
     void LoadStageData();
@@ -128,6 +131,9 @@ private:
   std::unique_ptr<Sprite> slashSprite_;
   std::unique_ptr<Sprite> slashNestSprite_;
 
+  std::vector < std::unique_ptr<Sprite>> pauseSprite_;
+  std::unique_ptr<Sprite> menuSprite_;
+  std::unique_ptr<Sprite> cursorSprite_;
 
   // フェード機能
   std::unique_ptr<Fade> fade_;
@@ -144,6 +150,9 @@ private:
   // クリアフラグ
   bool isClear_ = false;
   bool isFadeStart_ = false;
+  // ポーズメニューフラグ
+  bool openPause_ = false;
+  int pauseIndex_ = 2;
 
   // カメラのオフセット
   Vector3 cameraOffset_ = { 0.0f, 10.0f, -10.0f };
