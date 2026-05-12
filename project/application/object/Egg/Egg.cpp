@@ -27,8 +27,6 @@ void Egg::Initialize(const Vector3& pos) {
     anima_->Initialize(object_.get());
     anima_->Play();
 
-
-
 }
 
 void Egg::Finalize() {
@@ -37,7 +35,17 @@ void Egg::Finalize() {
 
 void Egg::Update() {
 
-    Vector3 translate = object_->GetTranslate();
+    translate = object_->GetTranslate();
+
+#ifdef USE_IMGUI
+
+    ImGui::Begin("Egg");
+    ImGui::DragFloat3("pos", &translate.x, 1.0f, 0.0f, 500.0f);
+    ImGui::End();
+
+#endif
+
+
 
     if (!gameScene_->IsClear())
     {
@@ -99,37 +107,62 @@ void Egg::Update() {
 
     }
 
-    // --- 色の演出処理 ---
-    flickerCounter_ += 1.0f / 60.0f; // フレーム進捗（60FPS想定）
-    Vector4 finalColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // 基本は白
+    if (isDead_)
+    {
+        if (a >= 0.0f)
+        {
+            a -= 0.01f; // 徐々に透明にする
+            object_->SetModelInstanceColor("egg", { 1.0f, 1.0f, 1.0f, a });
+        }
+        else
+        {
+            SceneManager::GetInstance()->ChangeScene("TitleScene");
+        }
 
-    // 1. HP低下による常時明滅 (HP 30%以下などで発動)
-    float hpRatio = HP_ / maxHP_;
-    if (hpRatio <= 0.3f) {
-        // HPが低いほど明滅を速くする (周期を短くする)
-        float speed = (hpRatio <= 0.1f) ? 15.0f : 8.0f;
-        float sinValue = (sinf(flickerCounter_ * speed) + 1.0f) * 0.5f; // 0.0 ~ 1.0
-
-        // 赤っぽく明滅させる
-        finalColor.y = 0.2f + (sinValue * 0.8f);
-        finalColor.z = 0.2f + (sinValue * 0.8f);
+        for (auto& effect : explosionEffect_)
+        {
+            effect->Update();
+        }
     }
-if (damageEffectTimer_ > 0.0f) {
-    damageEffectTimer_ -= 1.0f / 60.0f;
+    else
+    {
 
-    // sin波を使って 0.0 ～ 1.0 の値を計算 (15.0fは遷移スピード)
-    float t = (sinf(damageEffectTimer_ * 15.0f) + 1.0f) * 0.5f;
+        // --- 色の演出処理 ---
+        flickerCounter_ += 1.0f / 60.0f; // フレーム進捗（60FPS想定）
+        Vector4 finalColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // 基本は白
+
+        // 1. HP低下による常時明滅 (HP 30%以下などで発動)
+        float hpRatio = HP_ / maxHP_;
+        if (hpRatio <= 0.3f) {
+            // HPが低いほど明滅を速くする (周期を短くする)
+            float speed = (hpRatio <= 0.1f) ? 15.0f : 8.0f;
+            float sinValue = (sinf(flickerCounter_ * speed) + 1.0f) * 0.5f; // 0.0 ~ 1.0
+
+            // 赤っぽく明滅させる
+            finalColor.y = 0.2f + (sinValue * 0.8f);
+            finalColor.z = 0.2f + (sinValue * 0.8f);
+        }
+        if (damageEffectTimer_ > 0.0f) {
+            damageEffectTimer_ -= 1.0f / 60.0f;
+
+            // sin波を使って 0.0 ～ 1.0 の値を計算 (15.0fは遷移スピード)
+            float t = (sinf(damageEffectTimer_ * 15.0f) + 1.0f) * 0.5f;
+
+            // 赤 {1,0,0,1} とデフォルト色を線形補間(Lerp)する
+            finalColor.x = 1.0f; // R成分を 0.0(黒) ～ 1.0(赤) で遷移
+            finalColor.y = Lerp(1.0f, 0.0f, t); // G成分を 0.0(黒) ～ 0.0(赤) で遷移
+            finalColor.z = Lerp(1.0f, 0.0f, t); // B成分を 0.0(黒) ～ 0.0(赤) で遷移
+
+            finalColor.w = 1.0f;
+        }
+        else {
+            isDamage = false;
+        }
+
+        // 最終的な色を適用
+        object_->SetModelInstanceColor("egg", finalColor);
+    }
     
-    // 赤 {1,0,0,1} とデフォルト色を線形補間(Lerp)する
-    finalColor.x =1.0f; // R成分を 0.0(黒) ～ 1.0(赤) で遷移
-    finalColor.y = Lerp(1.0f, 0.0f, t); // G成分を 0.0(黒) ～ 0.0(赤) で遷移
-    finalColor.z = Lerp(1.0f, 0.0f, t); // B成分を 0.0(黒) ～ 0.0(赤) で遷移
-    
-    finalColor.w = 1.0f;
-} else {
-    isDamage = false;
-}    // 最終的な色を適用
-    object_->SetModelInstanceColor("egg", finalColor);
 
     object_->SetTranslate(translate);
 
@@ -139,11 +172,15 @@ if (damageEffectTimer_ > 0.0f) {
 }
 
 void Egg::Draw() {
-
-
-
-
     object_->Draw();
+
+    if (isDead_)
+    {
+        for (auto& effect : explosionEffect_)
+        {
+            effect->Draw();
+        }
+    }
 }
 
 Vector3 Egg::GetWorldPosition() const {
@@ -172,16 +209,33 @@ void Egg::OnCollision(const Player* player_) {
 void Egg::SetHP(float hp)
 {
     HP_ -= hp;
-   if (hp > 0.0f) {
+    if (hp > 0.0f) {
         isDamage = true;
         damageEffectTimer_ = kDamageEffectTime; // 常に最新のダメージでタイマーをリセット
     }
 
 }
 void Egg::Death() {
+
+    if (isDead_)
+    {
+        return;
+    }
+
     // HPがなくなったら
     if (HP_ <= 0.0f)
     {
-        SceneManager::GetInstance()->ChangeScene("TitleScene");
+        isDead_ = true;
+        a = object_->GetColor().w;
+        object_->SetBlendMode(BlendMode::Add);
+
+        // エフェクトの生成
+        for (int i = 0; i < 10; i++)
+        {
+            auto effect = std::make_unique<EggExplosion>();
+            effect->Initialize(translate);
+            explosionEffect_.push_back(std::move(effect));
+        }
+
     }
 }

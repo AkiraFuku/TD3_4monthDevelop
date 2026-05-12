@@ -6,6 +6,8 @@
 #include "DrawFunction.h"
 #include "Audio.h"
 #include "EggAnima.h"
+#include "EggExplosion.h"
+#include <vector>
 
 class Player;
 class GameScene;
@@ -50,6 +52,8 @@ public:
     // 死亡判定
     void Death();
 
+    // getter
+    bool IsDead() const { return isDead_; }
     
 public: // 外部入出力
 
@@ -62,7 +66,7 @@ private:
 
     Vector3 scale_ = { 1.0f,1.0f,1.0f };
     Vector3 rotate_ = { 0.0f,0.0f,0.0f };
-    Vector3 translate_ = { 0.0f,0.0f,0.0f };
+    Vector3 translate;
 
     // キャラクターの当たり判定サイズ
     static inline const float kWidth = 1.6f;
@@ -79,6 +83,7 @@ private:
 
     // HP
     float HP_ = 10.0f;
+    bool isDead_ = false;
 
     // サウンド
     Audio::SoundHandle up_ = 0;
@@ -89,5 +94,10 @@ private:
     const float kDamageEffectTime = 0.5f; // 点滅させる合計時間
     float flickerCounter_ = 0.0f;    // 明滅用カウンター
     bool isDamage=false;
+
+    // 卵の爆発エフェクト
+    std::vector<std::unique_ptr<EggExplosion>> explosionEffect_;
+    // 透明度
+    float a = 1.0f;
 };
 
