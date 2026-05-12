@@ -9,8 +9,8 @@ class OneWayObject
 {
 public:
     // 方向の定義
-    enum class Direction
-    {
+
+    enum class Direction {
         PositiveX, // +X方向のみ許可
         NegativeX, // -X方向のみ許可
         PositiveZ, // +Z方向のみ許可
@@ -30,7 +30,8 @@ public:
     bool IsInside(const Vector3& pos) const;
 
     // プレイヤーの現在位置と移動量を受け取り、進入不可なら移動量を補正する
-    void ResolveCollision(Vector3& currentPos, Vector3& moveVel) const;
+
+    void ResolveCollision( Vector3& currentPos, Vector3& moveVel) const;
 
     void DebugDrawImGui(int index, const Vector3& playerPos, const Vector3& playerMoveVel) const;
 
@@ -44,15 +45,16 @@ public: // 外部入出力
     AABB GetAABB() const;
 
     // セッター
-    void SetTranslate(const Vector3& translate)
-    {
+    void SetTranslate(const Vector3& translate) {
+
         position_ = translate;
         if (object_) {
             object_->SetTranslate(translate);
         }
     }
 
-private:
+
+private:    
     Vector3 position_;
     Direction allowedDir_;
     float width_;

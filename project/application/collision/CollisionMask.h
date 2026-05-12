@@ -5,6 +5,8 @@
 #include "DrawFunction.h"
 #include "JSONManager.h"
 
+#include "StageModel.h"
+
 class CollisionMask
 {
 public:
@@ -125,11 +127,11 @@ public: // 外部入出力
     void SetCurrentStageID(const int& stageID) { stageID_ = stageID; }
     const int GetCurrentStageID() { return stageID_; }
 
-    const Vector3 GetStartPos() { return stageDatas_[static_cast<int>(currentStageID_)]->startPos_; }
-    const Vector3 GetEggStartPos() { return stageDatas_[static_cast<int>(currentStageID_)]->eggStartPos_; }
-    const Vector3 GetGoalPos() { return stageDatas_[static_cast<int>(currentStageID_)]->goalPos_; }
-    const size_t GetEnemyCount()
-    {
+    const Vector3 GetStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->startPos_; }
+    const Vector3 GetEggStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->eggStartPos_; }
+    const Vector3 GetGoalPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->goalPos_; }
+    const size_t GetEnemyCount() {
+
         // enemyStartPos の配列サイズを返す
         return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size();
     }
@@ -138,14 +140,17 @@ public: // 外部入出力
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
-            static Vector3 defaultPos = {0.0f, 0.0f, 0.0f};
+
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
 
         return stageDatas_[static_cast<int>(currentStageID_)]->enemyStartPos_[i];
     }
-    const size_t GetNestMaterialCount()
-    {
+
+    const size_t GetNestMaterialCount() {
+
         // nestMaterialPos の配列サイズを返す
         return stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_.size();
     }
@@ -154,7 +159,9 @@ public: // 外部入出力
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->nestMaterialPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
-            static Vector3 defaultPos = {0.0f, 0.0f, 0.0f};
+
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
 
@@ -165,15 +172,18 @@ public: // 外部入出力
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
-            static Vector3 defaultPos = {0.0f, 0.0f, 0.0f};
+
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectPos_[i];
     }
 
     // 一方通行の道のサイズ
-    const Vector3& GetOneWayObjectScale(const size_t i)
-    {
+
+    const Vector3& GetOneWayObjectScale(const size_t i) {
+
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectScale_.size())
         {
             // エラー処理: インデックスが範囲外、またはJSONにサイズデータがない場合はデフォルトサイズ(幅5, 奥行き15)を返す
@@ -183,8 +193,9 @@ public: // 外部入出力
         return stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectScale_[i];
     }
     // 一方通行の道の向き
-    int32_t GetOneWayObjectDir(const size_t i)
-    {
+
+    int32_t GetOneWayObjectDir(const size_t i) {
+
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->oneWayObjectDir_.size())
         {
             // エラー処理: インデックスが範囲外、またはJSONにデータがない場合はデフォルトの向き(PositiveZ)の値を返す
@@ -200,12 +211,13 @@ public: // 外部入出力
     }
 
     // 壊れるブロックの位置
-    const Vector3& GetBrokenBlockPos(const size_t i)
-    {
+
+    const Vector3& GetBrokenBlockPos(const size_t i) {
         if (i >= stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_.size())
         {
             // エラー処理: インデックスが範囲外の場合は、デフォルトの位置を返す
-            static Vector3 defaultPos = {0.0f, 0.0f, 0.0f};
+            static Vector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+
             return defaultPos;
         }
         return stageDatas_[static_cast<int>(currentStageID_)]->brokenBlockPos_[i];

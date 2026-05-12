@@ -8,6 +8,7 @@
 #include "EggAnima.h"
 
 class Player;
+class GameScene;
 
 class Egg
 {
@@ -37,6 +38,8 @@ public:
 
     // プレイヤーのポインタ
     void SetPlayer(Player* player) { player_ = player; }
+    // ゲームシーンのポインタ
+    void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
 
     // 卵の状況を取得
     bool IsOnPlayer() const { return onPlayer_; }
@@ -71,6 +74,8 @@ private:
     bool onPlayer_ = false;
     // プレイヤーのポインタ
     Player* player_ = nullptr;
+    // ゲームシーンのポインタ
+    GameScene* gameScene_ = nullptr;
 
     // HP
     float HP_ = 10.0f;

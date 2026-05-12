@@ -83,6 +83,10 @@ void GameScene::Initialize() {
     terrain_->Initialize();*/
 
     CollisionMask::GetInstance()->Initialize();
+    stageModel_ = std::make_unique<StageModel>();
+    stageModel_->Initialize();
+    stageModel_->Create(10.0f);
+
     playerPos_ = CollisionMask::GetInstance()->GetStartPos();
     eggPos = CollisionMask::GetInstance()->GetEggStartPos();
     goalPos = CollisionMask::GetInstance()->GetGoalPos();
@@ -124,12 +128,14 @@ void GameScene::Initialize() {
     player_ = std::make_unique<Player>();
     player_->Initialize(playerPos_, thread_.get());
     player_->SetMaxThreadCount(5);
+    player_->SetGameScene(this);
 
     // 卵の初期化
     egg_ = std::make_unique<Egg>();
     egg_->Initialize(eggPos);
     player_->SetEgg(egg_.get());
     egg_->SetPlayer(player_.get());
+    egg_->SetGameScene(this);
 
     // ゴールの初期化
     goal_ = std::make_unique<Goal>();
@@ -283,6 +289,8 @@ void GameScene::Initialize() {
 }
 void GameScene::Finalize() {
 
+    stageModel_->Finalize();
+
     LightManager::GetInstance()->ClearLights();
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
@@ -335,6 +343,8 @@ void GameScene::Update()
     camera->UpdateViewProjection();
     object3d->Update();
     object3d2->Update();
+
+    stageModel_->Update();
 
 #ifdef USE_IMGUI
 
@@ -440,14 +450,16 @@ void GameScene::Update()
         // IsInside (プレイヤーの中心座標がブロック内にあるか)
         if (isInside) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsInside: True (Player center is in block)");
-        } else {
+        }
+        else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsInside: False");
         }
 
         // IsRider (ブロックがプレイヤーの乗降をどう認識しているか)
         if (isRider) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsRider : True (Player is riding)");
-        } else {
+        }
+        else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsRider : False");
         }
 
@@ -465,11 +477,12 @@ void GameScene::Update()
     // クリアフラグが立っている場合
     if (isClear_)
     {
-
+        Clear();
     }
 
-
     CollisionMask::GetInstance()->Update();
+
+
 
     sprite->Update();
 
@@ -533,7 +546,10 @@ void GameScene::Update()
 
     // 【変更】すべての敵のUpdateを呼ぶ
     for (auto& enemy : enemies_) {
-        enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
+        if (enemy->GetCanMove())
+        {
+            enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
+        }
     }
 
     // 巣の素材の更新処理
@@ -560,12 +576,16 @@ void GameScene::Update()
     nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
     backgroundModel_->Update();
 
-    // 当たり判定の確認
-    CheckAllCollisions();
 
-    // ゴールクリアの判定
-    goal_->Clear();
-    egg_->Death();
+    if (!isClear_)
+    {
+        // 当たり判定の確認
+        CheckAllCollisions();
+
+        // ゴールクリアの判定
+        goal_->Clear();
+        egg_->Death();
+    }
 
     // 破壊フラグの立ったブロックを削除
     brokenBlocks_.erase(
@@ -637,6 +657,8 @@ void GameScene::Draw() {
 
     // player_->Draw();
     // terrain_->Draw();
+
+    stageModel_->Draw();
 
     // 卵の描画処理
     egg_->Draw();
@@ -876,7 +898,40 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
 
 void GameScene::Clear()
 {
-    // カメラをプレイヤーの前へ
+    if (t_ < 1.0f)
+    {
+        t_ += 0.01f; // tを徐々に増加させる
+        // カメラをプレイヤーの前へ
+        Vector3 cameraPos = camera->GetTranslate();
+        Vector3 newPos = Vector3Lerp(cameraPos, player_->GetPosition() + cameraOffset_, t_);
+        Vector3 cameraRotate = camera->GetRotate();
+        Vector3 newRotate = Vector3Lerp(player_->GetForward(), Vector3{ 0.0f,3.0f,0.0f }, t_);
+        camera->SetTranslate(newPos);
+        player_->SetForward(newRotate);
+    }
+    else
+    {
+        if (isFadeStart_)
+        {
+            if (fade_->IsFinished())
+            {
+                SceneManager::GetInstance()->ChangeScene("TitleScene");
+            }
+        }
+        else
+        {
+            if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_B) ||
+                Input::GetInstance()->PushedKeyDown(DIK_SPACE))
+            {
+                // クリア後の入力を検知したら、次のシーンへ遷移する処理をここに書く
+                fade_->StartFadeOut(0.02f); // フェードアウト開始
+                isFadeStart_ = true; // フェード開始フラグを立てる
+            }
+
+        }
+        
+    }
+
 }
 
 void GameScene::LoadStageData()

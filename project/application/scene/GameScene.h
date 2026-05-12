@@ -23,6 +23,7 @@
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
 #include "Fade.h"
+#include "StageModel.h"
 
 class GameScene : public Scene {
 public:
@@ -79,6 +80,8 @@ private:
 
     CollisionMask* collisionMask_;
     bool isVisibleCollisionMask_ = true;
+
+    std::unique_ptr<StageModel> stageModel_ = nullptr;
 
   // ----- Player -----
   std::unique_ptr<Player> player_;
@@ -140,9 +143,10 @@ private:
   bool isReset_ = false;
   // クリアフラグ
   bool isClear_ = false;
+  bool isFadeStart_ = false;
 
   // カメラのオフセット
-  Vector3 cameraOffset_ = { 0.0f, 5.0f, -10.0f };
+  Vector3 cameraOffset_ = { 0.0f, 10.0f, -10.0f };
   // 線形補間用の係数
   float t_ = 0.0f;
 };

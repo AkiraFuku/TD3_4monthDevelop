@@ -9,10 +9,10 @@
 #include "BrokenBlock.h"
 #include "Audio.h"
 #include "EnemyAnima.h"
-#include "EnemyWebEffect.h"
 
 class ThreadManager;
 class Egg;
+class GameScene;
 
 class Enemy {
 public:
@@ -62,6 +62,9 @@ public:
 
     void Reset(const Vector3& pos);
 
+    // ゲームシーンのポインタをセット
+    void SetGameScene(GameScene* scene) { gameScene_ = scene; }
+
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);
@@ -69,7 +72,6 @@ private:
 private:
     std::unique_ptr<EnemyAnima> anima_;
     std::unique_ptr<Object3d> object_;
-    std::unique_ptr<EnemyWebEffect> webEffect_;
     std::deque<Point> path_;
     float moveSpeed_ = 0.08f;
     int recalculateTimer_ = 0;
@@ -88,8 +90,6 @@ private:
 
     bool isTrapped_ = false;   // ★蜘蛛の巣に捕まっているフラグ
     uint64_t trappedWebKey_ = 0; // ★捕まっている場所のキー
-    float webEffectTimer_ = 0.0f;
-    Vector3 webEffectRot_ = {0.0f, 0.0f, 0.0f};
 
     bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
 
@@ -97,5 +97,8 @@ private:
 
     // サウンド
     Audio::SoundHandle attack_ = 0;
+
+    // ゲームシーンのポインタ
+    GameScene* gameScene_ = nullptr;
 
 };

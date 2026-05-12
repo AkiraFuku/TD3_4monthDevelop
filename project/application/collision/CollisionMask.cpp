@@ -255,7 +255,7 @@ void CollisionMask::Update()
 
 void CollisionMask::Draw() 
 {
-    stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Draw();
+    //stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Draw();
 }
 
 bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textureData)

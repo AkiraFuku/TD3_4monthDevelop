@@ -339,6 +339,22 @@ Model* Model::CreatePlaneFromTex(const std::string& textureFilePath)
     return model;
 }
 
+Model* Model::CreateDynamicModel(const std::vector<VertexData>& vertices, const std::string& textureFilePath)
+{
+    Model* model = new Model();
+
+    model->modelData_.vertices = vertices;
+
+    model->modelData_.material.textureFilePath = textureFilePath;
+    model->modelData_.material.textureIndex =
+        TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
+
+    model->CreateVertexBuffer();
+    model->CreateMaterialResource();
+
+    return model;
+}
+
  Model::Node Model::ReadNode(aiNode* node)
 {
    Node result;

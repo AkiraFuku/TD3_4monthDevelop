@@ -70,16 +70,15 @@ public:
 
 
     //アニメーションを変更する処理
-    void ChangeAnimation(PlayerAnima::AnimationState newState)
-    {
+    void ChangeAnimation(PlayerAnima::AnimationState newState) {
         if (anima_) {
             anima_->ChangeAnimation(newState);
         }
     }
 
     // 一回きりアニメーション終了後のリセット処理を行い、指定した状態に遷移する
-    void ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState newState)
-    {
+
+    void ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState newState) {
         if (anima_) {
             anima_->ResetOneShotAnimation();
             anima_->ChangeAnimation(newState);
@@ -110,8 +109,9 @@ public:
     bool CanFireThread() const;
 
     // 糸を撃ったかどうかを確認し、確認したらフラグを折る関数
-    bool GetAndResetDidFireThread()
-    {
+
+    bool GetAndResetDidFireThread() {
+
         if (didFireThread_) {
             didFireThread_ = false;
             return true;
