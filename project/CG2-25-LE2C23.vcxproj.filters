@@ -83,6 +83,7 @@
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
     <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
     <ClCompile Include="Fade.cpp" />
+    <ClCompile Include="StageModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="application\object\Egg\EggAnima.h" />
     <ClInclude Include="application\object\enemy\EnemyAnima.h" />
     <ClInclude Include="Fade.h" />
+    <ClInclude Include="StageModel.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

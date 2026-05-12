@@ -3,7 +3,9 @@
 #include "CollisionMask.h"
 #include "ThreadManager.h"
 #include "Egg.h"
+
 #include "Object3dCommon.h"
+#include "GameScene.h"
 
 // キー生成関数 (SpiderWebManager.cpp と同じアルゴリズム)
 static uint64_t GenerateWebKey(const ThreadManager::ThreadIntersection& intersect) {
@@ -137,135 +139,138 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     std::vector<uint64_t>& occupiedWebKeys) {
 
     // 卵に当たっている、または既に巣に捕まっている場合は移動計算をスキップ
-    if (isHit_ || isTrapped_) 
+    if (!isHit_ || !isTrapped_ || !gameScene_->IsClear())
     {
+
         if (isTrapped_ && webEffect_) {
             webEffect_->Update(object_->GetTranslate(), Object3dCommon::GetInstance()->GetDefaultCamera());
         }
         return;
     }
 
-    Vector3 currentPos = object_->GetTranslate();
-    Vector3 expectedPos = currentPos;
-    bool isMoving = false;
+        Vector3 currentPos = object_->GetTranslate();
+        Vector3 expectedPos = currentPos;
+        bool isMoving = false;
 
 
-    // ==========================================
-    // 1. 移動方向と「予定座標(expectedPos)」の計算
-    // ==========================================
+        // ==========================================
+        // 1. 移動方向と「予定座標(expectedPos)」の計算
+        // ==========================================
 
 
-    // 現在位置が橋（OneWayObject）の上かどうかを判定
-    bool currentlyOnBridge = false;
-    for (const auto& ow : oneWays) {
-        if (ow->IsInside(currentPos)) {
-            currentlyOnBridge = true;
-            break;
+        // 現在位置が橋（OneWayObject）の上かどうかを判定
+        bool currentlyOnBridge = false;
+        for (const auto& ow : oneWays) {
+            if (ow->IsInside(currentPos)) {
+                currentlyOnBridge = true;
+                break;
+            }
         }
-    }
 
-    // 橋に乗った瞬間の判定（フラグの切り替わり）
-    if (currentlyOnBridge && !isOnBridge_) {
-        isOnBridge_ = true;
-        // 橋に乗った瞬間、一度だけ「橋の先」を見据えた最新のパスを計算する
-        RecalculatePath(eggPos, tm, oneWays, brokenBlock);
-        recalculateTimer_ = 0;
-    }
-    // 橋から降りた瞬間の判定
-    else if (!currentlyOnBridge && isOnBridge_) {
-        isOnBridge_ = false;
-        // 橋を降りたので、改めて状況（糸の有無など）を確認して再計算
-        shouldReplanNextUpdate_ = true;
-    }
-
-    recalculateTimer_++;
-
-    // 再計算の実行条件
-    bool timeToReplan = (recalculateTimer_ > 60);
-
-    // 【重要】橋の上にいる間は、時間が経っても再計算を「させない」
-    // ただし、外部からの強制リプランニング(shouldReplanNextUpdate_)がある場合は例外
-    if (!isOnBridge_) {
-        if (timeToReplan || shouldReplanNextUpdate_) {
+        // 橋に乗った瞬間の判定（フラグの切り替わり）
+        if (currentlyOnBridge && !isOnBridge_) {
+            isOnBridge_ = true;
+            // 橋に乗った瞬間、一度だけ「橋の先」を見据えた最新のパスを計算する
             RecalculatePath(eggPos, tm, oneWays, brokenBlock);
             recalculateTimer_ = 0;
-            shouldReplanNextUpdate_ = false;
         }
-    }
-    else {
-        // 橋の上で詰まった時のための保険：パスが空になったら再計算
-        if (path_.empty() || shouldReplanNextUpdate_) {
-            RecalculatePath(eggPos, tm, oneWays, brokenBlock);
-            shouldReplanNextUpdate_ = false;
+        // 橋から降りた瞬間の判定
+        else if (!currentlyOnBridge && isOnBridge_) {
+            isOnBridge_ = false;
+            // 橋を降りたので、改めて状況（糸の有無など）を確認して再計算
+            shouldReplanNextUpdate_ = true;
         }
-    }
 
-    if (!path_.empty()) {
-        // 1. 本来目指すマスの中心
-        Vector3 targetGridPos = GridToWorld(path_.front());
+        recalculateTimer_++;
 
-        // 2. 【修正】そのマスの「中」にある実際の糸の座標を探す
-        Vector3 actualThreadTarget = targetGridPos; // 見つからない時のバックアップ
-        float closestDist = 2.0f; // 探す範囲（1.5〜2.0くらいが適当）
+        // 再計算の実行条件
+        bool timeToReplan = (recalculateTimer_ > 60);
 
-        if (tm) {
-            for (auto& physics : tm->GetPhysicsList()) {
-                for (const auto& node : physics->GetNodes()) {
-                    // そのマス（targetGridPos）の近くにノードがあるか？
-                    float dx = node.currentPos.x - targetGridPos.x;
-                    float dz = node.currentPos.z - targetGridPos.z;
-                    float dSq = dx * dx + dz * dz;
+        // 【重要】橋の上にいる間は、時間が経っても再計算を「させない」
+        // ただし、外部からの強制リプランニング(shouldReplanNextUpdate_)がある場合は例外
+        if (!isOnBridge_) {
+            if (timeToReplan || shouldReplanNextUpdate_) {
+                RecalculatePath(eggPos, tm, oneWays, brokenBlock);
+                recalculateTimer_ = 0;
+                shouldReplanNextUpdate_ = false;
+            }
+        }
+        else {
+            // 橋の上で詰まった時のための保険：パスが空になったら再計算
+            if (path_.empty() || shouldReplanNextUpdate_) {
+                RecalculatePath(eggPos, tm, oneWays, brokenBlock);
+                shouldReplanNextUpdate_ = false;
+            }
+        }
 
-                    if (dSq < closestDist) {
-                        closestDist = dSq;
-                        actualThreadTarget = node.currentPos;
+        if (!path_.empty()) {
+            // 1. 本来目指すマスの中心
+            Vector3 targetGridPos = GridToWorld(path_.front());
+
+            // 2. 【修正】そのマスの「中」にある実際の糸の座標を探す
+            Vector3 actualThreadTarget = targetGridPos; // 見つからない時のバックアップ
+            float closestDist = 2.0f; // 探す範囲（1.5〜2.0くらいが適当）
+
+            if (tm) {
+                for (auto& physics : tm->GetPhysicsList()) {
+                    for (const auto& node : physics->GetNodes()) {
+                        // そのマス（targetGridPos）の近くにノードがあるか？
+                        float dx = node.currentPos.x - targetGridPos.x;
+                        float dz = node.currentPos.z - targetGridPos.z;
+                        float dSq = dx * dx + dz * dz;
+
+                        if (dSq < closestDist) {
+                            closestDist = dSq;
+                            actualThreadTarget = node.currentPos;
+                        }
                     }
                 }
             }
-        }
-        actualThreadTarget.y = 0.0f;
+            actualThreadTarget.y = 0.0f;
 
-        // 3. GridToWorld の座標ではなく、見つけた糸の座標(actualThreadTarget)へ向かう
-        Vector3 nextTarget = actualThreadTarget;
+            // 3. GridToWorld の座標ではなく、見つけた糸の座標(actualThreadTarget)へ向かう
+            Vector3 nextTarget = actualThreadTarget;
 
-        Vector3 diff = { nextTarget.x - currentPos.x, 0.0f, nextTarget.z - currentPos.z };
-        float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
+            Vector3 diff = { nextTarget.x - currentPos.x, 0.0f, nextTarget.z - currentPos.z };
+            float distance = std::sqrt(diff.x * diff.x + diff.z * diff.z);
 
-        if (distance < 0.2f) {
-            path_.pop_front(); // 目標地点に到達したらリストから消す
-        } else {
-            expectedPos.x += (diff.x / distance) * moveSpeed_;
-            expectedPos.z += (diff.z / distance) * moveSpeed_;
-            isMoving = true;
-            // 2. 【追加】移動方向を向く
-            float angle = std::atan2(diff.x, diff.z);
-            object_->SetRotate({ 0.0f, angle, 0.0f });
-        }
-    }
-
-
-    // ==========================================
-    // 2. 交差点（トラップ）での捕縛判定
-    // ==========================================
-    if (tm && isMoving) {
-        for (const auto& intersect : tm->GetIntersections()) {
-
-            // ① この交差点のキー（ID）を生成
-            uint64_t key = GenerateWebKey(intersect);
-
-            // ② すでに他の敵がこのWeb(交差点)を占有していたら無視して次の交差点へ
-            bool alreadyOccupied = false;
-            for (uint64_t occupied : occupiedWebKeys) {
-                if (key == occupied) {
-                    alreadyOccupied = true;
-                    break;
-                }
+            if (distance < 0.2f) {
+                path_.pop_front(); // 目標地点に到達したらリストから消す
             }
-            if (alreadyOccupied) continue;
+            else {
+                expectedPos.x += (diff.x / distance) * moveSpeed_;
+                expectedPos.z += (diff.z / distance) * moveSpeed_;
+                isMoving = true;
+                // 2. 【追加】移動方向を向く
+                float angle = std::atan2(diff.x, diff.z);
+                object_->SetRotate({ 0.0f, angle, 0.0f });
+            }
+        }
 
-            // ③ 距離判定 (XZ平面)
-            Vector3 diff = {currentPos.x - intersect.position.x, 0.0f, currentPos.z - intersect.position.z};
-            float distSq = diff.x * diff.x + diff.z * diff.z;
+
+        // ==========================================
+        // 2. 交差点（トラップ）での捕縛判定
+        // ==========================================
+        if (tm && isMoving) {
+            for (const auto& intersect : tm->GetIntersections()) {
+
+                // ① この交差点のキー（ID）を生成
+                uint64_t key = GenerateWebKey(intersect);
+
+                // ② すでに他の敵がこのWeb(交差点)を占有していたら無視して次の交差点へ
+                bool alreadyOccupied = false;
+                for (uint64_t occupied : occupiedWebKeys) {
+                    if (key == occupied) {
+                        alreadyOccupied = true;
+                        break;
+                    }
+                }
+                if (alreadyOccupied) continue;
+
+                // ③ 距離判定 (XZ平面)
+                Vector3 diff = { currentPos.x - intersect.position.x, 0.0f, currentPos.z - intersect.position.z };
+                float distSq = diff.x * diff.x + diff.z * diff.z;
+
 
             // 交差点の半径内に入ったかチェック
             if (distSq <= intersect.radius * intersect.radius) {
@@ -275,37 +280,38 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
                 canMove_ = false;       // 移動不可にする
                 trappedWebKey_ = key;   // どの巣に捕まったか記録
 
-                // 占有リストに追加（このフレームの後の敵が引っかからなくなる）
-                occupiedWebKeys.push_back(key);
+                    // 占有リストに追加（このフレームの後の敵が引っかからなくなる）
+                    occupiedWebKeys.push_back(key);
 
-                // 移動をキャンセルしてその場に留める
-                expectedPos = currentPos;
-                break;
+                    // 移動をキャンセルしてその場に留める
+                    expectedPos = currentPos;
+                    break;
+                }
             }
         }
-    }
 
-    // 壊れるブロックの判定
-    for (auto& brokenBlock : brokenBlock)
-    {
-        brokenBlock->CheckRiding(currentPos, this);
-    }
-    if (isMoving)
-    {
+        // 壊れるブロックの判定
+        for (auto& brokenBlock : brokenBlock)
+        {
+            brokenBlock->CheckRiding(currentPos, this);
+        }
+        if (isMoving)
+        {
             anima_->ChangeAnimation(EnemyAnima::AnimationState::Walk);
 
 
-    }else{
-        anima_->ChangeAnimation(EnemyAnima::AnimationState::Idle);
+        }
+        else {
+            anima_->ChangeAnimation(EnemyAnima::AnimationState::Idle);
 
-    
+
+        }
+        object_->SetTranslate(expectedPos);
     }
-
     // ==========================================
     // 3. 座標の確定とモデルの更新
     // ==========================================
     anima_->Update();
-    object_->SetTranslate(expectedPos);
     object_->Update();
 
     if (isTrapped_ && webEffect_) {

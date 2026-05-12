@@ -84,6 +84,8 @@ public:
 
     static Model* CreatePlaneFromTex(const std::string& textureFilePath);
 
+    static Model* CreateDynamicModel(const std::vector<VertexData>& vertices, const std::string& textureFilePath);
+
     static Node ReadNode(aiNode*node );
 
     
