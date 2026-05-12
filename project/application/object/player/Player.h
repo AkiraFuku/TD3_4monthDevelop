@@ -274,5 +274,4 @@ public:
 
 private:
     JSONManager::Group playerGroup_;
-
 };
