@@ -8,21 +8,28 @@ std::unique_ptr<SpriteCommon> SpriteCommon::instance = nullptr;
 
 SpriteCommon* SpriteCommon::GetInstance() {
     if (instance == nullptr) {
-        instance.reset(new SpriteCommon());
+        // privateコンストラクタを呼び出せるヘルパー構造体
+        struct Helper : public SpriteCommon {
+            Helper() : SpriteCommon() {
+            }
+        };
+        instance = std::make_unique<Helper>();
     }
     return instance.get();
 }
 
 void SpriteCommon::Finalize() {
 
-    instance.reset();
 }
 void SpriteCommon::Initialize()
 {
 
     PsoConfig config{};
-    config.vsPath = L"resources/shaders/Sprite/Sprite.vs.hlsl";
-    config.psPath = L"resources/shaders/Sprite/Sprite.ps.hlsl";
+    PsoConfig::ShaderPath vsPath{ ShaderType::VS, L"resources/shaders/Sprite/Sprite.vs.hlsl", "main", L"vs_6_0" };
+    PsoConfig::ShaderPath psPath{ ShaderType::PS, L"resources/shaders/Sprite/Sprite.ps.hlsl", "main", L"ps_6_0" };
+
+    config.shaderPaths.push_back(vsPath);
+    config.shaderPaths.push_back(psPath);
 
 
     config.rootSignatureGenerator = []() {
@@ -88,14 +95,21 @@ void SpriteCommon::Initialize()
         return rootSignature;
         };
     config.inputLayoutGenerator = []() {
-        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        };
+        InputLayout inputLayout = {};
+
+        inputLayout.inputElement ={
+           { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+           { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+           { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };  
+        
+      
+        inputLayout.inputLayout.pInputElementDescs = inputLayout.inputElement.data();
+        inputLayout.inputLayout.NumElements = static_cast<UINT>(inputLayout.inputElement.size());
+        return inputLayout;
         };
     // 深度設定
-    config.depthEnable = false;
+    config.depthEnable = true;
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 
     // PSOManagerに名前を付けて登録

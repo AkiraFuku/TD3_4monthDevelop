@@ -9,7 +9,7 @@
 
 std::unique_ptr<CollisionMask, CollisionMask::Deleter> CollisionMask::instance_ = nullptr;
 
-CollisionMask* CollisionMask::GetInstance() 
+CollisionMask* CollisionMask::GetInstance()
 {
     if (instance_ == nullptr)
     {
@@ -36,11 +36,11 @@ void CollisionMask::Initialize()
         object->Initialize();
         object->SetRotate(Vector3{ -90.0f / 180.0f * PI, 0.0f, 0.0f });
         object->SetTranslate(translate_);
-        
+
         stageDatas_[i] = std::make_unique<StageData>();
         stageDatas_[i]->maskData_ = std::make_unique<MaskData>();
         stageDatas_[i]->maskData_->object = std::move(object);
-        
+
         stageDatas_[i]->startPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
         stageDatas_[i]->eggStartPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
         stageDatas_[i]->goalPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
@@ -57,43 +57,51 @@ void CollisionMask::Initialize()
         LoadJsonData(i);
     }
 
-   /* LoadFromFile("resources/Mask/Mask.png", stageDatas_[0]->maskData_->textureData);
-    stageDatas_[0]->maskData_->name = "mapMaskData";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[0]->maskData_->name, "resources/Mask/Mask.png");
-    
-    LoadFromFile("resources/Mask/Mask(1).png", stageDatas_[1]->maskData_->textureData);
-    stageDatas_[1]->maskData_->name = "mapMaskData1";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[1]->maskData_->name, "resources/Mask/Mask(1).png");
-    
-    LoadFromFile("resources/Mask/Mask(2).png", stageDatas_[2]->maskData_->textureData);
-    stageDatas_[2]->maskData_->name = "mapMaskData2";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[2]->maskData_->name, "resources/Mask/Mask(2).png");
-    
-    LoadFromFile("resources/Mask/Mask(3).png", stageDatas_[3]->maskData_->textureData);
-    stageDatas_[3]->maskData_->name = "mapMaskData3";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[3]->maskData_->name, "resources/Mask/Mask(3).png");*/
+    /* LoadFromFile("resources/Mask/Mask.png", stageDatas_[0]->maskData_->textureData);
+     stageDatas_[0]->maskData_->name = "mapMaskData";
+     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[0]->maskData_->name, "resources/Mask/Mask.png");
 
-    /*for (size_t i = 0; i < 4; i++)
-    {
-        GenerateSDF(stageDatas_[i]->maskData_.get());
+     LoadFromFile("resources/Mask/Mask(1).png", stageDatas_[1]->maskData_->textureData);
+     stageDatas_[1]->maskData_->name = "mapMaskData1";
+     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[1]->maskData_->name, "resources/Mask/Mask(1).png");
 
-        stageDatas_[i]->maskData_->object->SetModel(stageDatas_[i]->maskData_->name);
+     LoadFromFile("resources/Mask/Mask(2).png", stageDatas_[2]->maskData_->textureData);
+     stageDatas_[2]->maskData_->name = "mapMaskData2";
+     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[2]->maskData_->name, "resources/Mask/Mask(2).png");
 
-        auto model = ModelManager::GetInstance()->findModel(stageDatas_[i]->maskData_->name);
+     LoadFromFile("resources/Mask/Mask(3).png", stageDatas_[3]->maskData_->textureData);
+     stageDatas_[3]->maskData_->name = "mapMaskData3";
+     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[3]->maskData_->name, "resources/Mask/Mask(3).png");*/
 
-        stageDatas_[i]->maskData_->max_ = model->GetModelData().vertices[1].position;
-        stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
-    }*/
-    
+     /*for (size_t i = 0; i < 4; i++)
+     {
+         GenerateSDF(stageDatas_[i]->maskData_.get());
+
+         stageDatas_[i]->maskData_->object->SetModel(stageDatas_[i]->maskData_->name);
+
+         auto model = ModelManager::GetInstance()->findModel(stageDatas_[i]->maskData_->name);
+
+         stageDatas_[i]->maskData_->max_ = model->GetModelData().vertices[1].position;
+         stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
+     }*/
+
     currentStageID_ = static_cast<StageID>(stageID_);
 
     LoadJsonData(static_cast<int>(currentStageID_));
 
     stageChangeRequest_ = CollisionMask::StageID::Unknown;
 
+
     PsoConfig config{};
-    config.vsPath = L"resources/shaders/MaskMap/Mask.VS.hlsl";
-    config.psPath = L"resources/shaders/MaskMap/Mask.PS.hlsl";
+
+    PsoConfig::ShaderPath vsPath{ ShaderType::VS,L"resources/shaders/MaskMap/Mask.VS.hlsl", "main", L"vs_6_0" };
+    PsoConfig::ShaderPath psPath{ ShaderType::PS,L"resources/shaders/MaskMap/Mask.PS.hlsl", "main", L"ps_6_0" };
+
+
+    config.shaderPaths.push_back(vsPath);
+    config.shaderPaths.push_back(psPath);
+
+
 
 
     config.rootSignatureGenerator = []() {
@@ -186,15 +194,20 @@ void CollisionMask::Initialize()
 
 
         return rootSignature;
-    };
-    
+        };
+
     config.inputLayoutGenerator = []() {
-        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+       InputLayout inputLayout = {};
+
+        inputLayout.inputElement ={
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
-    };
+        inputLayout.inputLayout.pInputElementDescs = inputLayout.inputElement.data();
+        inputLayout.inputLayout.NumElements = static_cast<UINT>(inputLayout.inputElement.size());
+        return inputLayout;
+        };
     // 深度設定
     config.depthEnable = true;
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -208,9 +221,9 @@ void CollisionMask::Initialize()
     }
 }
 
-void CollisionMask::Update() 
+void CollisionMask::Update()
 {
-    if(stageChangeRequest_ != StageID::Unknown)
+    if (stageChangeRequest_ != StageID::Unknown)
     {
         currentStageID_ = stageChangeRequest_;
         LoadJsonData(static_cast<int>(currentStageID_));
@@ -222,16 +235,16 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentStageID_);
-    const char* items[] = {"Map0", "Map1", "Map2", "Map3","Map4","Map5"};
+    const char* items[] = { "Map0", "Map1", "Map2", "Map3","Map4","Map5" };
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<StageID>(maskMapIndex));
     }
 
-   /* if (ImGui::Button("Save"))
-    {
-        SaveJsonData();
-    }*/
+    /* if (ImGui::Button("Save"))
+     {
+         SaveJsonData();
+     }*/
 
     if (ImGui::Button("Load"))
     {
@@ -242,18 +255,18 @@ void CollisionMask::Update()
         SaveJsonData(static_cast<int>(currentStageID_));
     }
 
-   
+
 
 
     ImGui::End();
 
 #endif // _DEBUG
-    
+
 
     stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Update();
 }
 
-void CollisionMask::Draw() 
+void CollisionMask::Draw()
 {
     //stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Draw();
 }
@@ -365,10 +378,10 @@ float CollisionMask::GetSDFValue(float worldX, float worldZ)
     auto& maskData = stageDatas_[static_cast<int>(currentStageID_)]->maskData_;
 
     // 1. ワールド座標を画像上の浮動小数点の座標 (u, v) に変換
-    float u = (worldX - maskData->min_.x) / (maskData->max_.x - maskData->min_.x) 
+    float u = (worldX - maskData->min_.x) / (maskData->max_.x - maskData->min_.x)
         * (maskData->textureData.widthX - 1);
-    float v = (worldZ - maskData->min_.y) / (maskData->max_.y - maskData->min_.y) 
-        * (maskData->textureData.widthZ - 1); 
+    float v = (worldZ - maskData->min_.y) / (maskData->max_.y - maskData->min_.y)
+        * (maskData->textureData.widthZ - 1);
 
     // 2. 周辺4ピクセルの座標を特定（確実に範囲内に収める）
     int x0 = std::clamp(static_cast<int>(u), 0, maskData->textureData.widthX - 1);
@@ -408,7 +421,7 @@ Vector2 CollisionMask::GetSDFNormal(float worldX, float worldZ)
     float dz = GetSDFValue(worldX, worldZ + delta) - GetSDFValue(worldX, worldZ - delta);
 
     float length = std::sqrtf(dx * dx + dz * dz);
-    if(length < 1e-5f) {
+    if (length < 1e-5f) {
         // 勾配がほとんどない（距離場が平坦）場合は、適当な法線を返す
         return Vector2(0.0f, 0.0f);
     }
@@ -447,11 +460,11 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
     int widthX = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.widthX;
     int widthZ = stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.widthZ;
 
-    float left  = x - (width / 2.0f);
+    float left = x - (width / 2.0f);
     float right = x + (width / 2.0f);
     float front = z - (width / 2.0f);
     float back = z + (width / 2.0f);
-  
+
     float v1 = (front - min_.y) / (max_.y - min_.y) * widthZ;
     float v2 = (back - min_.y) / (max_.y - min_.y) * widthZ;
     int minIZ = std::clamp(static_cast<int>(std::min(v1, v2)), 0, widthZ - 1);
@@ -464,12 +477,12 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
 
     // 範囲内のピクセルを走査
     for (int iz = minIZ; iz <= maxIZ; ++iz) {
-        for (int ix = minIX; ix <= maxIX; ++ix) 
+        for (int ix = minIX; ix <= maxIX; ++ix)
         {
             // 黒ピクセルがあれば衝突
             if (stageDatas_[static_cast<int>(currentStageID_)]->maskData_->textureData.data[iz * widthX + ix] < 128)
             {
-            #ifdef _DEBUG
+#ifdef _DEBUG
 
                 ImGui::Begin("Debug");
                 ImGui::Text("Hit at Pixel: X=%d, Z=%d", ix, iz);
@@ -477,7 +490,7 @@ bool CollisionMask::IsCollisionWall(const float& x, const float& z, const float&
 
                 return true;
 
-            #endif // _DEBUG
+#endif // _DEBUG
 
             }
         }
@@ -498,7 +511,7 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
 
     // ステップ1: 壁の入り口を探す
     while (traveled < maxDist) {
-        Vector3 currentPos; 
+        Vector3 currentPos;
         currentPos.x = start.x + direction.x * traveled;
         currentPos.z = start.z + direction.z * traveled;
         float dist = GetSDFValue(currentPos.x, currentPos.z);
@@ -506,7 +519,7 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
         // 距離がほぼ0（壁の表面）に到達
         if (dist <= 0.1f) {
             result.hit = true;
-            result.hitPos = {currentPos.x, currentPos.z};
+            result.hitPos = { currentPos.x, currentPos.z };
             break;
         }
         // 安全な距離分だけ進む
@@ -529,7 +542,7 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
 
         // 距離が再びプラス（空白）になったらそこが出口
         if (dist > 0.1f) {
-            result.exitPos = {currentPos.x, currentPos.z};
+            result.exitPos = { currentPos.x, currentPos.z };
             foundExit = true; // ★ 出口を発見！
             break;
         }
@@ -547,16 +560,16 @@ CollisionMask::RayResult CollisionMask::CastRayThroughWall(Vector3 start, Vector
 
 void CollisionMask::CreateJsonData(int stageID)
 {
-   stageGroup_.items["texturePass"] = JSONManager::Item{ };
-   stageGroup_.items["startPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
-   stageGroup_.items["eggStartPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
-   stageGroup_.items["goalPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
-   stageGroup_.itemVector["enemyStartPos"] = std::vector<JSONManager::Item> { };
-   stageGroup_.itemVector["nestMaterialPos"] = std::vector<JSONManager::Item>{ };
-   stageGroup_.itemVector["oneWayObjectPos"] = std::vector<JSONManager::Item>{ };
-   stageGroup_.itemVector["brokenBlockPos"] = std::vector<JSONManager::Item>{ };
+    stageGroup_.items["texturePass"] = JSONManager::Item{ };
+    stageGroup_.items["startPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
+    stageGroup_.items["eggStartPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
+    stageGroup_.items["goalPos"] = JSONManager::Item{ Vector3{0.0f, 0.0f, 0.0f} };
+    stageGroup_.itemVector["enemyStartPos"] = std::vector<JSONManager::Item>{ };
+    stageGroup_.itemVector["nestMaterialPos"] = std::vector<JSONManager::Item>{ };
+    stageGroup_.itemVector["oneWayObjectPos"] = std::vector<JSONManager::Item>{ };
+    stageGroup_.itemVector["brokenBlockPos"] = std::vector<JSONManager::Item>{ };
 
-   JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
+    JSONManager::GetInstance()->RegisterGroup("Stage" + std::to_string(stageID), stageGroup_);
 }
 
 void CollisionMask::LoadJsonData(int stageID)
@@ -584,7 +597,7 @@ void CollisionMask::LoadJsonData(int stageID)
         stageDatas_[stageID]->goalPos_ = goalPos;
     }
     std::vector<Vector3> enemyStartPos;
-    if(JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "enemyStartPos", enemyStartPos))
+    if (JSONManager::GetInstance()->TryGetVector("Stage" + std::to_string(stageID), "enemyStartPos", enemyStartPos))
     {
         stageDatas_[stageID]->enemyStartPos_ = enemyStartPos;
     }
@@ -627,15 +640,15 @@ void CollisionMask::LoadJsonData(int stageID)
 
 void CollisionMask::SaveJsonData(int stageID)
 {
-   
+
     stageGroup_.items["startPos"] = JSONManager::Item{ stageDatas_[stageID]->startPos_ };
-    stageGroup_.items["eggStartPos"] = JSONManager::Item{ stageDatas_[stageID]->eggStartPos_};
+    stageGroup_.items["eggStartPos"] = JSONManager::Item{ stageDatas_[stageID]->eggStartPos_ };
     stageGroup_.items["goalPos"] = JSONManager::Item{ stageDatas_[stageID]->goalPos_ };
-    stageGroup_.itemVector["enemyStartPos"] = 
+    stageGroup_.itemVector["enemyStartPos"] =
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->enemyStartPos_);
-    stageGroup_.itemVector["nestMaterialPos"] = 
+    stageGroup_.itemVector["nestMaterialPos"] =
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->nestMaterialPos_);
-    stageGroup_.itemVector["oneWayObjectPos"] = 
+    stageGroup_.itemVector["oneWayObjectPos"] =
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectPos_);
     stageGroup_.itemVector["oneWayObjectScale"] =
         JSONManager::GetInstance()->ToItemVector(stageDatas_[stageID]->oneWayObjectScale_);

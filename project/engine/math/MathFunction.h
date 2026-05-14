@@ -2,11 +2,16 @@
 ///
 #define _USE_MATH_DEFINES
 #define PI 3.14159265358979323846f
-#include <cmath>
-#include "../../engine/2d/Vector4.h"
-#include <assert.h>
-#include "Quanternion.h"
-///using namespace std;
+#include "Vector4.h"
+#include "Quaternion.h"
+#include "Vector3.h"
+#include "Vector2.h"
+//#include "Transform.h"
+struct EulerTransform;
+struct QuaternionTransform;
+struct UVTransform;
+Vector3 Bezier(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, float t);
+Vector3 CatmullRom(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, float t);
 static const int kColumnWidth = 60;
 static const int kRowHeight = 20;
 Vector3 Cross(const Vector3& v1, const Vector3& v2);
@@ -16,13 +21,13 @@ Vector3 operator+(const Vector3& v1, const Vector3& v2);
 Vector3 operator+=(Vector3& v1, const Vector3& v2);
 Vector3 operator-(const Vector3& v1, const Vector3& v2);
 Vector3 operator-=(Vector3& v1, const Vector3& v2);
+Vector3 operator-(const Vector3& v);
 
 Vector3 operator*(float scalar, const Vector3& v);
 Vector3 operator*(const Vector3& v, float scalar);
 Vector3 operator/(const Vector3& v, float scalar);
 Vector3 operator/=(Vector3& v, float scalar);
-
-Matrix4x4 MakeBillboardMatrix(const Vector3& scale, const Vector3& rotate, Matrix4x4& billboardMatrix, const Vector3& translate); Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
+Matrix4x4 MakeBillboardMatrix(const Vector3& scale, const Vector3& rotate, Matrix4x4& billboardMatrix, const Vector3& translate);Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
 
 template <typename T>
 T Lerp(const T& v1, const T& v2, float t);
@@ -34,10 +39,13 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 ///ビューポート行列
 Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth);
 
+Matrix4x4 MakeUVTransformMatrix(const UVTransform& uvTransform);
+Matrix4x4 MakeTranslateMatrix(const Vector2& translate);
+Matrix4x4 MakeScaleMatrix(const Vector2& scale);
+Matrix4x4 MakeUVRotateMatrix(const float& rotate);
 
-//
-Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
-Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate);
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate);
 Matrix4x4 MakeTranslateMatrix(const Vector3& traslate);
 Matrix4x4 MakeScaleMatrix(const Vector3& scale);
 /// <summary>
@@ -89,7 +97,7 @@ Matrix4x4 Transpose(const Matrix4x4& m);
 /// 単位行列の作成
 /// </summary>
 /// <returns></returns>
-Matrix4x4 Makeidetity4x4();
+Matrix4x4 Makeidentity4x4();
 //}
 
     /// <summary>
@@ -143,9 +151,12 @@ Vector3 Normalize(const Vector3& v);
 
 Vector3 TransformNormal(const Vector3& v, const Matrix4x4& m);
 
-Vector3 Vector3Lerp(const Vector3& start, const Vector3& end, float t);
-
 template<typename T>
-inline T Lerp(const T& v1, const T& v2, float t) {
+inline T Lerp(const T& v1, const T& v2, float t)
+{
     return v1 + (v2 - v1) * t;
 }
+Vector2 Normalize(const Vector2& v);    
+Vector2 Lerp(const Vector2& v1, const Vector2& v2, float t);
+Vector2 operator+(const Vector2& v1, const Vector2& v2);
+Vector2 operator-(const Vector2& v1, const Vector2& v2);

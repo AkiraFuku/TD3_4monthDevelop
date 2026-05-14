@@ -99,16 +99,16 @@ void ThreadRenderer::CreateConstantBuffers() {
     transformationMatrixResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&wvpResource_));
 
-    wvpResource_->WVP = Makeidetity4x4();
-    wvpResource_->World = Makeidetity4x4();
-    wvpResource_->WorldInverseTranspose = Makeidetity4x4();
+    wvpResource_->WVP = Makeidentity4x4();
+    wvpResource_->World = Makeidentity4x4();
+    wvpResource_->WorldInverseTranspose = Makeidentity4x4();
 
     // マテリアルバッファの作成とマッピング
     materialResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialData));
     materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 
     // デフォルト値 (白・ライティング無効)
-    materialData_->color = {1.0f, 1.0f, 1.0f, 1.0f};
+    materialData_->color = { 1.0f, 1.0f, 1.0f, 1.0f };
     materialData_->enableLighting = 0;
 }
 
@@ -154,9 +154,9 @@ void ThreadRenderer::GenerateThreadMesh(const std::vector<PhysicsNode>& nodes, V
         forward = Normalize(forward);
 
         // 上方向ベクトルの決定 (ジンバルロック対策)
-        Vector3 up = {0.0f, 1.0f, 0.0f};
+        Vector3 up = { 0.0f, 1.0f, 0.0f };
         if (std::abs(forward.y) > 0.99f) {
-            up = {1.0f, 0.0f, 0.0f};
+            up = { 1.0f, 0.0f, 0.0f };
         }
 
         Vector3 right = Normalize(Cross(up, forward));
@@ -170,7 +170,7 @@ void ThreadRenderer::GenerateThreadMesh(const std::vector<PhysicsNode>& nodes, V
             Vector3 pos = nodes[i].currentPos + (normal * radius_);
 
             VertexData v;
-            v.position = {pos.x, pos.y, pos.z, 1.0f};
+            v.position = { pos.x, pos.y, pos.z, 1.0f };
             v.normal = normal;
             v.texcord = {
                 static_cast<float>(j) / radialSegments_,
@@ -210,7 +210,7 @@ void ThreadRenderer::UpdateTransform(Camera* camera) {
     if (!camera) return;
 
     // 頂点はすでにワールド座標のため、単位行列を設定
-    Matrix4x4 worldMatrix = Makeidetity4x4();
+    Matrix4x4 worldMatrix = Makeidentity4x4();
 
     // カメラ行列を乗算してWVP行列を作成
     wvpResource_->WVP = Multiply(worldMatrix, camera->GetViewProtectionMatrix());
