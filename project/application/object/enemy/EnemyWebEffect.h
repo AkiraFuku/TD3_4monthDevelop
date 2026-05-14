@@ -39,10 +39,15 @@ private:
     float wrapDir_ = 1.0f;
     bool isActive_ = false;
 
+    float scaleProgress_ = 0.0f;
+
     WebState state_ = WebState::None;
     float lineAlpha_ = 1.0f; // 線の透明度（フェード用）
 
     int totalGeneratedNodes_ = 0;     // これまでに生成した総ノード数
     const int MAX_TOTAL_NODES = 250;  // 巻き付け完了までの総ノード数
     const int MAX_TRAIL_LENGTH = 60;  // 同時に描画する軌跡の最大長（数値を小さくすると尻尾が短くなります）
+
+private:
+    float EaseOutBounce(float x);
 };
