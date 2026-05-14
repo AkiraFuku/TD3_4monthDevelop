@@ -126,6 +126,7 @@ public: // 外部入出力
     void SetMaskMapRequest(const StageID& maskMapRequest) { stageChangeRequest_ = maskMapRequest; }
     void SetCurrentStageID(const int& stageID) { stageID_ = stageID; }
     const int GetCurrentStageID() { return stageID_; }
+    const StageID GetMaxStageID() { return StageID::Unknown; }
 
     const Vector3 GetStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->startPos_; }
     const Vector3 GetEggStartPos(){ return stageDatas_[static_cast<int>(currentStageID_)]->eggStartPos_; }
