@@ -65,6 +65,7 @@
     <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\Mass.cpp" />
+    <ClCompile Include="engine\math\Quanternion.cpp" />
     <ClCompile Include="engine\math\RotateFunction.cpp" />
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="application\object\player\PlayerState.cpp" />
@@ -84,7 +85,6 @@
     <ClCompile Include="application\object\StageModel.cpp" />
     <ClCompile Include="application\object\enemy\EnemyWebEffect.cpp" />
     <ClCompile Include="EggExplosion.cpp" />
-    <ClCompile Include="engine\math\Quaternion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -142,6 +142,7 @@
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
+    <ClInclude Include="engine\math\Quanternion.h" />
     <ClInclude Include="engine\math\RotateFunction.h" />
     <ClInclude Include="engine\math\Transform.h" />
     <ClInclude Include="Animation.h" />
@@ -162,7 +163,6 @@
     <ClInclude Include="EggExplosion.h" />
     <ClInclude Include="application\object\StageModel.h" />
     <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
-    <ClInclude Include="engine\math\Quaternion.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />

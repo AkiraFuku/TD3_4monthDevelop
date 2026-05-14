@@ -16,7 +16,7 @@ void GameScene::Initialize() {
     camera->SetRotate({ 0.80f, 0.0f, 0.0f });
     camera->SetTranslate({ 0.0f, 30.0f, -30.0f });
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
-    ParticleManager::GetInstance()->SetCamera(camera.get());
+    ParticleManager::GetInstance()->Setcamera(camera.get());
 
     //  BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
@@ -941,9 +941,9 @@ void GameScene::Clear()
         t_ += 0.01f; // tを徐々に増加させる
         // カメラをプレイヤーの前へ
         Vector3 cameraPos = camera->GetTranslate();
-        Vector3 newPos = Lerp(cameraPos, player_->GetPosition() + cameraOffset_, t_);
+        Vector3 newPos = Vector3Lerp(cameraPos, player_->GetPosition() + cameraOffset_, t_);
         Vector3 cameraRotate = camera->GetRotate();
-        Vector3 newRotate = Lerp(player_->GetForward(), Vector3{ 0.0f,3.0f,0.0f }, t_);
+        Vector3 newRotate = Vector3Lerp(player_->GetForward(), Vector3{ 0.0f,3.0f,0.0f }, t_);
         camera->SetTranslate(newPos);
         player_->SetForward(newRotate);
     }

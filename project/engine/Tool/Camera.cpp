@@ -6,14 +6,14 @@ Camera::Camera()
     , aspect(static_cast<float>(WinApp::kClientWidth) / static_cast<float>(WinApp::kClientHeight))
     , nearCrip(0.1f)
     , farCrip(100.0f)
-    , worldMatrix(MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate))
+    , worldMatrix(MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate))
     , viewMatrix(Inverse(worldMatrix))
     , projectionMatrix(MakePerspectiveFovMatrix(fovY, aspect, nearCrip, farCrip))
     , viewProtectionMatrix(Multiply(viewMatrix, projectionMatrix))
 {}
 void Camera::Update() {
 
-    worldMatrix = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+    worldMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 
 }
 

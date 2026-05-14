@@ -56,10 +56,10 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread)
 
     anima_->ChangeAnimation(PlayerAnima::AnimationState::Idle);
 
-    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
-    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
-    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
-    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+    playerGroup_.items["position"] = JSONManager::Item {translate_};
+    playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
+    playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item {remainingThreadCount_};
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
 
@@ -78,7 +78,7 @@ void Player::Finalize()
 /// </summary>
 void Player::Update()
 {
-    moveVel_ = { 0.0f, 0.0f, 0.0f };
+    moveVel_ = {0.0f, 0.0f, 0.0f};
 
     if (!gameScene_->IsClear())
     {
@@ -291,7 +291,7 @@ void Player::IsCollisionSDF()
 
         int insideCount = 0; // OneWayObjectの中に入っている頂点の数
         for (const auto& corner : corners) {
-            Vector3 cornerPos = { corner.x, translate_.y, corner.y };
+            Vector3 cornerPos = {corner.x, translate_.y, corner.y};
             if (oneWay->IsInside(cornerPos)) {
                 insideCount++;
             }
@@ -314,7 +314,7 @@ void Player::IsCollisionSDF()
         for (auto* block : brokenBlocks_) {
             if (block && !block->IsBroken()) {
                 // corner は Vector2 なので Vector3 に変換して判定
-                Vector3 corner3D = { corner.x, translate_.y, corner.y };
+                Vector3 corner3D = {corner.x, translate_.y, corner.y};
                 if (block->IsInside(corner3D)) {
                     isCornerOnBrokenBlock = true;
                     break;
@@ -339,7 +339,7 @@ void Player::IsCollisionSDF()
             {
                 // 押し戻し量
                 float pushBack = 0.075f - d;
-                Vector2 pushVec = { normal.x * pushBack, normal.y * pushBack };
+                Vector2 pushVec = {normal.x * pushBack, normal.y * pushBack};
 
                 // =========================================================
                 // ★修正: 事前に判定した activeOneWay の結果を使うように変更
@@ -429,8 +429,8 @@ void Player::FireThread()
 
     const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
 
-    Vector3 start = { rayResult_.hitPos.x, targetY, rayResult_.hitPos.y };
-    Vector3 end = { rayResult_.exitPos.x, targetY, rayResult_.exitPos.y };
+    Vector3 start = {rayResult_.hitPos.x, targetY, rayResult_.hitPos.y};
+    Vector3 end = {rayResult_.exitPos.x, targetY, rayResult_.exitPos.y};
 
     // =========================================================
     // ★ 追加: 既存の糸と近すぎないか（重複しないか）チェック
@@ -463,26 +463,19 @@ void Player::FireThread()
 
 void Player::CreatePSO()
 {
-    PsoConfig config{};
-    //config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
-    //config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
+    PsoConfig config {};
+    config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
+    config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
 
-    PsoConfig::ShaderPath vsPath{ ShaderType::VS,L"resources/shaders/PLayer/Player.vs.hlsl", "main", L"vs_6_0" };
-    PsoConfig::ShaderPath psPath{ ShaderType::PS,L"resources/shaders/PLayer/PLayer.ps.hlsl", "main", L"ps_6_0" };
-
-
-
-    config.shaderPaths.push_back(vsPath);
-    config.shaderPaths.push_back(psPath);
 
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
-        D3D12_STATIC_SAMPLER_DESC sampler{};
+        D3D12_STATIC_SAMPLER_DESC sampler {};
         sampler = PSOManager::GetInstance()->StaticSamplers();
 
         staticSamplers.push_back(sampler);
-        D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
+        D3D12_DESCRIPTOR_RANGE descRangeTexture[1] {};
         descRangeTexture[0].BaseShaderRegister = 0; // t0
         descRangeTexture[0].NumDescriptors = 1;
         descRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -542,12 +535,12 @@ void Player::CreatePSO()
         rootParameters[kCamera].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // ピクセルシェーダーのみ見える
 
         // シリアライズ
-        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
+        D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature {};
         descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         descriptionRootSignature.pParameters = rootParameters.data();
-        descriptionRootSignature.NumParameters = (UINT)rootParameters.size();
+        descriptionRootSignature.NumParameters = (UINT) rootParameters.size();
         descriptionRootSignature.pStaticSamplers = staticSamplers.data();
-        descriptionRootSignature.NumStaticSamplers = (UINT)staticSamplers.size();
+        descriptionRootSignature.NumStaticSamplers = (UINT) staticSamplers.size();
 
 
         Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
@@ -568,17 +561,11 @@ void Player::CreatePSO()
         return rootSignature;
         };
     config.inputLayoutGenerator = []() {
-        InputLayout inputLayout = {};
-
-        inputLayout.inputElement = {
+        return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         };
-
-        inputLayout.inputLayout.pInputElementDescs = inputLayout.inputElement.data();
-        inputLayout.inputLayout.NumElements = static_cast<UINT>(inputLayout.inputElement.size());
-        return inputLayout;
         };
     // 深度設定
     config.depthEnable = true;
@@ -598,7 +585,7 @@ void Player::SetPosition(const Vector3& pos)
 // 向いている方向
 Vector3 Player::GetForward() const
 {
-    return { std::sin(rotationY_), 0.0f, std::cos(rotationY_) };
+    return {std::sin(rotationY_), 0.0f, std::cos(rotationY_)};
 }
 
 void Player::SetForward(const Vector3& forward)
@@ -611,15 +598,15 @@ AABB Player::GetAABB() const
     Vector3 worldPos = GetPosition();
     AABB aabb;
 
-    aabb.min = { worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f };
-    aabb.max = { worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f };
+    aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+    aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
 
     return aabb;
 }
 
 Matrix4x4 Player::GetWorldMatrix() const
 {
-    Matrix4x4 worldMatrix = MakeAffineMatrix(scale_, rotate_, translate_);
+    Matrix4x4 worldMatrix = MakeAfineMatrix(scale_, rotate_, translate_);
     return worldMatrix;
 }
 
@@ -666,7 +653,7 @@ void Player::TurnToDirection(const Vector3& direction)
 
     rotationY_ += difference * kTurnSpeed;
 
-    rotate_ = { 0.0f, rotationY_, 0.0f };
+    rotate_ = {0.0f, rotationY_, 0.0f};
     object_->SetRotate(rotate_);
 }
 
@@ -694,8 +681,8 @@ void Player::UpdatePredictionLine()
         if (rayResult.hit) {
             const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
 
-            Vector3 start = { rayResult.hitPos.x, targetY, rayResult.hitPos.y };
-            Vector3 end = { rayResult.exitPos.x, targetY, rayResult.exitPos.y };
+            Vector3 start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
+            Vector3 end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
 
             // =========================================================
             // ★ 追加: 既存の糸と近すぎないか（重複しないか）チェック
@@ -711,20 +698,20 @@ void Player::UpdatePredictionLine()
                 canDrawPrediction_ = true;
 
                 // --- 予測線の更新 (既存) ---
-                Vector3 centerPos = { (start.x + end.x) * 0.5f, (start.y + end.y) * 0.5f, (start.z + end.z) * 0.5f };
+                Vector3 centerPos = {(start.x + end.x) * 0.5f, (start.y + end.y) * 0.5f, (start.z + end.z) * 0.5f};
                 float yaw = std::atan2(dir.x, dir.z);
                 float pitch = std::atan2(-dir.y, std::sqrt(dir.x * dir.x + dir.z * dir.z));
 
                 predictionLineObj_->SetTranslate(centerPos);
-                predictionLineObj_->SetScale({ 0.2f, 0.2f, distance }); // 太さは適宜調整
-                predictionLineObj_->SetRotate({ pitch, yaw, 0.0f });
+                predictionLineObj_->SetScale({0.2f, 0.2f, distance}); // 太さは適宜調整
+                predictionLineObj_->SetRotate({pitch, yaw, 0.0f});
                 predictionLineObj_->Update();
 
                 // ★追加：予測地点（ポインター）の更新
                 // 位置はレイの終点
                 predictionPointObj_->SetTranslate(end);
                 // 球体を平たく潰して「円」に見せる（Y軸を小さくする）
-                predictionPointObj_->SetScale({ 0.5f, 0.05f, 0.5f });
+                predictionPointObj_->SetScale({0.5f, 0.05f, 0.5f});
                 predictionPointObj_->Update();
             }
         }
@@ -760,10 +747,10 @@ void Player::InitializeModel()
 
 void Player::SaveJson()
 {
-    playerGroup_.items["position"] = JSONManager::Item{ translate_ };
-    playerGroup_.items["rotate"] = JSONManager::Item{ rotate_ };
-    playerGroup_.items["velocity"] = JSONManager::Item{ velocity_ };
-    playerGroup_.items["remainingThreadCount"] = JSONManager::Item{ remainingThreadCount_ };
+    playerGroup_.items["position"] = JSONManager::Item {translate_};
+    playerGroup_.items["rotate"] = JSONManager::Item {rotate_};
+    playerGroup_.items["velocity"] = JSONManager::Item {velocity_};
+    playerGroup_.items["remainingThreadCount"] = JSONManager::Item {remainingThreadCount_};
 
     JSONManager::GetInstance()->RegisterGroup("Player", playerGroup_);
     JSONManager::GetInstance()->SaveFile("Player");
@@ -794,7 +781,7 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection)
         return false;
     }
 
-    ThreadManager::ThreadQueryResult query{};
+    ThreadManager::ThreadQueryResult query {};
 
     Vector3 probePos = translate_;
     const float probeDistance = kWidth * 0.5f + kThreadEnterRadius;
@@ -841,7 +828,7 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection)
         tangentLength = std::sqrtf(tangent.x * tangent.x + tangent.z * tangent.z);
 
         if (tangentLength <= 0.0001f) {
-            moveVel_ = { 0.0f, 0.0f, 0.0f };
+            moveVel_ = {0.0f, 0.0f, 0.0f};
             return true;
         }
     }
@@ -860,17 +847,13 @@ bool Player::TryMoveOnThread(const Vector3& moveDirection)
             // プレイヤーが交差点の判定半径内に入っているか
             if (dist <= intersection.radius) {
                 // 交差している2本の糸の方向ベクトルを計算
-                Vector3 dirA = { intersection.segmentAEnd.x - intersection.segmentAStart.x, 0.0f, intersection.segmentAEnd.z - intersection.segmentAStart.z };
+                Vector3 dirA = {intersection.segmentAEnd.x - intersection.segmentAStart.x, 0.0f, intersection.segmentAEnd.z - intersection.segmentAStart.z};
                 float lenA = std::sqrtf(dirA.x * dirA.x + dirA.z * dirA.z);
-                if (lenA > 0.0001f) {
-                    dirA.x /= lenA; dirA.z /= lenA;
-                }
+                if (lenA > 0.0001f) { dirA.x /= lenA; dirA.z /= lenA; }
 
-                Vector3 dirB = { intersection.segmentBEnd.x - intersection.segmentBStart.x, 0.0f, intersection.segmentBEnd.z - intersection.segmentBStart.z };
+                Vector3 dirB = {intersection.segmentBEnd.x - intersection.segmentBStart.x, 0.0f, intersection.segmentBEnd.z - intersection.segmentBStart.z};
                 float lenB = std::sqrtf(dirB.x * dirB.x + dirB.z * dirB.z);
-                if (lenB > 0.0001f) {
-                    dirB.x /= lenB; dirB.z /= lenB;
-                }
+                if (lenB > 0.0001f) { dirB.x /= lenB; dirB.z /= lenB; }
 
                 // 今の進行方向(tangent)と、2本の糸の一致度を比較する
                 float diffA = std::abs(tangent.x * dirA.x + tangent.z * dirA.z);
@@ -945,14 +928,14 @@ void Player::ResolveThreadMove()
         return;
     }
 
-    ThreadManager::ThreadQueryResult query{};
+    ThreadManager::ThreadQueryResult query {};
 
     // 今フレームの予定移動先
     Vector3 nextPos = translate_;
     nextPos.x += moveVel_.x;
     nextPos.z += moveVel_.z;
 
-    Vector3 currentMoveDir = { moveVel_.x, 0.0f, moveVel_.z };
+    Vector3 currentMoveDir = {moveVel_.x, 0.0f, moveVel_.z};
 
     // ★追加: 速度がほぼ無い場合は、正面方向を向かせる
     if (std::abs(currentMoveDir.x) < 0.0001f && std::abs(currentMoveDir.z) < 0.0001f) {
