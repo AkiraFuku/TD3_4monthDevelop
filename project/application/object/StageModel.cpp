@@ -149,6 +149,7 @@ void StageModel::Create(float wallHeight)
     object3dFloor_->Initialize();
     object3dFloor_->SetModel(modelNameFloor_);
     object3dFloor_->SetTranslate({ 0.0f, -1.0f, 0.0f });
+    object3dFloor_->SetPsoName("Object3d");
 
     modelNameWall_ = "StageModelWall_" + std::to_string(collisionMask->GetCurrentStageID());
     ModelManager::GetInstance()->CreateDynamicModel(modelNameWall_, verticesWall, textureFilePathWall_);
@@ -157,7 +158,7 @@ void StageModel::Create(float wallHeight)
     object3dWall_->Initialize();
     object3dWall_->SetModel(modelNameWall_);
     object3dWall_->SetTranslate({ 0.0f, -1.0f, 0.0f });
-
+    object3dWall_->SetPsoName("Object3d");
 }
 
 void StageModel::Release()
