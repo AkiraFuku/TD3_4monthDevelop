@@ -25,6 +25,7 @@
 #include "Fade.h"
 #include "StageModel.h"
 
+
 class GameScene : public Scene {
 public:
 
@@ -154,10 +155,17 @@ private:
   bool openPause_ = false;
   int pauseIndex_ = 2;
 
+  // スティック
+  bool isStickPushed = false;
+
   // カメラのオフセット
   Vector3 cameraOffset_ = { 0.0f, 10.0f, -10.0f };
   // 線形補間用の係数
   float t_ = 0.0f;
+
+
+  const float kStickMax = 32767.0f;
+  const float kDeadZone = 0.3f;
 
  
 };

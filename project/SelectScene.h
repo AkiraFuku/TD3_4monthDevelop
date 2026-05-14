@@ -6,8 +6,6 @@
 #include "DebugCamera.h"
 #include "Fade.h"
 
-static const float kStickMax = 32767.0f;
-static const float kDeadZone = 0.3f;
 
 class SelectScene : public Scene
 {
@@ -43,5 +41,9 @@ private:
     std::unique_ptr<Fade> fade_;
 
     bool isFinished_ = false;
+
+    const float kStickMax = 32767.0f;
+    const float kDeadZone = 0.3f;
+
 };
 
