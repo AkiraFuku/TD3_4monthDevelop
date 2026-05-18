@@ -5,6 +5,14 @@
 class ParicleEmitter
 {
 public:
+    /// <summary>
+    /// パーティクル生成
+    /// </summary>
+    /// <param name="name">パーティクルグループ名</param>
+    /// <param name="transfom">位置</param>
+    /// <param name="count"></param>
+    /// <param name="frequency"></param>
+    /// <param name="frequencyTime"></param>
     ParicleEmitter(const  std::string name, EulerTransform transfom, uint32_t count, float frequency, float frequencyTime);
     void Update();
     void Emit();

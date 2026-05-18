@@ -75,6 +75,7 @@ public:
         uint32_t kNumInstance;
         std::string name;
         EffectType effectType;
+        bool isImmortality=false;
     };
     struct PrimitiveResource {
         Microsoft::WRL::ComPtr<ID3D12Resource> resource;
@@ -90,7 +91,8 @@ public:
         const std::string textureFilepath,
         EffectType type = EffectType::Plane,
         ParticleEmitterFunc initialize = nullptr,
-        ParticleUpdateFunc update = nullptr
+        ParticleUpdateFunc update = nullptr,
+        bool immortal=false
     );
     static ParticleManager* GetInstance();
     void Emit(const std::string name, const Vector3& postion, uint32_t count);

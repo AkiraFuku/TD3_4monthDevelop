@@ -62,8 +62,29 @@ void GameScene::Initialize() {
         particle.uvTransform.offset.x += deltaTime;
         particle.transform.translate += particle.velocity * deltaTime;
         };
+    ParticleManager::ParticleEmitterFunc initialize = [](const Vector3& emitterPosition, std::mt19937& randomEngine)-> ParticleManager::Particle {
+
+        std::uniform_real_distribution<float> rotation(-std::numbers::pi_v<float>, std::numbers::pi_v<float>);
+        ParticleManager::Particle particle;
+         particle.transform.scale = { 2.0f,2.0f,2.0f };
+        particle.transform.rotate = { 0.0f,0.0f,0.0f };
+        particle.transform.translate = emitterPosition;
+        particle.velocity = { 0.0f, 0.0f, 0.0f };
+
+        particle.color = { 1.0f,1.0f,1.0f,1.0f };
+
+        particle.lifeTime = 1.0f;
+        particle.currentTime = 0.0f;
+        return particle;
+        };
+    ParticleManager::ParticleUpdateFunc update = [](ParticleManager::Particle& particle, float deltaTime) {
+        // パーティクルの更新処理
+        // 例: 速度に基づいて位置を更新し、寿命を減少させる
+        particle.uvTransform.offset.x += deltaTime/2;
+        };
+    TextureManager::GetInstance()->LoadTexture( "resources/gradationLine.png");
     ParticleManager::GetInstance()->CreateParticleGroup(
-        "Test", "resources/uvChecker.png", ParticleManager::EffectType::Cylinder, initializeFunc, updateFunc);
+        "Test", "resources/gradationLine.png", ParticleManager::EffectType::Cylinder, initialize, update);
     /*   std::vector<Sprite*> sprites;
        for (uint32_t i = 0; i < 5; i++)
        {*/
@@ -72,8 +93,7 @@ void GameScene::Initialize() {
     sprite->Initialize("resources/uvChecker.png");
 
     sprite->SetPosition(Vector2{ 25.0f + 100.0f, 100.0f });
-    // sprite->SetSize(Vector2{ 100.0f,100.0f });
-    // sprites.push_back(sprite);
+
 
     sprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
 
@@ -97,7 +117,7 @@ void GameScene::Initialize() {
     /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
     camera->SetFarCrip(1000.0f);
     EulerTransform M = { {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
-    emitter = std::make_unique<ParicleEmitter>("Test", M, 10, 5.0f, 0.0f);
+    emitter = std::make_unique<ParicleEmitter>("Test", M, 1, 5.0f, 0.0f);
 
     /*player_ = new Player();
     player_->Initialize();
@@ -168,8 +188,12 @@ void GameScene::Initialize() {
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
     goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
+   
+    Vector3 ePos=goalPos;
+    ePos.y=-1.0f;
 
-
+    emitter->SetTranslate(ePos);
+    emitter->Emit();
 
 
     // 敵の初期化
@@ -344,9 +368,9 @@ void GameScene::Finalize() {
 }
 
 void GameScene::Update()
-{   
-    emitter->SetTranslate( player_->GetPosition());
-    emitter->Update();
+{
+   /* emitter->SetTranslate(player_->GetPosition());
+    emitter->Update();*/
 
     XINPUT_STATE state;
 

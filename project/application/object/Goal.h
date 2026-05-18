@@ -39,7 +39,9 @@ public:
     // getter
     int GetNeedNestCount() const { return needNestMaterialCount_; }
 
-
+    Vector3 GetPos() const{
+    return  object_->GetTranslate();
+    } 
 public: // 外部入出力
 
 

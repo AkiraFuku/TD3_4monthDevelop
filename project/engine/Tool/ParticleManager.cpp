@@ -260,10 +260,7 @@ void ParticleManager::Initialize() {
 
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("Particle", config);
-    // auto psoSet = PSOManager::GetInstance()->GetPso("Particle");
-   /*  graphicsPipelineState_ = psoSet.pipelineState;
-     rootSignature_ = psoSet.rootSignature;*/
-
+  
      //  CreatePSO();
        //頂点データの初期化（座標等）
        //頂点リソース生成
@@ -324,22 +321,26 @@ void ParticleManager::Update() {
         {
 
 
-
-
-            if ((*particleIterator).lifeTime <= (*particleIterator).currentTime)
+            if (!particleGroup.isImmortality)
             {
-                particleIterator = particleGroup.particles.erase(particleIterator);
-                continue;
+                if ((*particleIterator).lifeTime <= (*particleIterator).currentTime)
+                {
+                    particleIterator = particleGroup.particles.erase(particleIterator);
+                    continue;
+                }
+
             }
 
-            float alpha = 1.0f - ((*particleIterator).currentTime / (*particleIterator).lifeTime);
-            (*particleIterator).transform.translate += (*particleIterator).velocity * DXCommon::kDeltaTime;
-            (*particleIterator).currentTime += DXCommon::kDeltaTime;
+
+
+            /* float alpha = 1.0f - ((*particleIterator).currentTime / (*particleIterator).lifeTime);
+             (*particleIterator).transform.translate += (*particleIterator).velocity * DXCommon::kDeltaTime;
+             (*particleIterator).currentTime += DXCommon::kDeltaTime;*/
 
             if (numInstance < kMaxNumInstance)
             {
 
-                particleGroup.instancingData[numInstance].color.w = alpha;
+           //     particleGroup.instancingData[numInstance].color.w = alpha;
                 Matrix4x4 worldMatrix = {};
 
                 if (particleGroup.update) {
@@ -379,7 +380,7 @@ void ParticleManager::Draw() {
     PsoSet psoSet{};
 
     //VBVの設定
-    //DXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
+   
 
     for (auto& [key, particleGroup] : particleGroups) {
         if (particleGroup.kNumInstance > 0) {
@@ -387,7 +388,7 @@ void ParticleManager::Draw() {
             const auto& primitive = primitiveResources_[particleGroup.effectType];
             if (particleGroup.effectType == EffectType::Cylinder)
             {
-                psoSet = PSOManager::GetInstance()->GetPso("ParticleCylinder", BlendMode::Normal);
+                psoSet = PSOManager::GetInstance()->GetPso("ParticleCylinder", BlendMode::Add);
             } else
             {
                 psoSet = PSOManager::GetInstance()->GetPso("Particle", BlendMode::Add);
@@ -421,13 +422,15 @@ void ParticleManager::CreateParticleGroup(
     const std::string textureFilepath,
     EffectType type,
     ParticleEmitterFunc initialize,
-    ParticleUpdateFunc update
+    ParticleUpdateFunc update,
+    bool immortal
 )
 {
 
     assert(!particleGroups.contains(name));
     //
     ParticleGroup& newParticle = particleGroups[name];
+    newParticle.isImmortality = immortal;
     newParticle.initialize = initialize;
     newParticle.update = update;
     newParticle.name = name;
