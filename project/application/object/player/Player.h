@@ -154,6 +154,8 @@ public:
     // ゲームシーンのポインタをセット
     void SetGameScene(GameScene* scene) { gameScene_ = scene; }
 
+    void UpdateHeight();
+
 private:
     // 現在乗っているOneWayObjectのポインタ
     OneWayObject* currentOneWay_ = nullptr;
@@ -236,10 +238,6 @@ private:
     // Threadを生成できる回数
     int remainingThreadCount_ = 0;
 
-    // 重力の強さ
-    float gravity_ = 0.008f;
-    // 現在の落下速度
-    float fallSpeed_ = 0.0f;
     // 糸をたわませるPlayerの「重さ」
     float weight_ = 0.3f;
     // 重さを適用する範囲（半径）
@@ -247,6 +245,8 @@ private:
 
     float threadBaseY_ = -0.40f;
     float threadOffsetY_ = 0.0f;
+
+    float currentEdgeFade_ = 1.0f; // ★追加: UpdateHeightで使うためにフェード値を保存
 
     CollisionMask::RayResult rayResult_;
 
