@@ -1115,8 +1115,39 @@ void GameScene::Pause()
     }
     else
     {
-        if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) ||
-            Input::GetInstance()->TriggerKeyDown(DIK_S))
+        // コントローラー入力を取得
+        XINPUT_STATE joyState{};
+        bool stickUpTrigger = false;
+        bool stickDownTrigger = false;
+
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
+
+            if (std::abs(stickX) > kDeadZone) {
+
+                // 右に倒した瞬間
+                if (stickX > 0.5f) {
+                    if (!isStickPushed) {
+                        stickUpTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // 左に倒した瞬間
+                else if (stickX < -0.5f) {
+                    if (!isStickPushed) {
+                        stickDownTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // スティックが中央に戻ったらリセット
+                else {
+                    isStickPushed = false;
+                }
+            }
+        }
+
+        if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
         {
             if (pauseIndex_ < 2)
             {
@@ -1127,8 +1158,8 @@ void GameScene::Pause()
                 pauseIndex_ = 0;
             }
         }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) ||
-            Input::GetInstance()->TriggerKeyDown(DIK_W))
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
         {
             if (pauseIndex_ > 0)
             {
@@ -1139,12 +1170,12 @@ void GameScene::Pause()
                 pauseIndex_ = 2;
             }
         }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_Q))
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
         {
             openPause_ = false;
             return;
         }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE))
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
             if (pauseIndex_ == 0)
             {
