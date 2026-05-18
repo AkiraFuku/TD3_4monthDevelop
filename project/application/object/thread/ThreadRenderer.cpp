@@ -99,9 +99,9 @@ void ThreadRenderer::CreateConstantBuffers() {
     transformationMatrixResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&wvpResource_));
 
-    wvpResource_->WVP = Makeidetity4x4();
-    wvpResource_->World = Makeidetity4x4();
-    wvpResource_->WorldInverseTranspose = Makeidetity4x4();
+    wvpResource_->WVP = Makeidentity4x4();
+    wvpResource_->World = Makeidentity4x4();
+    wvpResource_->WorldInverseTranspose = Makeidentity4x4();
 
     // マテリアルバッファの作成とマッピング
     materialResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialData));
@@ -210,7 +210,7 @@ void ThreadRenderer::UpdateTransform(Camera* camera) {
     if (!camera) return;
 
     // 頂点はすでにワールド座標のため、単位行列を設定
-    Matrix4x4 worldMatrix = Makeidetity4x4();
+    Matrix4x4 worldMatrix = Makeidentity4x4();
 
     // カメラ行列を乗算してWVP行列を作成
     wvpResource_->WVP = Multiply(worldMatrix, camera->GetViewProtectionMatrix());

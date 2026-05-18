@@ -16,7 +16,7 @@ void GameScene::Initialize() {
     camera->SetRotate({ 0.80f, 0.0f, 0.0f });
     camera->SetTranslate({ 0.0f, 30.0f, -30.0f });
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
-    ParticleManager::GetInstance()->Setcamera(camera.get());
+    ParticleManager::GetInstance()->SetCamera(camera.get());
 
     //  BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
 
@@ -39,9 +39,31 @@ void GameScene::Initialize() {
     LightManager::GetInstance()->AddPointLight({ 1.0f, 1.0f, 1.0f, 1.0f },
         { 0, 0, 0 }, 4.0f, 2.0f, 0.1f);
     TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
+    ParticleManager::ParticleEmitterFunc initializeFunc = [](const Vector3& emitterPosition, std::mt19937& randomEngine)-> ParticleManager::Particle {
 
+        std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+        std::uniform_real_distribution<float> distTime(1.0f, 10.0f);
+        ParticleManager::Particle particle;
+        particle.transform.scale = { 1.0f,1.0f,1.0f };
+        particle.transform.rotate = { 0.0f,0.0f,0.0f };
+        Vector3 randamTranslate = { distribution(randomEngine),distribution(randomEngine) ,distribution(randomEngine) };
+        particle.transform.translate = emitterPosition + randamTranslate;
+        particle.velocity = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+
+        particle.color = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine),1.0f };
+
+        particle.lifeTime = distTime(randomEngine);
+        particle.currentTime = 0.0f;
+        return particle;
+        };
+    ParticleManager::ParticleUpdateFunc updateFunc = [](ParticleManager::Particle& particle, float deltaTime) {
+        // パーティクルの更新処理
+        // 例: 速度に基づいて位置を更新し、寿命を減少させる
+        particle.uvTransform.offset.x += deltaTime;
+        particle.transform.translate += particle.velocity * deltaTime;
+        };
     ParticleManager::GetInstance()->CreateParticleGroup(
-        "Test", "resources/uvChecker.png");
+        "Test", "resources/uvChecker.png", ParticleManager::EffectType::Cylinder, initializeFunc, updateFunc);
     /*   std::vector<Sprite*> sprites;
        for (uint32_t i = 0; i < 5; i++)
        {*/
@@ -263,7 +285,7 @@ void GameScene::Initialize() {
         std::string path = "resources/Menu/" + std::to_string(i) + ".png";
         auto pauseSprite = std::make_unique<Sprite>();
         pauseSprite->Initialize(path);
-        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (230.0f * i))});
+        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (230.0f * i)) });
         pauseSprite_.push_back(std::move(pauseSprite));
     }
 
@@ -287,7 +309,7 @@ void GameScene::Initialize() {
     backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
     backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
 
-   
+
 }
 void GameScene::Finalize() {
 
@@ -322,7 +344,8 @@ void GameScene::Finalize() {
 }
 
 void GameScene::Update()
-{
+{   
+    emitter->SetTranslate( player_->GetPosition());
     emitter->Update();
 
     XINPUT_STATE state;
@@ -336,8 +359,7 @@ void GameScene::Update()
         debugCamera_.Update(camera->GetTransform());
         camera->SetTranslate(debugCamera_.GetTranslate());
         camera->SetWorldMatrix(debugCamera_.GetWorldMatrix());
-    }
-    else
+    } else
     {
         camera->Update();
     }
@@ -397,8 +419,7 @@ void GameScene::Update()
     if (player_->OnThread()) {
         // 糸の上なら 緑色 で表示
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON THREAD: YES");
-    }
-    else {
+    } else {
         // 地面なら 赤色 で表示
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
     }
@@ -452,16 +473,14 @@ void GameScene::Update()
         // IsInside (プレイヤーの中心座標がブロック内にあるか)
         if (isInside) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsInside: True (Player center is in block)");
-        }
-        else {
+        } else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsInside: False");
         }
 
         // IsRider (ブロックがプレイヤーの乗降をどう認識しているか)
         if (isRider) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsRider : True (Player is riding)");
-        }
-        else {
+        } else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsRider : False");
         }
 
@@ -488,8 +507,7 @@ void GameScene::Update()
     {
         Pause();
         return;
-    }
-    else
+    } else
     {
         if (Input::GetInstance()->TriggerKeyDown(DIK_Q))
         {
@@ -538,8 +556,7 @@ void GameScene::Update()
     Vector3 targetPos;
     if (egg_->IsOnPlayer()) {
         targetPos = player_->GetPosition();
-    }
-    else {
+    } else {
         targetPos = egg_->GetWorldPosition();
     }
 
@@ -718,7 +735,7 @@ void GameScene::Draw() {
         brokenBlock->Draw();
     }
 
-    // ParticleManager::GetInstance()->Draw();
+    ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画
     // sprite->Draw();
 
@@ -743,8 +760,7 @@ void GameScene::Draw() {
         }
 
         cursorSprite_->Draw();
-    }
-    else  if (isClear_)
+    } else  if (isClear_)
     {
         if (t_ >= 1.0f)
         {
@@ -756,8 +772,7 @@ void GameScene::Draw() {
 
             cursorSprite_->Draw();
         }
-    }
-    else
+    } else
     {
         threadCountSprites_[player_->GetThreadCount()]->Draw();
         slashSprite_->Draw();
@@ -767,7 +782,7 @@ void GameScene::Draw() {
         nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
 
     }
-   
+
 
     fade_->Draw();
 }
@@ -780,8 +795,7 @@ void GameScene::CheckAllCollisions() {
     if (isCollision(playerAABB, eggAABB)) {
         egg_->OnCollision(player_.get());
         ResolveCollision(player_.get(), playerAABB, eggAABB);
-    }
-    else {
+    } else {
         egg_->SetHitFlag(false);
     }
 
@@ -797,8 +811,7 @@ void GameScene::CheckAllCollisions() {
         if (isCollision(enemyAABB, eggAABB)) {
             enemy->OnCollision(egg_.get());
             ResolveCollision(enemy.get(), enemyAABB, eggAABB);
-        }
-        else {
+        } else {
             enemy->SetHitFlag(false);
         }
     }
@@ -858,15 +871,13 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
         {
             currentPos.x += overlapX; // 右へ
         }
-    }
-    else
+    } else
     {
         // Z軸方向の押し戻し
         if (playerAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        }
-        else
+        } else
         {
             currentPos.z += overlapZ; // 奥へ
         }
@@ -880,20 +891,17 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             if (playerAABB.min.x < otherAABB.min.x)
             {
                 currentPos.x += (overlapX * 2.0f);
-            }
-            else
+            } else
             {
                 currentPos.x -= (overlapX * 2.0f);
             }
-        }
-        else
+        } else
         {
             // Z軸方向の押し戻し
             if (playerAABB.min.z < otherAABB.min.z)
             {
                 currentPos.z += (overlapZ * 2.0f);
-            }
-            else
+            } else
             {
                 currentPos.z -= (overlapZ * 2.0f);
             }
@@ -925,25 +933,21 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
         {
             currentPos.x += overlapX; // 右へ
         }
-    }
-    else if (overlapZ < overlapX && overlapZ < overlapY) {
+    } else if (overlapZ < overlapX && overlapZ < overlapY) {
         // Z軸方向の押し戻し
         if (enemyAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        }
-        else
+        } else
         {
             currentPos.z += overlapZ; // 奥へ
         }
-    }
-    else {
+    } else {
         // Y軸方向の押し戻し（床や天井）
         if (enemyAABB.min.y < otherAABB.min.y)
         {
             currentPos.y -= overlapY; // 下へ
-        }
-        else
+        } else
         {
             currentPos.y += overlapY; // 上へ
         }
@@ -1006,8 +1010,7 @@ void GameScene::Clear()
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
         pauseIndex_ = 1;
-    }
-    else
+    } else
     {
         if (isFadeStart_)
         {
@@ -1019,23 +1022,20 @@ void GameScene::Clear()
                 if (pauseIndex_ == 1)
                 {
                     SceneManager::GetInstance()->ChangeScene("TitleScene");
-                }
-                else if (pauseIndex_ == 2)
+                } else if (pauseIndex_ == 2)
                 {
                     SceneManager::GetInstance()->ChangeScene("SelectScene");
-                }
-                else if (pauseIndex_ == 3)
+                } else if (pauseIndex_ == 3)
                 {
                     // ステージナンバーを設定
                     int num = CollisionMask::GetInstance()->GetCurrentStageID();
 
-                    int maxNum =  static_cast<int>(CollisionMask::GetInstance()->GetMaxStageID());
+                    int maxNum = static_cast<int>(CollisionMask::GetInstance()->GetMaxStageID());
 
                     if (num == maxNum)
                     {
                         CollisionMask::GetInstance()->SetCurrentStageID(0);
-                    }
-                    else
+                    } else
                     {
                         CollisionMask::GetInstance()->SetCurrentStageID(num + 1);
                     }
@@ -1043,8 +1043,7 @@ void GameScene::Clear()
                     SceneManager::GetInstance()->ChangeScene("GameScene");
                 }
             }
-        }
-        else
+        } else
         {
             if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
                 Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
@@ -1052,25 +1051,21 @@ void GameScene::Clear()
                 if (pauseIndex_ < 3)
                 {
                     pauseIndex_++;
-                }
-                else
+                } else
                 {
                     pauseIndex_ = 1;
                 }
-            }
-            else if(Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+            } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
                 Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
             {
                 if (pauseIndex_ > 1)
                 {
                     pauseIndex_--;
-                }
-                else
+                } else
                 {
                     pauseIndex_ = 3;
                 }
-            }
-            else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+            } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
@@ -1089,7 +1084,7 @@ void GameScene::Clear()
         }
         menuSprite_->Update();
         cursorSprite_->Update();
-        
+
     }
 
 }
@@ -1106,14 +1101,12 @@ void GameScene::Pause()
             if (pauseIndex_ == 1)
             {
                 SceneManager::GetInstance()->ChangeScene("TitleScene");
-            }
-            else if (pauseIndex_ == 2)
+            } else if (pauseIndex_ == 2)
             {
                 SceneManager::GetInstance()->ChangeScene("SelectScene");
             }
         }
-    }
-    else
+    } else
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
@@ -1152,37 +1145,31 @@ void GameScene::Pause()
             if (pauseIndex_ < 2)
             {
                 pauseIndex_++;
-            }
-            else
+            } else
             {
                 pauseIndex_ = 0;
             }
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
         {
             if (pauseIndex_ > 0)
             {
                 pauseIndex_--;
-            }
-            else
+            } else
             {
                 pauseIndex_ = 2;
             }
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
         {
             openPause_ = false;
             return;
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
             if (pauseIndex_ == 0)
             {
                 openPause_ = false;
                 return;
-            }
-            else
+            } else
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;

@@ -22,7 +22,7 @@ Vector3 operator*(const Vector3& v, float scalar);
 Vector3 operator/(const Vector3& v, float scalar);
 Vector3 operator/=(Vector3& v, float scalar);
 
-Matrix4x4 MakeBillboardMatrix(const Vector3& scale, const Vector3& rotate, Matrix4x4& billboardMatrix, const Vector3& translate); Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
+Matrix4x4 MakeBillboardMatrix(const Vector3& scale, const Vector3& rotate, Matrix4x4& billboardMatrix, const Vector3& translate); Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
 
 template <typename T>
 T Lerp(const T& v1, const T& v2, float t);
@@ -36,8 +36,8 @@ Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, f
 
 
 //
-Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
-Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate);
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate);
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate);
 Matrix4x4 MakeTranslateMatrix(const Vector3& traslate);
 Matrix4x4 MakeScaleMatrix(const Vector3& scale);
 /// <summary>
@@ -89,7 +89,7 @@ Matrix4x4 Transpose(const Matrix4x4& m);
 /// 単位行列の作成
 /// </summary>
 /// <returns></returns>
-Matrix4x4 Makeidetity4x4();
+Matrix4x4 Makeidentity4x4();
 //}
 
     /// <summary>

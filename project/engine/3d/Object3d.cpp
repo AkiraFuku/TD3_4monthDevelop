@@ -24,7 +24,7 @@ void Object3d::Update()
 {
 
 
-    Matrix4x4 objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);;
+    Matrix4x4 objectBaseMatrix = MakeAffineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);;
 
 
     if (model_)
@@ -124,8 +124,8 @@ void Object3d::AddModel(const std::string& modelPath, const std::string& name, c
     newInst->resource->Map(0, nullptr, reinterpret_cast<void**>(&newInst->mappedData));
 
     // 行列の初期化
-    newInst->mappedData->World = Makeidetity4x4();
-    newInst->mappedData->WVP = Makeidetity4x4();
+    newInst->mappedData->World = Makeidentity4x4();
+    newInst->mappedData->WVP = Makeidentity4x4();
 
     // Object3dが管理するリストに追加
     models_.push_back(std::move(newInst));
@@ -170,8 +170,8 @@ void Object3d::CreateWVPResource()
         CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResource_.Get()->
         Map(0, nullptr, reinterpret_cast<void**>(&wvpResource_));
-    wvpResource_->WVP = Makeidetity4x4();
-    wvpResource_->World = Makeidetity4x4();
+    wvpResource_->WVP = Makeidentity4x4();
+    wvpResource_->World = Makeidentity4x4();
     wvpResource_->WorldInverseTranspose = Inverse(wvpResource_->World);
 
 
@@ -215,11 +215,11 @@ void Object3d::UpdateModelInstances()
     bool baseMatrixChanged = memcmp(&transform_, &cachedBaseTransform_, sizeof(EulerTransform)) != 0;
     Matrix4x4 objectBaseMatrix;
     if (baseMatrixChanged || isBaseMatrixDirty_) {
-        objectBaseMatrix = MakeAfineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+        objectBaseMatrix = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
         cachedBaseTransform_ = transform_;
         isBaseMatrixDirty_ = false;
     } else {
-        objectBaseMatrix = MakeAfineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);
+        objectBaseMatrix = MakeAffineMatrix(cachedBaseTransform_.scale, cachedBaseTransform_.rotate, cachedBaseTransform_.translate);
     }
 
     // ★修正: カメラが存在する場合は毎フレーム更新（安全）
@@ -242,7 +242,7 @@ void Object3d::UpdateModelInstances()
         if (transformChanged || instance->isDirty || cameraUpdated) {
             
             // ローカル行列を計算
-            instance->localMatrix = MakeAfineMatrix(
+            instance->localMatrix = MakeAffineMatrix(
                 instance->transform.scale,
                 instance->transform.rotate,
                 instance->transform.translate
