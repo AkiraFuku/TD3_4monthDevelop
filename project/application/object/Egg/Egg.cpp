@@ -53,31 +53,32 @@ void Egg::Update() {
         // プレイヤーに持ち上げられていたら
         if (onPlayer_)
         {
-            // スペースキーで卵を置く
-            if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+            if(!player_->OnThread())
             {
-                // プレイヤーのワールド行列を取得
-                Matrix4x4 worldMatrix = player_->GetWorldMatrix();
-                Vector3 velocity_ = { 0.0f, -2.0f, 1.0f };
-                velocity_ = TransformNormal(velocity_, worldMatrix);
-                translate += velocity_;
+                // スペースキーで卵を置く
+                if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
+                    // プレイヤーのワールド行列を取得
+                    Matrix4x4 worldMatrix = player_->GetWorldMatrix();
+                    Vector3 velocity_ = {0.0f, -2.0f, 1.0f};
+                    velocity_ = TransformNormal(velocity_, worldMatrix);
+                    translate += velocity_;
 
-                // 置いた先が壁だったら
-                if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z, kWidth))
-                {
-                    // プレイヤーと同じ場所に置く
-                    translate = player_->GetPosition();
+                    // 置いた先が壁だったら
+                    if (CollisionMask::GetInstance()->IsCollisionWall(translate.x, translate.z, kWidth)) {
+                        // プレイヤーと同じ場所に置く
+                        translate = player_->GetPosition();
+                    }
+
+                    onPlayer_ = false;
+
+                    // サウンド再生
+                    Audio::GetInstance()->PlayAudio(down_, false, 1.0f);
+
+                    // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
+                    player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
+                    object_->SetTranslate(translate);
+                    return;
                 }
-
-                onPlayer_ = false;
-
-                // サウンド再生
-                Audio::GetInstance()->PlayAudio(down_, false, 1.0f);
-
-                // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
-                player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
-                object_->SetTranslate(translate);
-                return;
             }
 
             // 座標をプレイヤーと同期する

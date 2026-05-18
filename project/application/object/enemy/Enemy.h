@@ -68,6 +68,8 @@ public:
 
     void UpdateHeight(ThreadManager* tm); // ★追加: Y座標のみを更新する関数
 
+    void DrawImGui();
+
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);

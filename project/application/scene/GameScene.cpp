@@ -628,7 +628,7 @@ void GameScene::Update()
     // ① Rキーを押したらフェードアウト開始
     if (!isClear_ && !isResetWaiting_)
     {
-        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER) ||
+        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) ||
             Input::GetInstance()->PushedKeyDown(DIK_R))
         {
             if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)

@@ -50,7 +50,7 @@ private:
 
     std::array<float, 5> ringRates_ = {0.18f, 0.34f, 0.52f, 0.73f, 0.96f};
 
-    float webThickness_ = 0.008f;
+    float webThickness_ = 0.025f;
     int radialSegments_ = 4;
     int maxIntersections_ = 64;
 

@@ -17,7 +17,7 @@ private:
     // ---------------------------------------------------------
 
     // 描画関連
-    static inline const float kThreadThickness = 0.02f;       // 糸の太さ
+    static inline const float kThreadThickness = 0.05f;       // 糸の太さ
     static inline const int   kThreadDrawSegments = 6;        // 糸の描画分割数
 
     // 物理演算（基本）

@@ -60,7 +60,7 @@ void Goal::Draw()
 void Goal::Clear()
 {
     // プレイヤーの素材の回収数が必要数を下回っていたら無効
-    if (player_->GetNestMaterial() < needNestMaterialCount_)
+    if (player_->GetNestMaterial() < needNestMaterialCount_ || !egg_->IsOnPlayer())
     {
         return;
     }

@@ -38,6 +38,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread)
     predictionLineObj_ = std::make_unique<Object3d>();
     predictionLineObj_->Initialize();
     predictionLineObj_->SetModel("cylinder/cylinder.obj");
+    predictionLineObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
 
     predictionPointObj_ = std::make_unique<Object3d>();
     predictionPointObj_->Initialize();
@@ -442,9 +443,9 @@ void Player::FireThread()
         dir.x /= len;
         dir.z /= len;
 
-        /*const float extend = 0.2f;
+        const float extend = 0.2f;
         start.x -= dir.x * extend;
-        start.z -= dir.z * extend;*/
+        start.z -= dir.z * extend;
         //end.x += dir.x * extend;
         //end.z += dir.z * extend;
     }
@@ -654,64 +655,81 @@ void Player::TurnToDirection(const Vector3& direction)
     object_->SetRotate(rotate_);
 }
 
-void Player::UpdatePredictionLine()
-{
-    // ★追加: 照準の位置を計算して更新
-    const float kAimDistance = 5.0f; // プレイヤーから照準までの距離
-    Vector3 forward = GetForward();
-
-    Vector3 aimPos = {
-        translate_.x + forward.x * kAimDistance,
-        translate_.y + 1.0f, // 地面に埋まらないように少し浮かせる
-        translate_.z + forward.z * kAimDistance
-    };
-
+void Player::UpdatePredictionLine() {
+    // 初期化：一旦描画フラグをオフ
     canDrawPrediction_ = false;
 
-    // 糸を生成可能な条件が揃っているかチェック
-    if (remainingThreadCount_ > 0 && thread_ && !onThread_ && CanFireThread()) {
-        Vector3 playerPos = GetPosition();
+    // 1. キーが押されていなければ終了
+    if (!(Input::GetInstance()->PushedKeyDown(DIK_V) || Input::GetInstance()->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))) {
+        return;
+    }
 
-        // Rayを飛ばして壁との交差を判定（FireThreadと同じ処理）
-        auto rayResult = CollisionMask::GetInstance()->CastRayThroughWall(playerPos, forward, 50.0f);
+    // キーが押されているなら、とにかく描画フラグをONにする
+    canDrawPrediction_ = true;
 
-        if (rayResult.hit) {
-            const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
+    Vector3 forward = GetForward();
+    Vector3 playerPos = GetPosition();
 
-            Vector3 start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
-            Vector3 end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
+    // 2. Rayを飛ばす
+    auto rayResult = CollisionMask::GetInstance()->CastRayThroughWall(playerPos, forward, 50.0f);
 
-            // =========================================================
-            // ★ 追加: 既存の糸と近すぎないか（重複しないか）チェック
-            // =========================================================
-            if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) {
-                return; // 近すぎる場合は発射をキャンセルする
-            }
+    Vector3 start = {0.0f, 0.0f, 0.0f};
+    Vector3 end = {0.0f, 0.0f, 0.0f};
 
-            Vector3 dir = end - start;
-            float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+    // 3. 壁に当たっているか否かで、線の「始点」と「終点」を決める
+    if (rayResult.hit) {
+        // 壁にヒットした場合：壁を貫通する位置を始点・終点にする
+        const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
+        start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
+        end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
+    } else {
+        // 壁にヒットしていない場合：プレイヤーから前方へ適当な長さの直線を引く
+        const float defaultLineLength = 10.0f; // 何も無い時の線の長さ（好みに合わせて調整してください）
+        start = playerPos;
+        end = {
+            playerPos.x + forward.x * defaultLineLength,
+            playerPos.y, // プレイヤーと同じ高さ
+            playerPos.z + forward.z * defaultLineLength
+        };
+    }
 
-            if (distance > 0.001f) {
-                canDrawPrediction_ = true;
+    Vector3 dir = end - start;
+    float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
 
-                // --- 予測線の更新 (既存) ---
-                Vector3 centerPos = {(start.x + end.x) * 0.5f, (start.y + end.y) * 0.5f, (start.z + end.z) * 0.5f};
-                float yaw = std::atan2(dir.x, dir.z);
-                float pitch = std::atan2(-dir.y, std::sqrt(dir.x * dir.x + dir.z * dir.z));
+    if (distance > 0.001f) {
+        // 4. 糸を発射できる条件の総合チェック
+        bool canCreate = true;
+        if (!rayResult.hit) canCreate = false; // ★壁に当たっていないなら発射不可
+        else if (remainingThreadCount_ <= 0) canCreate = false;
+        else if (thread_ == nullptr) canCreate = false;
+        else if (onThread_) canCreate = false;
+        else if (!CanFireThread()) canCreate = false;
+        else if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) canCreate = false;
 
-                predictionLineObj_->SetTranslate(centerPos);
-                predictionLineObj_->SetScale({0.2f, 0.2f, distance}); // 太さは適宜調整
-                predictionLineObj_->SetRotate({pitch, yaw, 0.0f});
-                predictionLineObj_->Update();
-
-                // ★追加：予測地点（ポインター）の更新
-                // 位置はレイの終点
-                predictionPointObj_->SetTranslate(end);
-                // 球体を平たく潰して「円」に見せる（Y軸を小さくする）
-                predictionPointObj_->SetScale({0.5f, 0.05f, 0.5f});
-                predictionPointObj_->Update();
-            }
+        // 5. 条件に応じて色を変える
+        if (canCreate) {
+            // 発射可能：黄色
+            predictionLineObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
+            predictionPointObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
+        } else {
+            // 発射不可：赤色
+            predictionLineObj_->SetColor({1.0f, 0.0f, 0.0f, 1.0f});
+            predictionPointObj_->SetColor({1.0f, 0.0f, 0.0f, 1.0f});
         }
+
+        // 6. オブジェクトの座標・回転・スケールを更新
+        Vector3 centerPos = {(start.x + end.x) * 0.5f, (start.y + end.y) * 0.5f, (start.z + end.z) * 0.5f};
+        float yaw = std::atan2(dir.x, dir.z);
+        float pitch = std::atan2(-dir.y, std::sqrt(dir.x * dir.x + dir.z * dir.z));
+
+        predictionLineObj_->SetTranslate(centerPos);
+        predictionLineObj_->SetScale({0.2f, 0.2f, distance});
+        predictionLineObj_->SetRotate({pitch, yaw, 0.0f});
+        predictionLineObj_->Update();
+
+        predictionPointObj_->SetTranslate(end);
+        predictionPointObj_->SetScale({0.5f, 0.05f, 0.5f});
+        predictionPointObj_->Update();
     }
 }
 
