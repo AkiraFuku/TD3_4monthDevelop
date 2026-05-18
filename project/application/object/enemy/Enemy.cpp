@@ -209,7 +209,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
         recalculateTimer_++;
 
         // 再計算の実行条件
-        bool timeToReplan = (recalculateTimer_ > 60);
+        bool timeToReplan = (recalculateTimer_ > 30);
 
         // 【重要】橋の上にいる間は、時間が経っても再計算を「させない」
         // ただし、外部からの強制リプランニング(shouldReplanNextUpdate_)がある場合は例外
