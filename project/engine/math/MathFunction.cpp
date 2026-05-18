@@ -559,3 +559,11 @@ Matrix4x4 MakeRotateZMatrix(float radian)
         ret.z = start.z + (end.z - start.z) * t;
         return ret;
     }
+
+    Vector2 Vector2Lerp(const Vector2& start, const Vector2& end, float t)
+    {
+        Vector2 ret;
+        ret.x = start.x + (end.x - start.x) * t;
+        ret.y = start.y + (end.y - start.y) * t;
+        return ret;
+    }

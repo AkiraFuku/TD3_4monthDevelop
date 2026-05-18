@@ -1,7 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include "Audio.h"
-#include "Sprite.h"
+#include "Object3d.h"
 #include "Scene.h"
 #include "DebugCamera.h"
 #include "Fade.h"
@@ -14,19 +14,21 @@ public:
     void Finalize()override;
     void Update()override;
     void Draw()override;
+
+    void MoveCursor();
 private:
     std::unique_ptr<Camera> camera;
     DebugCamera debugCamera_;
     bool isDebugCamera_ = false;
 
-    // ステージ画像
-    std::vector<std::unique_ptr <Sprite>> sprites_;
+    // ステージモデル
+    std::vector<std::unique_ptr <Object3d>> objects_;
+    std::unique_ptr<Object3d> background_;
     std::unique_ptr<Sprite> arrowSprite_;
-    std::unique_ptr<Sprite> background_;
     const uint32_t kStageNum_ = 3;
     uint32_t stageIndex = 0;
     uint32_t preIndex = 0;
-    std::vector<Vector2> stagePos_;
+    std::vector<Vector3> stagePos_;
     Vector2 arrowPos_;
 
     // サウンド
@@ -45,5 +47,7 @@ private:
     const float kStickMax = 32767.0f;
     const float kDeadZone = 0.3f;
 
+    float theta = 0.0f;
+    float amplitude = 1.0f;
 };
 

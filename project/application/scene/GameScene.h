@@ -131,6 +131,11 @@ private:
   std::vector<std::unique_ptr <Sprite>> nestCountSprites_;
   std::unique_ptr<Sprite> slashSprite_;
   std::unique_ptr<Sprite> slashNestSprite_;
+  std::unique_ptr<Sprite> threadIconSprite_;
+  std::unique_ptr<Sprite> nestIconSprite_;
+  std::unique_ptr<Sprite> eggSprite_;
+  std::unique_ptr<Sprite> hpSprite_;
+  std::unique_ptr<Sprite> clearSprite_;
 
   std::vector < std::unique_ptr<Sprite>> pauseSprite_;
   std::unique_ptr<Sprite> menuSprite_;

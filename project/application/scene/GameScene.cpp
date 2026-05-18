@@ -225,22 +225,22 @@ void GameScene::Initialize() {
         // 1つずつ生成する
         auto threadLimit = std::make_unique<Sprite>();
         threadLimit->Initialize(path);
-        threadLimit->SetPosition(Vector2{ 250.0f,500.0f });
+        threadLimit->SetPosition(Vector2{ 260.0f,550.0f });
         threadLimitSprites_.push_back(std::move(threadLimit));
 
         auto threadCount = std::make_unique<Sprite>();
         threadCount->Initialize(path);
-        threadCount->SetPosition(Vector2{ 0.0f,500.0f });
+        threadCount->SetPosition(Vector2{ 60.0f,550.0f });
         threadCountSprites_.push_back(std::move(threadCount));
 
         auto nestLimit = std::make_unique<Sprite>();
         nestLimit->Initialize(path);
-        nestLimit->SetPosition(Vector2{ 850.0f,500.0f });
+        nestLimit->SetPosition(Vector2{ 680.0f,550.0f });
         nestMaterialSprites_.push_back(std::move(nestLimit));
 
         auto nestCount = std::make_unique<Sprite>();
         nestCount->Initialize(path);
-        nestCount->SetPosition(Vector2{ 600.0f,500.0f });
+        nestCount->SetPosition(Vector2{ 480.0f,550.0f });
         nestCountSprites_.push_back(std::move(nestCount));
     }
 
@@ -248,22 +248,37 @@ void GameScene::Initialize() {
     slashSprite_->Initialize("resources/numbers/slash.png");
     slashNestSprite_ = std::make_unique<Sprite>();
     slashNestSprite_->Initialize("resources/numbers/slash.png");
+    threadIconSprite_ = std::make_unique<Sprite>();
+    threadIconSprite_->Initialize("resources/icon/thread.png");
+    nestIconSprite_ = std::make_unique<Sprite>();
+    nestIconSprite_->Initialize("resources/icon/nestMaterial.png");
+    eggSprite_ = std::make_unique<Sprite>();
+    eggSprite_->Initialize("resources/icon/egg.png");
+    hpSprite_ = std::make_unique<Sprite>();
+    hpSprite_->Initialize("resources/icon/hp.png");
+    clearSprite_ = std::make_unique<Sprite>();
+    clearSprite_->Initialize("resources/icon/clear.png");
 
     threadLimit_ = player_->GetThreadCount();
-    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 0.0f,500.0f });
-    slashSprite_->SetPosition(Vector2{ 150.0f,500.0f });
-    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 250.0f,500.0f });
-    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 600.0f,500.0f });
-    slashNestSprite_->SetPosition(Vector2{ 750.0f,500.0f });
-    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 850.0f,500.0f });
+    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 60.0f,550.0f });
+    slashSprite_->SetPosition(Vector2{ 160.0f,550.0f });
+    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 260.0f,550.0f });
+    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 480.0f,550.0f });
+    slashNestSprite_->SetPosition(Vector2{ 580.0f,550.0f });
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 680.0f,550.0f });
+    threadIconSprite_->SetPosition(Vector2{ -10.0f,510.0f });
+    nestIconSprite_->SetPosition(Vector2{ 380.0f,550.0f });
+    eggSprite_->SetPosition(Vector2{ 800.0f,550.0f });
+    hpSprite_->SetPosition(Vector2{ 960.0f,600.0f });
+    clearSprite_->SetPosition(Vector2{ 00.0f,100.0f });
 
     // メニューUIの初期化
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 3; i++)
     {
         std::string path = "resources/Menu/" + std::to_string(i) + ".png";
         auto pauseSprite = std::make_unique<Sprite>();
         pauseSprite->Initialize(path);
-        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (230.0f * i))});
+        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (430.0f * i))});
         pauseSprite_.push_back(std::move(pauseSprite));
     }
 
@@ -599,6 +614,11 @@ void GameScene::Update()
     slashNestSprite_->Update();
     nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
     backgroundModel_->Update();
+    threadIconSprite_->Update();
+    nestIconSprite_->Update();
+    eggSprite_->Update();
+    hpSprite_->SetSize(Vector2{ 30.0f * egg_->GetHP(), 100.0f });
+    hpSprite_->Update();
 
 
     if (!isClear_)
@@ -749,12 +769,13 @@ void GameScene::Draw() {
         if (t_ >= 1.0f)
         {
 
-            for (int i = 1; i < 4; i++)
+            for (int i = 1; i < 3; i++)
             {
                 pauseSprite_[i]->Draw();
             }
 
             cursorSprite_->Draw();
+            clearSprite_->Draw();
         }
     }
     else
@@ -765,7 +786,14 @@ void GameScene::Draw() {
         nestCountSprites_[player_->GetNestMaterial()]->Draw();
         slashNestSprite_->Draw();
         nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
+        threadIconSprite_->Draw();
+        nestIconSprite_->Draw();
+        eggSprite_->Draw();
 
+        if (egg_->IsDead())
+        {
+            hpSprite_->Draw();
+        }
     }
    
 
@@ -997,9 +1025,9 @@ void GameScene::Clear()
         player_->SetForward(newRotate);
 
         // メニューUIの初期化
-        for (int i = 1; i < 4; i++)
+        for (int i = 1; i < 3; i++)
         {
-            pauseSprite_[i]->SetPosition(Vector2{ (20.0f + (400.0f * (i - 1))), 500.0f });
+            pauseSprite_[i]->SetPosition(Vector2{ (20.0f + (500.0f * (i - 1))), 500.0f });
         }
         Vector2 pos = pauseSprite_[1]->GetPosition();
         pos.y += 200.0f;
@@ -1018,13 +1046,9 @@ void GameScene::Clear()
             {
                 if (pauseIndex_ == 1)
                 {
-                    SceneManager::GetInstance()->ChangeScene("TitleScene");
-                }
-                else if (pauseIndex_ == 2)
-                {
                     SceneManager::GetInstance()->ChangeScene("SelectScene");
                 }
-                else if (pauseIndex_ == 3)
+                else if (pauseIndex_ == 2)
                 {
                     // ステージナンバーを設定
                     int num = CollisionMask::GetInstance()->GetCurrentStageID();
@@ -1049,7 +1073,7 @@ void GameScene::Clear()
             if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
                 Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
             {
-                if (pauseIndex_ < 3)
+                if (pauseIndex_ < 2)
                 {
                     pauseIndex_++;
                 }
@@ -1067,7 +1091,7 @@ void GameScene::Clear()
                 }
                 else
                 {
-                    pauseIndex_ = 3;
+                    pauseIndex_ = 2;
                 }
             }
             else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
@@ -1089,6 +1113,7 @@ void GameScene::Clear()
         }
         menuSprite_->Update();
         cursorSprite_->Update();
+        clearSprite_->Update();
         
     }
 
@@ -1104,10 +1129,6 @@ void GameScene::Pause()
         if (fade_->IsFinished())
         {
             if (pauseIndex_ == 1)
-            {
-                SceneManager::GetInstance()->ChangeScene("TitleScene");
-            }
-            else if (pauseIndex_ == 2)
             {
                 SceneManager::GetInstance()->ChangeScene("SelectScene");
             }
@@ -1149,7 +1170,7 @@ void GameScene::Pause()
         if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
         {
-            if (pauseIndex_ < 2)
+            if (pauseIndex_ < 1)
             {
                 pauseIndex_++;
             }
@@ -1167,7 +1188,7 @@ void GameScene::Pause()
             }
             else
             {
-                pauseIndex_ = 2;
+                pauseIndex_ = 1;
             }
         }
         else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))

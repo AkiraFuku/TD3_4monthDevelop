@@ -47,7 +47,8 @@ public:
     bool IsOnPlayer() const { return onPlayer_; }
 
     // HPを減らす
-    void SetHP(float hp) ;
+    void SetHP(float hp);
+    float GetHP() const { return HP_; }
 
     // 死亡判定
     void Death();

@@ -1,47 +1,51 @@
 #include "SelectScene.h"
+#include "ModelManager.h"
 #include "TextureManager.h"
 #include "Input.h"
 #include "SceneManager.h"
 #include "CollisionMask.h"
+#include "Object3dCommon.h"
 
 void SelectScene::Initialize()
 {
     camera = std::make_unique<Camera>();
     camera->SetRotate({ 0.0f,0.0f,0.0f });
     camera->SetTranslate({ 0.0f,0.0f,-5.0f });
+    Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
 
     // テクスチャの読み込み
-    TextureManager::GetInstance()->LoadTexture("resources/stage1.png");
-    TextureManager::GetInstance()->LoadTexture("resources/stage2.png");
-    TextureManager::GetInstance()->LoadTexture("resources/stage3.png");
-    TextureManager::GetInstance()->LoadTexture("resources/arrow.png");
-
-    background_ = std::make_unique<Sprite>();
-    background_->Initialize("resources/selectScene.png");
-
     stagePos_ =
     {
-        {0.0f,300.0f},
-        {500.0f,300.0f},
-        {1000.0f,300.0f}
+        {-2.5f,0.0f,12.0f},
+        {0.0f,0.0f,12.0f},
+        {2.5f,0.0f,12.0f}
     };
 
     for (uint32_t i = 0; i < kStageNum_; i++)
     {
-        std::unique_ptr<Sprite> sprite = std::make_unique<Sprite>();
-        std::string path = "resources/stage" + std::to_string(i + 1) + ".png";
-        sprite->Initialize(path);
-        sprite->SetPosition(stagePos_[i]);
-        sprites_.push_back(std::move(sprite));
+        std::unique_ptr<Object3d> object = std::make_unique<Object3d>();
+        std::string path = "eggSelect/" + std::to_string(i + 1) + "/egg.obj";
+        object->Initialize();
+        ModelManager::GetInstance()->LoadModel("resources", path);
+        object->AddModel(path, "egg");
+        object->SetTranslate(stagePos_[i]);
+        objects_.push_back(std::move(object));
     }
 
     arrowSprite_ = std::make_unique<Sprite>();
-    arrowSprite_->Initialize("resources/arrow.png");
-    arrowPos_ = sprites_[0]->GetPosition();
-    arrowPos_.y += 300.0f;
+    arrowSprite_->Initialize("resources/Menu/cursor.png");
+    arrowPos_.x = objects_[0]->GetTranslate().x * 100.0f;
+    arrowPos_.x += 450.0f;
+    arrowPos_.y = objects_[0]->GetTranslate().y - 400.0f;
     arrowSprite_->SetPosition(arrowPos_);
 
-   
+    background_ = std::make_unique<Object3d>();
+    background_->Initialize();
+    ModelManager::GetInstance()->LoadModel("resources", "background/select.obj");
+    background_->AddModel("background/select.obj", "background");
+    background_->SetTranslate(Vector3{ 0.0f,0.0f,13.0f });
+
+
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/stageSelect.wav");
     enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
@@ -61,20 +65,57 @@ void SelectScene::Finalize()
 
 void SelectScene::Update()
 {
+    camera->Update();
+    camera->UpdateViewProjection();
+
+    MoveCursor();
+
+    // 選択されているモデルを動かす
+    Vector3 pos = objects_[stageIndex]->GetTranslate();
+    pos.y = sinf(theta) * amplitude;
+    theta += float(M_PI) / 60.0f; // 1秒で1周期の速度
+    objects_[stageIndex]->SetTranslate(pos);
+
+    // モデルの更新処理
+    for (const std::unique_ptr <Object3d>& object : objects_)
+    {
+        object->Update();
+    }
+
+    arrowSprite_->Update();
     background_->Update();
 
+    fade_->Update();
+}
+
+void SelectScene::Draw()
+{
+    background_->Draw();
+
+    for (const std::unique_ptr <Object3d>& object : objects_)
+    {
+        object->Draw();
+    }
+
+    arrowSprite_->Draw();
+
+    fade_->Draw();
+}
+
+void SelectScene::MoveCursor()
+{
     preIndex = stageIndex;
 
     // コントローラー入力を取得
     XINPUT_STATE joyState{};
-     bool stickRightTrigger = false;
+    bool stickRightTrigger = false;
     bool stickLeftTrigger = false;
 
     if (Input::GetInstance()->GetJoyStick(0, joyState)) {
         float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
 
-        if (std::abs(stickX) > kDeadZone){
-            
+        if (std::abs(stickX) > kDeadZone) {
+
             // 右に倒した瞬間
             if (stickX > 0.5f) {
                 if (!isStickPushed) {
@@ -129,7 +170,7 @@ void SelectScene::Update()
         fade_->StartFadeOut(0.05f);
         isFinished_ = true;
 
-        
+
     }
 
     if (isFinished_ && fade_->IsFinished()) {
@@ -141,32 +182,13 @@ void SelectScene::Update()
 
     if (preIndex != stageIndex)
     {
-        Vector2 pos = sprites_[stageIndex]->GetPosition();
-        pos.y += 300.0f;
+        Vector2 pos;
+        pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
+        pos.x += 450.0f;
+        pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
         arrowSprite_->SetPosition(pos);
+
+        Vector3 objectPos = stagePos_[preIndex];
+        objects_[preIndex]->SetTranslate(objectPos);
     }
-
-    // スプライトの更新処理
-    for (const std::unique_ptr <Sprite>& sprite : sprites_)
-    {
-        sprite->Update();
-    }
-
-    arrowSprite_->Update();
-
-    fade_->Update();
-}
-
-void SelectScene::Draw()
-{
-    background_->Draw();
-    
-    for (const std::unique_ptr <Sprite>& sprite : sprites_)
-    {
-        sprite->Draw();
-    }
-
-    arrowSprite_->Draw();
-
-    fade_->Draw();
 }
