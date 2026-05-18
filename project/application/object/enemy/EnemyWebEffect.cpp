@@ -10,21 +10,25 @@ void EnemyWebEffect::Initialize() {
     renderer_ = std::make_unique<ThreadRenderer>();
     // maxThreads=1, nodesPerThread=300, radius=0.04f, radialSegments=6
     renderer_->Initialize(1, 300, 0.01f, 6);
-    
+
     // 繭玉モデルの読み込みと初期化
     ModelManager::GetInstance()->LoadModel("resources", "cocoon/cocoon.obj");
     cocoonObject_ = std::make_unique<Object3d>();
     cocoonObject_->Initialize();
     cocoonObject_->SetModel("cocoon/cocoon.obj");
     cocoonObject_->SetBlendMode(BlendMode::Normal); // アルファブレンド用
-    cocoonAlpha_ = 0.0f;
-    cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
-    
+    cocoonScale_ = 0.0f;
+    cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
+
     isActive_ = false;
 }
 
 void EnemyWebEffect::Update(const Vector3& targetPos, Camera* camera)
 {
+
+    cocoonObject_->SetTranslate(targetPos);
+    cocoonObject_->Update();
+
     if (state_ == WebState::None) return;
 
     if (state_ == WebState::Winding) {
@@ -97,21 +101,23 @@ void EnemyWebEffect::Update(const Vector3& targetPos, Camera* camera)
         renderer_->Update(allNodes, camera);
     }
 
-    // 徐々にアルファ値を上げていく
+    // ▼ 徐々にスケールを大きくしていく ▼
     if (state_ == WebState::Winding || state_ == WebState::Formed) {
-        if (cocoonAlpha_ < 1.0f) {
-            // Winding中に徐々に濃くなり、Formedで完全に表示されるような速度
-            cocoonAlpha_ += 0.01f; 
-            if (cocoonAlpha_ > 1.0f) {
-                cocoonAlpha_ = 1.0f;
+        if (scaleProgress_ < 1.0f) {
+            // 進行度を進める（元の0.05fだと一瞬で終わってバウンスが見えにくいので、少し遅めの 0.02f にしています）
+            scaleProgress_ += 0.02f;
+            if (scaleProgress_ > 1.0f) {
+                scaleProgress_ = 1.0f;
             }
-            cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+
+            // ★ 進行度(0.0~1.0)をイージング関数に渡して、スケールを決定する
+            cocoonScale_ = EaseOutBounce(scaleProgress_);
+
+            // もし最終的な大きさを 1.0f 以外にしたい場合は、ここで掛け算します
+            // 例: cocoonObject_->SetScale({cocoonScale_ * 1.5f, cocoonScale_ * 1.5f, cocoonScale_ * 1.5f});
+            cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
         }
     }
-
-    // 位置をエネミーに追従させて更新
-    cocoonObject_->SetTranslate(targetPos);
-    cocoonObject_->Update();
 }
 
 void EnemyWebEffect::Draw()
@@ -125,8 +131,7 @@ void EnemyWebEffect::Draw()
     }
 
     // 繭のモデル描画
-    // アルファ値が0より大きければ描画する
-    if (cocoonAlpha_ > 0.0f) {
+    if (cocoonScale_ > 0.0f) {
         cocoonObject_->Draw();
     }
 }
@@ -140,9 +145,10 @@ void EnemyWebEffect::Start()
     wrapHeight_ = 0.0f;
     wrapDir_ = 1.0f;
     totalGeneratedNodes_ = 0; // カウンターをリセット
-    
-    cocoonAlpha_ = 0.0f;
-    if (cocoonObject_) cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+
+    scaleProgress_ = 0.0f;
+    cocoonScale_ = 0.0f;
+    if (cocoonObject_) cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
 }
 
 void EnemyWebEffect::Stop()
@@ -150,7 +156,22 @@ void EnemyWebEffect::Stop()
     isActive_ = false;
     state_ = WebState::None;
     nodes_.clear();
-    
-    cocoonAlpha_ = 0.0f;
-    if (cocoonObject_) cocoonObject_->SetColor({ 1.0f, 1.0f, 1.0f, cocoonAlpha_ });
+
+    scaleProgress_ = 0.0f;
+    cocoonScale_ = 0.0f;
+    if (cocoonObject_) cocoonObject_->SetScale({cocoonScale_, cocoonScale_, cocoonScale_});
+}
+
+float EnemyWebEffect::EaseOutBounce(float x) {
+    if (x < 0.4f) {
+        float t = x / 0.4f; // 0.0 ～ 1.0 に正規化
+        float skewedT = std::sqrt(t);
+
+        return 0.1f * t + 0.6f * std::sin(skewedT * PI);
+    } else {
+        float t = (x - 0.4f) / 0.6f; // 0.0 ～ 1.0 に正規化
+        float skewedT = std::sqrt(t);
+
+        return (0.1f + 0.9f * t) + 0.8f * std::sin(skewedT * PI);
+    }
 }

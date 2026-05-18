@@ -5,6 +5,7 @@
 #include "Egg.h"
 #include "GameScene.h"
 #include "Object3dCommon.h"
+#include "ImGuiManager.h"
 
 // キー生成関数 (SpiderWebManager.cpp と同じアルゴリズム)
 static uint64_t GenerateWebKey(const ThreadManager::ThreadIntersection& intersect) {
@@ -137,7 +138,40 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
     const std::vector<std::unique_ptr<BrokenBlock>>& brokenBlock,
     std::vector<uint64_t>& occupiedWebKeys) {
 
+#ifdef USE_IMGUI
+    DrawImGui();
+#endif
+
     Vector3 currentPos = object_->GetTranslate();
+
+    if (tm && !gameScene_->IsClear() && !isOnBridge_ && !isTrapped_) {
+        // 1. 現在地が「壁や穴」の判定（＝糸がないと落ちる場所）かチェック
+        bool isOverPit = CollisionMask::GetInstance()->IsWall(currentPos.x, currentPos.z);
+
+        // 2. 壊れるブロックの上なら「穴ではない」とみなす
+        if (isOverPit) {
+            for (const auto& br : brokenBlock) {
+                if (br->IsInside(currentPos) && !br->IsBroken()) {
+                    isOverPit = false;
+                    break;
+                }
+            }
+        }
+
+        // 3. 足元が本当に穴の場合のみ、糸へのスナップ（吸着）を有効にする
+        if (isOverPit) {
+            ThreadManager::ThreadQueryResult query;
+            if (tm->FindNearestThread(currentPos, 1.5f, query)) {
+                // 糸の先端（t=0 や t=1）に無理やり引っ張られるのを防ぐため、
+                // 糸の中間部分にいる時だけX, Z座標を糸の上に補正する
+                if (query.t > 0.01f && query.t < 0.99f) {
+                    currentPos.x = query.closestPoint.x;
+                    currentPos.z = query.closestPoint.z;
+                }
+            }
+        }
+    }
+
     Vector3 expectedPos = currentPos;
     bool isMoving = false;
 
@@ -180,7 +214,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
         recalculateTimer_++;
 
         // 再計算の実行条件
-        bool timeToReplan = (recalculateTimer_ > 60);
+        bool timeToReplan = (recalculateTimer_ > 30);
 
         // 【重要】橋の上にいる間は、時間が経っても再計算を「させない」
         // ただし、外部からの強制リプランニング(shouldReplanNextUpdate_)がある場合は例外
@@ -310,6 +344,19 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
         }
         object_->SetTranslate(expectedPos);
     }
+
+    // ==========================================
+    // 重みの適用 (Y座標の変更はここでは行わない)
+    // ==========================================
+    Vector3 finalPos = object_->GetTranslate();
+
+    if (tm && !gameScene_->IsClear()) {
+        if (!isOnBridge_) {
+            // 1. 周辺の糸に下向きの力(重さ)を加える（これだけ残す）
+            tm->ApplyWeight(finalPos, weightRadius_, weight_);
+        }
+    }
+
     // ==========================================
     // 3. 座標の確定とモデルの更新
     // ==========================================
@@ -345,6 +392,54 @@ void Enemy::Reset(const Vector3& pos) {
     attackTimer_ = 0;
     // 必要に応じてアニメーションを Idle に戻す
     anima_->ChangeAnimation(EnemyAnima::AnimationState::Idle);
+}
+
+void Enemy::UpdateHeight(ThreadManager* tm) {
+    // 1. 早期リターン
+    if (!tm || gameScene_->IsClear()) return;
+
+    // 2. 現在座標と糸の高さの準備
+    Vector3 finalPos = object_->GetTranslate();
+    float threadY = 0.0f;
+
+    // 3. 橋の上にいなくて、かつ糸の高さを取得できた場合（糸の上にいる）
+    if (!isOnBridge_ && tm->GetThreadHeight(finalPos, 0.5f, threadY)) {
+        float targetY = threadY;
+        float followSpeed = 0.2f;
+        // 現在のY座標から糸のY座標へ滑らかに移動させる
+        finalPos.y += (targetY - finalPos.y) * followSpeed;
+    } else {
+        // 4. 糸から降りた場合、または橋の上にいる場合はY座標を強制的に -0.4f にする
+        finalPos.y = -0.4f;
+
+        // ※もし -0.4f に向かって「スッ」と滑らかに着地・移動させたい場合は、
+        // 上の行の代わりに以下のコードを使用してください。
+        // finalPos.y += (-0.4f - finalPos.y) * 0.2f;
+    }
+
+    // 5. 高さを反映させた最終的な座標をセット
+    object_->SetTranslate(finalPos);
+    object_->Update();
+}
+
+void Enemy::DrawImGui() {
+#ifdef USE_IMGUI
+    // ImGuiのウィンドウを作成（"Enemy Debug"という名前）
+    ImGui::Begin("Enemy Debug");
+
+    // 現在の座標を取得
+    Vector3 pos = object_->GetTranslate();
+
+    // DragFloat3 でXYZ座標を操作できるようにする
+    // （第3引数 0.1f はドラッグ時の変化量）
+    if (ImGui::DragFloat3("Position", &pos.x, 0.1f)) {
+        // 値が変更されたらオブジェクトに反映
+        object_->SetTranslate(pos);
+        object_->Update();
+    }
+
+    ImGui::End();
+#endif
 }
 
 Point Enemy::WorldToGrid(const Vector3& pos) {

@@ -32,12 +32,14 @@ private:
     std::vector<PhysicsNode> nodes_;
 
     std::unique_ptr<Object3d> cocoonObject_; // 追加: 繭玉モデル
-    float cocoonAlpha_ = 0.0f;               // 追加: アルファ値
+    float cocoonScale_ = 0.0f;
 
     float wrapAngle_ = 0.0f;
     float wrapHeight_ = 0.0f;
     float wrapDir_ = 1.0f;
     bool isActive_ = false;
+
+    float scaleProgress_ = 0.0f;
 
     WebState state_ = WebState::None;
     float lineAlpha_ = 1.0f; // 線の透明度（フェード用）
@@ -45,4 +47,7 @@ private:
     int totalGeneratedNodes_ = 0;     // これまでに生成した総ノード数
     const int MAX_TOTAL_NODES = 250;  // 巻き付け完了までの総ノード数
     const int MAX_TRAIL_LENGTH = 60;  // 同時に描画する軌跡の最大長（数値を小さくすると尻尾が短くなります）
+
+private:
+    float EaseOutBounce(float x);
 };
