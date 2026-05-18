@@ -66,7 +66,7 @@ private:
 
     // キャラクターの当たり判定サイズ
     static inline const float kWidth = 1.6f;
-    static inline const float kHeight = 1.6f;
+    static inline const float kHeight = 6.4f;
 
     // 当たり判定フラグ
     bool isHit_ = false;

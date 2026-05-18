@@ -490,10 +490,6 @@ void GameScene::Update()
     // 卵の更新処理
     egg_->Update();
 
-    // 糸の更新処理
-    thread_->Update();
-    spiderWeb_->Update(*thread_);
-
     // 一方通行オブジェクトの更新
     for (auto& ow : stageOneWays_) {
         ow->Update();
@@ -553,6 +549,15 @@ void GameScene::Update()
         }*/
 
         enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
+    }
+
+    // 糸の更新処理
+    thread_->Update();
+    spiderWeb_->Update(*thread_);
+
+    player_->UpdateHeight();
+    for (auto& enemy : enemies_) {
+        enemy->UpdateHeight(thread_.get());
     }
 
     // 巣の素材の更新処理
@@ -725,8 +730,11 @@ void GameScene::CheckAllCollisions() {
     AABB eggAABB = egg_->GetAABB();
 
     if (isCollision(playerAABB, eggAABB)) {
-        egg_->OnCollision(player_.get());
-        ResolveCollision(player_.get(), playerAABB, eggAABB);
+        if(!egg_->IsOnPlayer())
+        {
+            egg_->OnCollision(player_.get());
+            ResolveCollision(player_.get(), playerAABB, eggAABB);
+        }
     }
     else {
         egg_->SetHitFlag(false);
@@ -743,11 +751,16 @@ void GameScene::CheckAllCollisions() {
 
         if (isCollision(enemyAABB, eggAABB)) {
             enemy->OnCollision(egg_.get());
-            ResolveCollision(enemy.get(), enemyAABB, eggAABB);
+
+            if(!egg_->IsOnPlayer())
+            {
+                ResolveCollision(enemy.get(), enemyAABB, eggAABB);
+            }
         }
         else {
             enemy->SetHitFlag(false);
         }
+
     }
 
     // 巣の素材の座標
@@ -779,6 +792,16 @@ void GameScene::CheckAllCollisions() {
 bool GameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
 {
     if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x && aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y && aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+        return true;
+    }
+    return false;
+}
+
+bool GameScene::isCollisionXZ(const AABB& aabb1, const AABB& aabb2)
+{
+    // Y軸 (min.y / max.y) の条件を削除し、XとZのみで重なりを判定する
+    if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x &&
+        aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
         return true;
     }
     return false;

@@ -66,6 +66,8 @@ public:
     // ゲームシーンのポインタをセット
     void SetGameScene(GameScene* scene) { gameScene_ = scene; }
 
+    void UpdateHeight(ThreadManager* tm); // ★追加: Y座標のみを更新する関数
+
 private:
     Point WorldToGrid(const Vector3& pos);
     Vector3 GridToWorld(const Point& grid);
@@ -100,6 +102,9 @@ private:
     bool shouldReplanNextUpdate_ = false; // 再計算予約フラグ
 
     bool isOnBridge_ = false; // 橋の上にいるかどうかの状態保持
+
+    float weight_ = 0.01f;      // 敵の重さ（たわみ具合。ゲームに合わせて調整してください）
+    float weightRadius_ = 1.0f; // 重みが影響する範囲の半径
 
     // サウンド
     Audio::SoundHandle attack_ = 0;

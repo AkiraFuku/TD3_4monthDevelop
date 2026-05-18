@@ -93,9 +93,6 @@ void Player::Update()
 
     // ★これを追加！！
     if (onThread_) {
-        // 【Threadに乗っている場合】
-        // 糸の上では自由落下しないため落下速度をリセット
-        fallSpeed_ = 0.0f;
 
         // 糸に沿った移動補正、Y座標の追従、糸への重さ適用
         ResolveThreadMove();
@@ -728,6 +725,29 @@ void Player::IsCollisionOneWay()
     }
 }
 
+void Player::UpdateHeight() {
+    // 1. 早期リターン
+    if (!onThread_ || !thread_) return;
+
+    // 2. 現在座標と糸の高さの準備
+    Vector3 finalPos = object_->GetTranslate();
+    float threadY = 0.0f;
+
+    if (thread_->GetThreadHeight(finalPos, 0.5f, threadY)) {
+        // 3. 目標のY座標を計算 (ベース位置、オフセット、端のフェードを考慮)
+        float targetY = threadBaseY_ + (threadY + threadOffsetY_ - threadBaseY_) * currentEdgeFade_;
+
+        // 4. 現在のY座標から目標のY座標へ移動させる (Playerは即時追従)
+        float followSpeed = 1.0f;
+        finalPos.y += (targetY - finalPos.y) * followSpeed;
+
+        // 5. 高さを反映させた最終的な座標をセット
+        translate_ = finalPos; // Playerはメンバ変数のtranslate_も同期する
+        object_->SetTranslate(translate_);
+        object_->Update();
+    }
+}
+
 void Player::InitializeModel()
 {
 
@@ -978,11 +998,9 @@ void Player::ResolveThreadMove()
     moveVel_.z += moveResult.velocityCorrection.z;
 
     // 2. Y座標の沈み込み処理
-    float targetY = query.closestPoint.y + threadOffsetY_;
+    // ★ ここにあった translate_.y の計算を削除し、edgeFade のみ保存します
+    currentEdgeFade_ = moveResult.edgeFade;
 
-    // ThreadManagerから貰った edgeFade を使ってY座標をブレンド
-    translate_.y = threadBaseY_ + (targetY - threadBaseY_) * moveResult.edgeFade;
-
-    // 3. 糸への重さの適用（※関数名を ApplyWeight に変更した想定）
+    // 3. 糸への重さの適用
     thread_->ApplyWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
 }
