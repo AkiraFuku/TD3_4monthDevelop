@@ -144,6 +144,7 @@ Vector3 Normalize(const Vector3& v);
 Vector3 TransformNormal(const Vector3& v, const Matrix4x4& m);
 
 Vector3 Vector3Lerp(const Vector3& start, const Vector3& end, float t);
+Vector2 Vector2Lerp(const Vector2& start, const Vector2& end, float t);
 
 template<typename T>
 inline T Lerp(const T& v1, const T& v2, float t) {

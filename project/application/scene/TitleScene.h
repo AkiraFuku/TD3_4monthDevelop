@@ -29,6 +29,7 @@ private:
     std::unique_ptr<Object3d> mo_;
     std::unique_ptr<Object3d> ri_;
     std::unique_ptr<Object3d> pressSpace_;
+    std::unique_ptr<Object3d> background_;
 
     // フェード機能
     std::unique_ptr<Fade> fade_;
@@ -43,5 +44,5 @@ private:
     Vector3 moPos_ = { 0.0f,1.0f,12.0f };
     Vector3 riPos_ = { 2.5f,0.5f,12.0f };
     Vector3 pressPos_ = { 0.0f,-2.0f,12.0f };
-    Vector2 cursorPos_ = { 400.0f,0.0f };
+    Vector2 cursorPos_ = { 250.0f,0.0f };
 };

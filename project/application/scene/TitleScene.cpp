@@ -17,11 +17,13 @@ void TitleScene::Initialize() {
     mo_ = std::make_unique<Object3d>();
     ri_ = std::make_unique<Object3d>();
     pressSpace_ = std::make_unique<Object3d>();
+    background_ = std::make_unique<Object3d>();
 
     ku_->Initialize();
     mo_->Initialize();
     ri_->Initialize();
     pressSpace_->Initialize();
+    background_->Initialize();
 
     TextureManager::GetInstance()->LoadTexture("resources/Menu/cursor.png");
     cursor_ = std::make_unique<Sprite>();
@@ -31,18 +33,22 @@ void TitleScene::Initialize() {
     ModelManager::GetInstance()->LoadModel("resources", "titleLogo/mo.obj");
     ModelManager::GetInstance()->LoadModel("resources", "titleLogo/ri.obj");
     ModelManager::GetInstance()->LoadModel("resources", "pressSpace.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "backGround/background.obj");
 
     ku_->AddModel("titleLogo/ku.obj", "ku");
     mo_->AddModel("titleLogo/mo.obj", "mo");
     ri_->AddModel("titleLogo/ri.obj", "ri");
     pressSpace_->AddModel("pressSpace.obj", "pressSpace");
+    background_->AddModel("backGround/background.obj", "background");
 
     ku_->SetTranslate(Vector3{ -2.5f,4.0f,12.0f });
     mo_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     ri_->SetTranslate(Vector3{ 2.5f,4.0f,12.0f });
     pressSpace_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
+    background_->SetTranslate(Vector3{ 0.0f,0.0f,13.0f });
     cursor_->SetPosition(Vector2{ 400.0f,0.0f });
 
+    pressSpace_->SetBlendMode(BlendMode::Add);
     
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/title.wav");
@@ -78,6 +84,9 @@ void TitleScene::Update() {
         Vector3 press = pressSpace_->GetTranslate();
         press = Vector3Lerp(press, pressPos_, t_);
         pressSpace_->SetTranslate(press);
+        Vector2 cursor = cursor_->GetPosition();
+        cursor = Vector2Lerp(cursor, cursorPos_, t_);
+        cursor_->SetPosition(cursor);
     }
 
     cursor_->Update();
@@ -85,6 +94,7 @@ void TitleScene::Update() {
     mo_->Update();
     ri_->Update();
     pressSpace_->Update();
+    background_->Update();
 
     if (!isFinished_ &&
         (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) ||
@@ -102,6 +112,7 @@ void TitleScene::Update() {
     }
 }
 void TitleScene::Draw() {
+    background_->Draw();
     ku_->Draw();
     mo_->Draw();
     ri_->Draw();

@@ -7,10 +7,11 @@
 
 void EggExplosion::Initialize(const Vector3& pos)
 {
-    ModelManager::GetInstance()->LoadModel("resources", "plane.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "eggExplosion/eggExplosion.obj");
     object_ = std::make_unique<Object3d>();
     object_->Initialize();
-    object_->SetModel("plane.obj");
+    object_->AddModel("eggExplosion/eggExplosion.obj", "eggExplosion");
+    object_->SetModel("eggExplosion/eggExplosion.obj");
 
     // ランダムエンジンの初期化
     std::random_device seedGenerator;
