@@ -319,7 +319,7 @@ void GameScene::Initialize() {
     clearSprite_->SetPosition(Vector2{ 00.0f,100.0f });
 
     // メニューUIの初期化
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         std::string path = "resources/Menu/" + std::to_string(i) + ".png";
         auto pauseSprite = std::make_unique<Sprite>();
@@ -536,6 +536,14 @@ void GameScene::Update()
 
     if (egg_->IsDead())
     {
+        pauseSprite_[0]->SetPosition(Vector2{ -500.0f,-500.0f });
+        pauseSprite_[1]->SetPosition(Vector2{ 450.0f,200.0f });
+        pauseSprite_[2]->SetPosition(Vector2{ -500.0f,-500.0f });
+        pauseSprite_[3]->SetPosition(Vector2{ 450.0f,400.0f });
+        cursorSprite_->SetPosition(pauseSprite_[3]->GetPosition());
+
+        GameOver();
+
         // 卵の更新処理
         egg_->Update();
 
@@ -548,7 +556,7 @@ void GameScene::Update()
         return;
     } else
     {
-        if (Input::GetInstance()->TriggerKeyDown(DIK_Q))
+        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) || Input::GetInstance()->TriggerKeyDown(DIK_Q))
         {
             openPause_ = true;
             return;
@@ -689,7 +697,7 @@ void GameScene::Update()
     // ① Rキーを押したらフェードアウト開始
     if (!isClear_ && !isResetWaiting_)
     {
-        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) ||
+        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_BACK) ||
             Input::GetInstance()->PushedKeyDown(DIK_R))
         {
             if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)
@@ -799,7 +807,20 @@ void GameScene::Draw() {
         CollisionMask::GetInstance()->Draw();
     }
 
-    if (openPause_)
+    if (egg_->IsDead())
+    {
+        if (t_ >= 1.0f)
+        {
+            for (auto& pauseSprite : pauseSprite_)
+            {
+                pauseSprite->Draw();
+            }
+
+            cursorSprite_->Draw();
+            clearSprite_->Draw();
+        }
+    }
+    else if (openPause_)
     {
         menuSprite_->Draw();
 
@@ -834,7 +855,7 @@ void GameScene::Draw() {
         nestIconSprite_->Draw();
         eggSprite_->Draw();
 
-        if (egg_->IsDead())
+        if (!egg_->IsDead())
         {
             hpSprite_->Draw();
         }
@@ -1082,13 +1103,44 @@ void GameScene::Clear()
         {
             pauseSprite_[i]->SetPosition(Vector2{ (20.0f + (500.0f * (i - 1))), 500.0f });
         }
-        Vector2 pos = pauseSprite_[1]->GetPosition();
+        Vector2 pos = pauseSprite_[2]->GetPosition();
         pos.y += 200.0f;
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
         pauseIndex_ = 1;
     } else
     {
+        // コントローラー入力を取得
+        XINPUT_STATE joyState{};
+        bool stickRightTrigger = false;
+        bool stickLeftTrigger = false;
+
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+
+            if (std::abs(stickX) > kDeadZone) {
+
+                // 右に倒した瞬間
+                if (stickX > 0.5f) {
+                    if (!isStickPushed) {
+                        stickRightTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // 左に倒した瞬間
+                else if (stickX < -0.5f) {
+                    if (!isStickPushed) {
+                        stickLeftTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // スティックが中央に戻ったらリセット
+                else {
+                    isStickPushed = false;
+                }
+            }
+        }
+
         if (isFadeStart_)
         {
             // フェードの更新
@@ -1179,7 +1231,8 @@ void GameScene::Pause()
                 SceneManager::GetInstance()->ChangeScene("SelectScene");
             }
         }
-    } else
+    }
+    else
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
@@ -1218,35 +1271,140 @@ void GameScene::Pause()
             if (pauseIndex_ < 1)
             {
                 pauseIndex_++;
-            } else
+            }
+            else
             {
                 pauseIndex_ = 0;
             }
-        } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
         {
             if (pauseIndex_ > 0)
             {
                 pauseIndex_--;
-            } else
+            }
+            else
             {
                 pauseIndex_ = 1;
             }
-        } else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
         {
             openPause_ = false;
             return;
-        } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
             if (pauseIndex_ == 0)
             {
                 openPause_ = false;
                 return;
-            } else
+            }
+            else
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
             }
+
+        }
+    }
+
+
+    Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
+    pos.y -= 500.0f;
+    pos.x -= 200.0f;
+    cursorSprite_->SetPosition(pos);
+
+    for (auto& pauseSprite : pauseSprite_)
+    {
+        pauseSprite->Update();
+    }
+    menuSprite_->Update();
+    cursorSprite_->Update();
+
+}
+
+void GameScene::GameOver()
+{
+    if (isFadeStart_)
+    {
+        // フェードの更新
+        fade_->Update();
+
+        if (fade_->IsFinished())
+        {
+            if (pauseIndex_ == 1)
+            {
+                SceneManager::GetInstance()->ChangeScene("SelectScene");
+            }
+            else if (pauseIndex_ == 3)
+            {
+                SceneManager::GetInstance()->ChangeScene("GameScene");
+            }
+        }
+    }
+    else
+    {
+        // コントローラー入力を取得
+        XINPUT_STATE joyState{};
+        bool stickUpTrigger = false;
+        bool stickDownTrigger = false;
+
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
+
+            if (std::abs(stickX) > kDeadZone) {
+
+                // 右に倒した瞬間
+                if (stickX > 0.5f) {
+                    if (!isStickPushed) {
+                        stickUpTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // 左に倒した瞬間
+                else if (stickX < -0.5f) {
+                    if (!isStickPushed) {
+                        stickDownTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // スティックが中央に戻ったらリセット
+                else {
+                    isStickPushed = false;
+                }
+            }
+        }
+
+        if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
+        {
+            if (pauseIndex_ < 3)
+            {
+                pauseIndex_ = 3;
+            }
+            else
+            {
+                pauseIndex_ = 1;
+            }
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
+        {
+            if (pauseIndex_ > 1)
+            {
+                pauseIndex_ = 1;
+            }
+            else
+            {
+                pauseIndex_ = 3;
+            }
+        }
+        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        {
+            fade_->StartFadeOut(0.02f);
+            isFadeStart_ = true;
 
         }
     }

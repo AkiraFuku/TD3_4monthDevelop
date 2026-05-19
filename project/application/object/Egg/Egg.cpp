@@ -115,10 +115,6 @@ void Egg::Update() {
             a -= 0.01f; // 徐々に透明にする
             object_->SetModelInstanceColor("egg", { 1.0f, 1.0f, 1.0f, a });
         }
-        else
-        {
-            SceneManager::GetInstance()->ChangeScene("TitleScene");
-        }
 
         for (auto& effect : explosionEffect_)
         {
@@ -229,6 +225,7 @@ void Egg::Death() {
         isDead_ = true;
         a = object_->GetColor().w;
         object_->SetBlendMode(BlendMode::Add);
+        gameScene_->SetPauseIndex(3);
 
         // エフェクトの生成
         for (int i = 0; i < 10; i++)
