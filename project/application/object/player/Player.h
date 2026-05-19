@@ -208,10 +208,13 @@ private:
     // ゲームシーンのポインタ
     GameScene* gameScene_ = nullptr;
 
+public:
+    // 状態クラス（PlayerState）から回転だけを呼び出せるように public へ移動
+    void TurnToDirection(const Vector3& direction);
+
 private:
     bool TryMoveOnThread(const Vector3& moveDirection);
     void ResolveThreadMove();
-    void TurnToDirection(const Vector3& direction);
 
     void UpdatePredictionLine();
 
