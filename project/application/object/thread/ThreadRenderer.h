@@ -64,6 +64,11 @@ public:
     /// </summary>
     void Draw();
 
+    /// <summary>
+    /// 糸の色を設定する
+    /// </summary>
+    void SetColor(const Vector4& color);
+
 private:
     // ---------------------------------------------------------
     // 内部処理関数
