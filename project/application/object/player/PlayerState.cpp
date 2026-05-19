@@ -149,28 +149,52 @@ void PlayerStateMove::Update(Player* player) {
         moveDirection.z /= length;
     }
 
-    // ★重要: 移動前のスレッド状態を記録
-    bool wasOnThread = player->OnThread();
-
-    // 4. 【肉体への指示】計算した方向ベクトルを渡して移動してもらう
-    player->Move(moveDirection);
-
-    // 5. スレッド上の移動処理
-    if (player->OnThread()) {
-        // ResolveThreadMove は Player::Update で呼ばれるので、ここでは不要
-    } else {
-        player->IsCollisionSDF();
+    // ==========================================
+    // ★ここから追加・変更
+    // ==========================================
+    // VキーまたはLBボタンが押されているか（狙いを定めている状態か）判定
+    bool isAiming = false;
+    if (Input::GetInstance()->PushedKeyDown(DIK_V) || Input::GetInstance()->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER)) {
+        isAiming = true;
     }
 
-    // ★重要: 状態が変わったかを比較
-    bool isNowOnThread = player->OnThread();
+    if (isAiming) {
+        // 狙いを定めている間は移動せず、入力方向への回転のみ行う
+        player->TurnToDirection(moveDirection);
 
-    if (!wasOnThread && isNowOnThread) {
-        // 地面 → スレッド上に乗った
-        player->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
-    } else if (wasOnThread && !isNowOnThread) {
-        // スレッド上 → 地面に降りた
-        player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+        // 動いていないのでアニメーションを待機状態にする
+        player->ChangeAnimation(PlayerAnima::AnimationState::Idle);
+    } else {
+        // ★重要: 移動前のスレッド状態を記録
+        bool wasOnThread = player->OnThread();
+
+        // 4. 【肉体への指示】計算した方向ベクトルを渡して移動してもらう
+        player->Move(moveDirection);
+
+        // 5. スレッド上の移動処理
+        if (player->OnThread()) {
+            // ResolveThreadMove は Player::Update で呼ばれるので、ここでは不要
+        } else {
+            player->IsCollisionSDF();
+        }
+
+        // ★重要: 状態が変わったかを比較
+        bool isNowOnThread = player->OnThread();
+
+        if (!wasOnThread && isNowOnThread) {
+            // 地面 → スレッド上に乗った
+            player->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+        } else if (wasOnThread && !isNowOnThread) {
+            // スレッド上 → 地面に降りた
+            player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+        } else {
+            // 状態が変わっていない場合も、ボタンを離した瞬間に歩行アニメが再開するように設定
+            if (player->OnThread()) {
+                player->ChangeAnimation(PlayerAnima::AnimationState::OnThread);
+            } else {
+                player->ChangeAnimation(PlayerAnima::AnimationState::Walk);
+            }
+        }
     }
 
     // 6. 状態遷移の判断（B または コントローラーのRBボタン でShootへ）

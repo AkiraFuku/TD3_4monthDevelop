@@ -664,9 +664,6 @@ void Player::UpdatePredictionLine() {
         return;
     }
 
-    // キーが押されているなら、とにかく描画フラグをONにする
-    canDrawPrediction_ = true;
-
     Vector3 forward = GetForward();
     Vector3 playerPos = GetPosition();
 
@@ -676,19 +673,23 @@ void Player::UpdatePredictionLine() {
     Vector3 start = {0.0f, 0.0f, 0.0f};
     Vector3 end = {0.0f, 0.0f, 0.0f};
 
+    // ★修正1: ターゲットのY座標を、ヒットに関わらず共通で使用する
+    const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
+
     // 3. 壁に当たっているか否かで、線の「始点」と「終点」を決める
     if (rayResult.hit) {
         // 壁にヒットした場合：壁を貫通する位置を始点・終点にする
-        const float targetY = CollisionMask::GetInstance()->GetTranslate().y;
         start = {rayResult.hitPos.x, targetY, rayResult.hitPos.y};
         end = {rayResult.exitPos.x, targetY, rayResult.exitPos.y};
     } else {
         // 壁にヒットしていない場合：プレイヤーから前方へ適当な長さの直線を引く
-        const float defaultLineLength = 10.0f; // 何も無い時の線の長さ（好みに合わせて調整してください）
-        start = playerPos;
+        const float defaultLineLength = 40.0f;
+
+        // ★修正2: 赤色（非ヒット）の時もY座標を targetY に合わせることで、線が空中に浮くのを防ぐ
+        start = {playerPos.x, targetY, playerPos.z};
         end = {
             playerPos.x + forward.x * defaultLineLength,
-            playerPos.y, // プレイヤーと同じ高さ
+            targetY, // プレイヤーと同じ高さではなく、糸の平面に合わせる
             playerPos.z + forward.z * defaultLineLength
         };
     }
@@ -697,14 +698,32 @@ void Player::UpdatePredictionLine() {
     float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
 
     if (distance > 0.001f) {
+        // ★修正3: 線が正常な長さの時だけ描画フラグをONにする
+        canDrawPrediction_ = true;
+
         // 4. 糸を発射できる条件の総合チェック
         bool canCreate = true;
-        if (!rayResult.hit) canCreate = false; // ★壁に当たっていないなら発射不可
+        if (!rayResult.hit) canCreate = false; // 壁に当たっていないなら発射不可
         else if (remainingThreadCount_ <= 0) canCreate = false;
         else if (thread_ == nullptr) canCreate = false;
         else if (onThread_) canCreate = false;
         else if (!CanFireThread()) canCreate = false;
         else if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) canCreate = false;
+
+        // ★修正4: FireThread() と完全に挙動を合わせるため、ヒット時は start 位置を手前に 0.2f 伸ばす
+        // これにより、壁の中で赤色になった場合でも壁に埋もれずに表示されます
+        if (rayResult.hit) {
+            dir.x /= distance;
+            dir.z /= distance;
+
+            const float extend = 0.2f;
+            start.x -= dir.x * extend;
+            start.z -= dir.z * extend;
+
+            // start座標を動かしたので、方向と距離を再計算
+            dir = end - start;
+            distance = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+        }
 
         // 5. 条件に応じて色を変える
         if (canCreate) {
@@ -730,6 +749,10 @@ void Player::UpdatePredictionLine() {
         predictionPointObj_->SetTranslate(end);
         predictionPointObj_->SetScale({0.5f, 0.05f, 0.5f});
         predictionPointObj_->Update();
+
+    } else {
+        // ★修正5: 距離が0（壁の極端な角など）の場合はフリーズを防ぐため描画しない
+        canDrawPrediction_ = false;
     }
 }
 
