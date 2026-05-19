@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
+#include <iostream>
 
 std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height, ThreadManager* tm
     , const std::vector<std::unique_ptr<OneWayObject>>& oneWays,const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock) {
@@ -13,7 +14,43 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
     std::vector<Node*> closedList;
     std::vector<Point> finalPath;
 
-    openList.push_back(new Node(start, 0, CalcH(start, goal), nullptr));
+    Node* startNode = new Node(start, 0, CalcH(start, goal), nullptr);
+
+    // 【安全対策】スタート地点のワールド座標を計算
+    float startWorldX = (float)start.x - 256.0f + 0.5f;
+    float startWorldZ = (float)start.y - 256.0f + 0.5f;
+
+    // 今いる場所が空中（IsWall）の場合のみ、足元の糸チェックを行う
+    if (CollisionMask::GetInstance()->IsWall(startWorldX, startWorldZ)) {
+        bool isStartOnThread = false;
+
+        if (tm) {
+            // 空中移動の時と同じく、少し広め（1.5マス分 = 2.25f）の判定で足元の糸を探す
+            float checkRadiusSq = 0.64f;
+
+            for (auto& physics : tm->GetPhysicsList()) {
+                for (const auto& node : physics->GetNodes()) {
+                    float dx = node.currentPos.x - startWorldX;
+                    float dz = node.currentPos.z - startWorldZ;
+
+                    if ((dx * dx + dz * dz) < checkRadiusSq) {
+                        isStartOnThread = true; // 確かに足元に糸がある！
+                        break;
+                    }
+                }
+                if (isStartOnThread) break;
+            }
+        }
+
+        // 物理的に糸が存在している場合のみ、空中スタートのフラグをONにする
+        startNode->isConnectedToThread = isStartOnThread;
+    }
+    else {
+        // 地面スタートの場合は、これまで通り「端っこを踏むまで」はフラグ false
+        startNode->isConnectedToThread = false;
+    }
+
+    openList.push_back(startNode);
 
     int nodeCount = 0;
 
@@ -100,18 +137,51 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             }
 
 
+            // 3. 糸の判定（あなたの想定した「フラグ連動方式」の完全版）
             if (tm) {
-                // ThreadManager内の全糸ノードをチェック
-                float checkRadiusSq = 0.64f; // 半径0.8の2乗。広めに設定
+                float checkRadiusSq = 0.64f;
 
                 for (auto& physics : tm->GetPhysicsList()) {
-                    for (const auto& node : physics->GetNodes()) {
-                        float dx = node.currentPos.x - worldX;
-                        float dz = node.currentPos.z - worldZ;
+                    const auto& nodes = physics->GetNodes();
+                    if (nodes.empty()) continue;
+
+                    for (size_t i = 0; i < nodes.size(); ++i) {
+                        float dx = nodes[i].currentPos.x - worldX;
+                        float dz = nodes[i].currentPos.z - worldZ;
 
                         if ((dx * dx + dz * dz) < checkRadiusSq) {
-                            hasThread = true;
-                            break;
+
+                            // 今調べている次のマスが「地面（!isWall）」のとき
+                            if (!isWall) {
+                                // 地面の上を歩いているときは、かすり飛び乗りを防ぐため
+                                // 「まさにそのマスに糸の端っこがある時」だけしか認めない
+                                bool isEdge = (i == 0 || i == nodes.size() - 1);
+                                if (isEdge) {
+                                    hasThread = true;
+                                    // 🌟【あなたの設計】端っこを踏んだので、このルートの開通フラグをONにする！
+                                    // （ただし、まだ openList に入れる前なので、一旦ローカル変数等で記憶するか、
+                                    // 下の Node 作成時にこのフラグを引き継ぎます）
+
+                                    if (hasThread) {
+                                        std::cout << "糸の探索進捗: マス(" << nextPos.x << ", " << nextPos.y << ") まで開通！ フラグ:" << current->isConnectedToThread << std::endl;
+                                    }
+
+                                    break;
+                                }
+                            }
+                            // 今調べている次のマスが「空中（isWall）」のとき
+                            else {
+                                // 空中の一歩を踏み出す、あるいは進むときは、
+                                // 🌟【あなたの設計】1手前のマス（current）が、すでに「糸の端」を踏んで開通フラグを持っていた場合のみ通行を許可！
+                                // または、すでに空中を移動中でフラグが維持されている場合のみ許可！
+                                if (current->isConnectedToThread) {
+                                    hasThread = true;
+                                    if (hasThread) {
+                                        std::cout << "糸の探索進捗: マス(" << nextPos.x << ", " << nextPos.y << ") まで開通！ フラグ:" << current->isConnectedToThread << std::endl;
+                                    }
+                                    break;
+                                }
+                            }
                         }
                     }
                     if (hasThread) break;
@@ -127,7 +197,19 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             }
 
             bool inClosed = false;
-            for (auto n : closedList) { if (n->pos == nextPos) { inClosed = true; break; } }
+            for (auto n : closedList) {
+                if (n->pos == nextPos) {
+                    // 座標が同じでも、既存のデータが「フラグなし」で、今回のルートが「フラグあり」なら、
+                    // 過去のデータを無視して、探索を上書き・続行させる！
+                    if (!n->isConnectedToThread && current->isConnectedToThread) {
+                        inClosed = false;
+                    }
+                    else {
+                        inClosed = true;
+                    }
+                    break;
+                }
+            }
             if (inClosed) continue;
 
             float moveCost = (dir.x != 0 && dir.y != 0) ? 1.414f : 1.0f;
@@ -151,17 +233,55 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 moveCost *= 2.0f;
             }
 
+            // --- 新しい Node を openList に追加する処理 ---
             int newG = current->g + static_cast<int>(moveCost * 10.0f);
             Node* openNode = nullptr;
-            for (auto n : openList) { if (n->pos == nextPos) { openNode = n; break; } }
+            for (auto n : openList) {
+                if (n->pos == nextPos) {
+                    // 座標が同じでも、待機中のデータが「フラグなし」で、今回が「フラグあり」なら、
+                    // それは別ルート（上位互換ルート）なので、別物として新しくノードを作らせる
+                    if (!n->isConnectedToThread && current->isConnectedToThread) {
+                        openNode = nullptr;
+                    }
+                    else {
+                        openNode = n;
+                    }
+                    break;
+                }
+            }
+
+            // ★【フラグ確定ロジックの修正】
+            // ① 今まさに地面で端っこを踏んだ（新規開通）
+            // ② 1歩前のマス（current）がすでにフラグを持っている（空中での前進）
+            // このどちらかであれば、このルートは「糸の上の正当なルート」です。
+            bool shouldBeConnected = (!isWall && hasThread) || current->isConnectedToThread;
 
             if (openNode == nullptr) {
-                openList.push_back(new Node(nextPos, newG, CalcH(nextPos, goal), current));
+                Node* newNode = new Node(nextPos, newG, CalcH(nextPos, goal), current);
+
+                // 確実に true を引き継ぐ
+                newNode->isConnectedToThread = shouldBeConnected;
+
+                openList.push_back(newNode);
             }
-            else if (newG < openNode->g) {
-                openNode->g = newG;
-                openNode->f = (float)openNode->g + (float)openNode->h;
-                openNode->parent = current;
+            else {
+                // 🌟【最重要】すでに openList にあるノードを更新する場合のガード
+                // より低コストなルートが見つかって親（parent）が切り替わるとき、
+                // 「新ルートがフラグを持っている」なら当然 true に更新しますが、
+                // もし新ルートがフラグを持っていなくても、既存のノードがすでに true だったなら、
+                // 絶対に false に上書き（リセット）させず、true を維持させます！
+                if (newG < openNode->g) {
+                    openNode->g = newG;
+                    openNode->f = (float)openNode->g + (float)openNode->h;
+                    openNode->parent = current;
+
+                    if (shouldBeConnected || openNode->isConnectedToThread) {
+                        openNode->isConnectedToThread = true;
+                    }
+                    else {
+                        openNode->isConnectedToThread = false;
+                    }
+                }
             }
         }
     }

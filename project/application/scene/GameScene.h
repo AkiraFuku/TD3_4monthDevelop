@@ -49,6 +49,12 @@ public:
   // ポーズメニュー処理
   void Pause();
 
+  // ゲームオーバー処理
+  void GameOver();
+
+  // setter
+  void SetPauseIndex(int index) { pauseIndex_ = index;  }
+
 public:
 
     void LoadStageData();
@@ -159,7 +165,7 @@ private:
   bool isFadeStart_ = false;
   // ポーズメニューフラグ
   bool openPause_ = false;
-  int pauseIndex_ = 2;
+  int pauseIndex_ = 0;
 
   // スティック
   bool isStickPushed = false;
@@ -167,7 +173,7 @@ private:
   // カメラのオフセット
   Vector3 cameraOffset_ = { 0.0f, 10.0f, -10.0f };
   // 線形補間用の係数
-  float t_ = 0.0f;
+  float t_ = 1.0f;
 
 
   const float kStickMax = 32767.0f;

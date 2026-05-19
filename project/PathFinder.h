@@ -32,6 +32,8 @@ private:
             // h（予測値）を 1.5倍 程度に強調する
             f = (float)g + (float)h * 1.5f;
         }
+
+        bool isConnectedToThread = false;
     };
 
     static int CalcH(Point a, Point b);
