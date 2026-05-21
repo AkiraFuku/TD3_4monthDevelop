@@ -49,6 +49,12 @@ public:
   // ポーズメニュー処理
   void Pause();
 
+  // ゲームオーバー処理
+  void GameOver();
+
+  // setter
+  void SetPauseIndex(int index) { pauseIndex_ = index;  }
+
 public:
 
     void LoadStageData();
@@ -142,6 +148,15 @@ private:
   std::unique_ptr<Sprite> menuSprite_;
   std::unique_ptr<Sprite> cursorSprite_;
 
+  
+  // 失敗時に「糸が足りません！」
+  std::unique_ptr<Sprite> notEnougthThreadSprite_;
+
+  std::vector <std::unique_ptr<Sprite>> buttonSprite_;
+  std::unique_ptr<Sprite> keyboard_;
+  std::unique_ptr<Sprite> pad_;
+
+
   // フェード機能
   std::unique_ptr<Fade> fade_;
 
@@ -159,7 +174,7 @@ private:
   bool isFadeStart_ = false;
   // ポーズメニューフラグ
   bool openPause_ = false;
-  int pauseIndex_ = 2;
+  int pauseIndex_ = 0;
 
   // スティック
   bool isStickPushed = false;

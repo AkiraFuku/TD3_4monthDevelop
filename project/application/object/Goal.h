@@ -3,6 +3,7 @@
 #include"Object3D.h"
 #include "Model.h"
 #include "Camera.h"
+#include "Sprite.h"
 
 class Egg;
 class Player;
@@ -51,6 +52,7 @@ public: // 外部入出力
 private:
 
     std::unique_ptr<Object3d> object_;
+    std::unique_ptr<Sprite> sprite_;
 
     Vector3 scale_ = { 1.0f,1.0f,1.0f };
     Vector3 rotate_ = { 0.0f,0.0f,0.0f };
@@ -68,5 +70,7 @@ private:
     // プレイヤーが持っている素材の数
     int playerNestMaterialCount_ = 0;
 
+    // ゴールできない警告
+    bool isWarning_ = false;
 };
 

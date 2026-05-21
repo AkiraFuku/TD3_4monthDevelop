@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "OneWayObject.h"
 #include "BrokenBlock.h"
+#include <iostream>
 
 std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int height, ThreadManager* tm
     , const std::vector<std::unique_ptr<OneWayObject>>& oneWays,const std::vector < std::unique_ptr <BrokenBlock>>& brokenBlock) {
@@ -13,13 +14,49 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
     std::vector<Node*> closedList;
     std::vector<Point> finalPath;
 
-    openList.push_back(new Node(start, 0, CalcH(start, goal), nullptr));
+    Node* startNode = new Node(start, 0, CalcH(start, goal), nullptr);
+
+    // 【安全対策】スタート地点のワールド座標を計算
+    float startWorldX = (float)start.x - 256.0f + 0.5f;
+    float startWorldZ = (float)start.y - 256.0f + 0.5f;
+
+    // 今いる場所が空中（IsWall）の場合のみ、足元の糸チェックを行う
+    if (CollisionMask::GetInstance()->IsWall(startWorldX, startWorldZ)) {
+        bool isStartOnThread = false;
+
+        if (tm) {
+            // 空中移動の時と同じく、少し広め（1.5マス分 = 2.25f）の判定で足元の糸を探す
+            float checkRadiusSq = 0.64f;
+
+            for (auto& physics : tm->GetPhysicsList()) {
+                for (const auto& node : physics->GetNodes()) {
+                    float dx = node.currentPos.x - startWorldX;
+                    float dz = node.currentPos.z - startWorldZ;
+
+                    if ((dx * dx + dz * dz) < checkRadiusSq) {
+                        isStartOnThread = true; // 確かに足元に糸がある！
+                        break;
+                    }
+                }
+                if (isStartOnThread) break;
+            }
+        }
+
+        // 物理的に糸が存在している場合のみ、空中スタートのフラグをONにする
+        startNode->isConnectedToThread = isStartOnThread;
+    }
+    else {
+        // 地面スタートの場合は、これまで通り「端っこを踏むまで」はフラグ false
+        startNode->isConnectedToThread = false;
+    }
+
+    openList.push_back(startNode);
 
     int nodeCount = 0;
 
     while (!openList.empty()) {
         nodeCount++;
-        if (nodeCount > 30000) { // 5000ノード以上調べてもダメなら中断
+        if (nodeCount > 30000) { 
             break;
         }
         auto it = std::min_element(openList.begin(), openList.end(), [](Node* a, Node* b) {
@@ -51,14 +88,18 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             if (nextPos.x < 0 || nextPos.x >= width || nextPos.y < 0 || nextPos.y >= height) continue;
 
             // --- 壁と糸の複合判定 ---
-            float worldX = (float)nextPos.x - 256.0f;
-            float worldZ = (float)nextPos.y - 256.0f;
+            float worldX = (float)nextPos.x - 256.0f + 0.5f;
+            float worldZ = (float)nextPos.y - 256.0f + 0.5f;
 
             
             bool isWall = CollisionMask::GetInstance()->IsWall(worldX, worldZ);
             bool hasThread = false;
             Vector3 worldPos = { worldX, 0.0f, worldZ };
 
+
+            std::cout << "[A*ルート精査中] 調査マス:(" << nextPos.x << ", " << nextPos.y
+                << ") 壁判定(1=空中, 0=地面): " << isWall
+                << " TMの存在: " << (tm != nullptr) << std::endl;
 
             // 1. 【追加】橋の判定（最優先）
             bool onOneWay = false;
@@ -100,18 +141,46 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             }
 
 
+            // 3. 糸の判定（正確な中心座標ベース）
             if (tm) {
-                // ThreadManager内の全糸ノードをチェック
-                float checkRadiusSq = 0.64f; // 半径0.8の2乗。広めに設定
+                // 確実に感知できるよう、判定の広さを 2.25f (1.5マス分) に設定
+                float radiusSq = 2.54f;
 
                 for (auto& physics : tm->GetPhysicsList()) {
-                    for (const auto& node : physics->GetNodes()) {
-                        float dx = node.currentPos.x - worldX;
-                        float dz = node.currentPos.z - worldZ;
+                    const auto& nodes = physics->GetNodes();
+                    if (nodes.empty()) continue;
 
-                        if ((dx * dx + dz * dz) < checkRadiusSq) {
+                    const auto& edgeStartNode = nodes.front();
+                    const auto& edgeEndNode = nodes.back();
+
+                    // 今調べている次のマスが「地面（!isWall）」のとき
+                    if (!isWall) {
+                        float dxStart = edgeStartNode.currentPos.x - worldX;
+                        float dzStart = edgeStartNode.currentPos.z - worldZ;
+                        float dxEnd = edgeEndNode.currentPos.x - worldX;
+                        float dzEnd = edgeEndNode.currentPos.z - worldZ;
+
+                        // ⭕ 中心座標同士で正しく距離を測る
+                        if ((dxStart * dxStart + dzStart * dzStart) < radiusSq ||
+                            (dxEnd * dxEnd + dzEnd * dzEnd) < radiusSq)
+                        {
                             hasThread = true;
+                            std::cout << "糸の探索進捗(地面で端を感知): マス(" << nextPos.x << ", " << nextPos.y << ") 開通！" << std::endl;
                             break;
+                        }
+                    }
+                    // 今調べている次のマスが「空中（isWall）」のとき
+                    else {
+                        for (size_t i = 0; i < nodes.size(); ++i) {
+                            float dx = nodes[i].currentPos.x - worldX;
+                            float dz = nodes[i].currentPos.z - worldZ;
+
+                            if ((dx * dx + dz * dz) < radiusSq) {
+                                if (current->isConnectedToThread) {
+                                    hasThread = true;
+                                    break;
+                                }
+                            }
                         }
                     }
                     if (hasThread) break;
@@ -127,7 +196,19 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             }
 
             bool inClosed = false;
-            for (auto n : closedList) { if (n->pos == nextPos) { inClosed = true; break; } }
+            for (auto n : closedList) {
+                if (n->pos == nextPos) {
+                    // 座標が同じでも、既存のデータが「フラグなし」で、今回のルートが「フラグあり」なら、
+                    // 過去のデータを無視して、探索を上書き・続行させる！
+                    if (!n->isConnectedToThread && current->isConnectedToThread) {
+                        inClosed = false;
+                    }
+                    else {
+                        inClosed = true;
+                    }
+                    break;
+                }
+            }
             if (inClosed) continue;
 
             float moveCost = (dir.x != 0 && dir.y != 0) ? 1.414f : 1.0f;
@@ -151,17 +232,58 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 moveCost *= 2.0f;
             }
 
+            // --- 新しい Node を openList に追加する処理 ---
             int newG = current->g + static_cast<int>(moveCost * 10.0f);
             Node* openNode = nullptr;
-            for (auto n : openList) { if (n->pos == nextPos) { openNode = n; break; } }
+            for (auto n : openList) {
+                if (n->pos == nextPos) {
+                    // 座標が同じでも、待機中のデータが「フラグなし」で、今回が「フラグあり」なら、
+                    // それは別ルート（上位互換ルート）なので、別物として新しくノードを作らせる
+                    if (!n->isConnectedToThread && current->isConnectedToThread) {
+                        openNode = nullptr;
+                    }
+                    else {
+                        openNode = n;
+                    }
+                    break;
+                }
+            }
+
+            // ★【フラグ確定ロジックの修正】
+            // ① 今まさに地面で端っこを踏んだ（新規開通）
+            // ② 1歩前のマス（current）がすでにフラグを持っている（空中での前進）
+            // このどちらかであれば、このルートは「糸の上の正当なルート」です。
+            bool shouldBeConnected = (!isWall && hasThread) || current->isConnectedToThread;
+
+            if (!isWall && !hasThread) {
+                shouldBeConnected = false;
+            }
 
             if (openNode == nullptr) {
-                openList.push_back(new Node(nextPos, newG, CalcH(nextPos, goal), current));
+                // ⭕【修正②】Hコスト（残り距離）の計算結果に、糸のルートなら大ボーナスを与える
+                // これにより、無駄な地面を調べるのをやめ、最優先で糸の上を突き進みます
+                int hCost = CalcH(nextPos, goal);
+                if (shouldBeConnected) {
+                    hCost -= 200; // 推定コストを大幅に下げてキューの最前に引き上げる
+                }
+
+                Node* newNode = new Node(nextPos, newG, hCost, current);
+                newNode->isConnectedToThread = shouldBeConnected;
+                openList.push_back(newNode);
             }
-            else if (newG < openNode->g) {
-                openNode->g = newG;
-                openNode->f = (float)openNode->g + (float)openNode->h;
-                openNode->parent = current;
+            else {
+                if (newG < openNode->g) {
+                    openNode->g = newG;
+                    openNode->f = (float)openNode->g + (float)openNode->h;
+                    openNode->parent = current;
+
+                    if (shouldBeConnected || openNode->isConnectedToThread) {
+                        openNode->isConnectedToThread = true;
+                    }
+                    else {
+                        openNode->isConnectedToThread = false;
+                    }
+                }
             }
         }
     }

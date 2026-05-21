@@ -66,6 +66,12 @@ void ThreadRenderer::Draw() {
     DXCommon::GetInstance()->GetCommandList()->DrawInstanced(currentVertexCount_, 1, 0, 0);
 }
 
+void ThreadRenderer::SetColor(const Vector4& color) {
+    if (materialData_) {
+        materialData_->color = color;
+    }
+}
+
 // ---------------------------------------------------------
 // 内部処理関数 (初期化関連)
 // ---------------------------------------------------------

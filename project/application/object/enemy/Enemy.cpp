@@ -161,12 +161,12 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
         // 3. 足元が本当に穴の場合のみ、糸へのスナップ（吸着）を有効にする
         if (isOverPit) {
             ThreadManager::ThreadQueryResult query;
-            if (tm->FindNearestThread(currentPos, 1.5f, query)) {
+            if (tm->FindNearestThread(currentPos, 0.5f, query)) {
                 // 糸の先端（t=0 や t=1）に無理やり引っ張られるのを防ぐため、
                 // 糸の中間部分にいる時だけX, Z座標を糸の上に補正する
                 if (query.t > 0.01f && query.t < 0.99f) {
-                    currentPos.x = query.closestPoint.x;
-                    currentPos.z = query.closestPoint.z;
+                    currentPos.x += (query.closestPoint.x - currentPos.x) * 0.3f;
+                    currentPos.z += (query.closestPoint.z - currentPos.z) * 0.3f;
                 }
             }
         }

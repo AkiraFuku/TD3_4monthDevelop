@@ -8,8 +8,13 @@
 #include "CollisionMask.h"
 #include "Audio.h"
 #include "PlayerAnima.h"
+#include "PathFinder.h"
+#include "Vector3.h"
 
 #include "JSONManager.h"
+
+#include <vector>
+#include <memory>
 
 class ThreadManager;
 class Egg;
@@ -17,8 +22,7 @@ class OneWayObject;
 class BrokenBlock;
 class GameScene;
 
-class Player
-{
+class Player {
 public:
     /// <summary>
     /// 初期化
@@ -132,8 +136,7 @@ public:
     /// </summary>
     void SetCanDrawPrediction(bool canDraw) { canDrawPrediction_ = canDraw; }
 
-    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWays)
-    {
+    void SetOneWayObjects(const std::vector<OneWayObject*>& oneWays) {
         oneWayObjects_ = oneWays;
     }
     // OneWayObjectに乗っているかどうかのゲッターとセッター
@@ -143,8 +146,7 @@ public:
     // 現在足元にOneWayObjectがあるか確認して返す関数
     OneWayObject* CheckOnOneWayObject() const;
 
-    void SetBrokenBlocks(const std::vector<BrokenBlock*>& blocks)
-    {
+    void SetBrokenBlocks(const std::vector<BrokenBlock*>& blocks) {
         brokenBlocks_ = blocks;
     }
 
@@ -155,6 +157,27 @@ public:
     void SetGameScene(GameScene* scene) { gameScene_ = scene; }
 
     void UpdateHeight();
+
+    // ---- 経路チェック機能 ----
+    // ゴール座標をセット（GameSceneから渡す）
+    void SetGoalPosition(const Vector3& goal) { goalPos_ = goal; }
+    // 収集すべき素材の座標リストをセット
+    void SetMaterialPositions(const std::vector<Vector3>& positions) { materialPositions_ = positions; }
+    // OneWayObject / BrokenBlock のリストをセット（経路探索に使用）
+    void SetRouteCheckObjects(
+        const std::vector<std::unique_ptr<OneWayObject>>* oneWays,
+        const std::vector<std::unique_ptr<BrokenBlock>>* brokenBlocks) {
+        routeOneWays_ = oneWays;
+        routeBrokenBlocks_ = brokenBlocks;
+    }
+    // 現在の糸の本数で全素材＋ゴールに到達可能か判定しキャッシュする
+    // 糸を張るたびなど変化点で呼ぶ想定（毎フレーム呼んでも動くが重い）
+    void CheckRouteToGoal();
+    // ImGuiで到達不可警告を描画する
+    void DrawRouteWarningImGui();
+
+    // 経路チェックが失敗したかどうかを取得する
+    bool GetRouteCheckFailed() const { return routeCheckFailed_; }
 
 private:
     // 現在乗っているOneWayObjectのポインタ
@@ -208,10 +231,13 @@ private:
     // ゲームシーンのポインタ
     GameScene* gameScene_ = nullptr;
 
+public:
+    // 状態クラス（PlayerState）から回転だけを呼び出せるように public へ移動
+    void TurnToDirection(const Vector3& direction);
+
 private:
     bool TryMoveOnThread(const Vector3& moveDirection);
     void ResolveThreadMove();
-    void TurnToDirection(const Vector3& direction);
 
     void UpdatePredictionLine();
 
@@ -274,4 +300,22 @@ public:
 
 private:
     JSONManager::Group playerGroup_;
+
+    // ---- 経路チェック用メンバ ----
+    // グリッド変換ユーティリティ（Enemy と同じアルゴリズム）
+    Point PlayerWorldToGrid(const Vector3& pos) const;
+    Vector3 PlayerGridToWorld(const Point& grid) const;
+
+    // ゴール座標（GameSceneからセット）
+    Vector3 goalPos_ = {0.0f, 0.0f, 0.0f};
+    // 収集すべき素材の座標リスト（GameSceneからセット）
+    std::vector<Vector3> materialPositions_;
+
+    // 経路探索に使う外部オブジェクトリスト（所有権なし・ポインタのみ保持）
+    const std::vector<std::unique_ptr<OneWayObject>>* routeOneWays_ = nullptr;
+    const std::vector<std::unique_ptr<BrokenBlock>>* routeBrokenBlocks_ = nullptr;
+
+    // 「到達不可」フラグと、到達できなかった理由の文字列（ImGui表示用）
+    bool        routeCheckFailed_ = false;
+    std::string routeFailReason_;
 };
