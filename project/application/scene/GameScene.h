@@ -155,7 +155,7 @@ private:
   // リセットフラグ
   bool isReset_ = false;
   // クリアフラグ
-  bool isClear_ = false;
+  bool isClear_ = true;
   bool isFadeStart_ = false;
   // ポーズメニューフラグ
   bool openPause_ = false;

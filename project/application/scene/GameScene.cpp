@@ -1038,7 +1038,7 @@ void GameScene::Clear()
         Vector3 newRotate = Vector3Lerp(player_->GetForward(), Vector3{ 0.0f,3.0f,0.0f }, t_);
         camera->SetTranslate(newPos);
         player_->SetForward(newRotate);
-
+        player_->ChangeAnimation(PlayerAnima::AnimationState::Clear);
         // メニューUIの初期化
         for (int i = 1; i < 3; i++)
         {

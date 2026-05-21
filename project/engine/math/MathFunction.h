@@ -6,6 +6,7 @@
 #include "../../engine/2d/Vector4.h"
 #include <assert.h>
 #include "Quanternion.h"
+#include "Vector2.h"
 ///using namespace std;
 static const int kColumnWidth = 60;
 static const int kRowHeight = 20;

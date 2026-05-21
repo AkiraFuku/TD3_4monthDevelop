@@ -104,6 +104,32 @@ void PlayerAnima::InitializeAnimations()
 
     animationMap_[AnimationState::Carry] = CreateRotationAnimation(AnimationState::Carry, false);
     animationMap_[AnimationState::OnThread] = CreateRotationAnimation(AnimationState::OnThread, true);
+
+ animationMap_[AnimationState::Clear] = Anima::AnimeMove{
+    [this](Object3d::ModelInstance& instance) {
+        // アニメーションの再生時間を取得 (0.0f ～ 1.0f に正規化される想定、または秒数)
+        // ここでは anima_->GetTimer() を使用
+        float timer = anima_->GetTimer();
+        
+        // アニメーションの長さを1秒とする場合、1.0fでクランプ
+        float t = std::min(timer / 1.0f, 1.0f); 
+
+        // イージングをかけるとより自然になります（任意）
+        // t = t * t * (3.0f - 2.0f * t); 
+
+        uint32_t partId = GetPartId(instance.name);
+        
+        // 開始ポーズ（正面）と終了ポーズ（万歳）を定義
+        Quaternion startRot = MakeQuaternionFromEuler({ 0.0f, 0.0f, 0.0f });
+        Quaternion endRot = MakeQuaternionFromEuler({ -0.5f, 0.0f, 0.0f }); // 上に上げる
+
+        if (partId == PART_Right_ARM) {
+            // 球面線形補間（Slerp）を使用して回転を補間
+            instance.transform.rotate = Slerp(startRot, endRot, t);
+        } 
+    },
+    false // ループさせない（一回切り）
+};
 }
 
 void PlayerAnima::Update()

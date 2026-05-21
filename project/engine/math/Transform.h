@@ -1,6 +1,7 @@
 #pragma once
 #include "Vector3.h"
 #include "Quanternion.h"
+#include "Vector2.h"
 struct EulerTransform{
     Vector3 scale;
     Vector3 rotate;

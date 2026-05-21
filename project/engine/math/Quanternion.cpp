@@ -76,11 +76,26 @@ Quaternion Inverse(const Quaternion& quaternion)
 	return result;
 }
 
-//void QuaternionScreenPrintf(Vector2 pos, const Quaternion& quaternion, const char* label)
-//{
-//	Novice::ScreenPrintf(static_cast<int>(pos.x), static_cast<int>(pos.y), "%.02f", quaternion.x);
-//	Novice::ScreenPrintf(static_cast<int>(pos.x + kColumnWidth), static_cast<int>(pos.y), "%.02f ", quaternion.y);
-//	Novice::ScreenPrintf(static_cast<int>(pos.x + kColumnWidth * 2), static_cast<int>(pos.y), "%.02f ", quaternion.z);
-//	Novice::ScreenPrintf(static_cast<int>(pos.x + kColumnWidth * 3),static_cast<int>( pos.y), "%.02f ", quaternion.w);
-//	Novice::ScreenPrintf(static_cast<int>(pos.x + kColumnWidth * 4),static_cast<int>( pos.y), ":%s", label);
-//}
+Quaternion MakeQuaternionFromEuler(const Vector3& euler) {
+    // 各軸の回転角を半分にする
+    float x = euler.x * 0.5f;
+    float y = euler.y * 0.5f;
+    float z = euler.z * 0.5f;
+
+    // 各軸のsinとcosを計算
+    float cx = std::cos(x);
+    float sx = std::sin(x);
+    float cy = std::cos(y);
+    float sy = std::sin(y);
+    float cz = std::cos(z);
+    float sz = std::sin(z);
+
+    // クォータニオンを合成（ZYX順）
+    Quaternion q;
+    q.x = sx * cy * cz - cx * sy * sz;
+    q.y = cx * sy * cz + sx * cy * sz;
+    q.z = cx * cy * sz - sx * sy * cz;
+    q.w = cx * cy * cz + sx * sy * sz;
+
+    return q;
+}
