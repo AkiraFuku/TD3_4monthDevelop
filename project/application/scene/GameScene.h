@@ -147,9 +147,15 @@ private:
   std::vector < std::unique_ptr<Sprite>> pauseSprite_;
   std::unique_ptr<Sprite> menuSprite_;
   std::unique_ptr<Sprite> cursorSprite_;
+
+  
+  // 失敗時に「糸が足りません！」
+  std::unique_ptr<Sprite> notEnougthThreadSprite_;
+
   std::vector <std::unique_ptr<Sprite>> buttonSprite_;
   std::unique_ptr<Sprite> keyboard_;
   std::unique_ptr<Sprite> pad_;
+
 
   // フェード機能
   std::unique_ptr<Fade> fade_;

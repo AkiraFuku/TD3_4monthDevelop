@@ -259,6 +259,36 @@ void GameScene::Initialize() {
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 
+    // =========================================================
+    // プレイヤーに現在の BrokenBlock リストを渡す
+    // =========================================================
+    std::vector<BrokenBlock*> blockPtrs;
+    for (auto& b : brokenBlocks_) {
+        blockPtrs.push_back(b.get());
+    }
+    player_->SetBrokenBlocks(blockPtrs);
+
+    // =========================================================
+    // ゴール座標、未回収素材、およびルート計算用の障害物を渡す
+    // =========================================================
+    // 1. ゴール座標をセット
+    player_->SetGoalPosition(goalPos);
+
+    // 2. 未回収の素材座標リストを作成してセット
+    std::vector<Vector3> uncollectedMaterialPositions;
+    for (auto& nestMaterial : nestMaterial_) {
+        if (!nestMaterial->IsDead()) {
+            uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+        }
+    }
+    player_->SetMaterialPositions(uncollectedMaterialPositions);
+
+    // 3. ポインタリストの作成は不要なので削除！
+
+    // 4. GameScene が持っている unique_ptr の配列を、そのままアドレス(&)で渡す！
+    player_->SetRouteCheckObjects(&stageOneWays_, &brokenBlocks_);
+    // =========================================================
+
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
     // サウンド再生
@@ -348,6 +378,11 @@ void GameScene::Initialize() {
     cursorSprite_->Initialize("resources/Menu/cursor.png");
     cursorSprite_->SetPosition(pauseSprite_[0]->GetPosition());
 
+
+    notEnougthThreadSprite_ = std::make_unique<Sprite>();
+    notEnougthThreadSprite_->Initialize("resources/uvChecker.png");
+    notEnougthThreadSprite_->SetPosition({0.0f, 0.0f});
+
     // コントローラーUIの初期化
     for (int i = 0; i < 4; i++)
     {
@@ -371,6 +406,7 @@ void GameScene::Initialize() {
     pad_->SetPosition(Vector2{ 0.0f,600.0f });
     pad_->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.95f });
     pad_->SetBlendMode(BlendMode::Add);
+
 
     fade_ = std::make_unique<Fade>();
     fade_->Initialize();
@@ -622,15 +658,6 @@ void GameScene::Update()
         ow->Update();
     }
 
-    // =========================================================
-    // ★ 追加: プレイヤーに現在の BrokenBlock リストを渡す
-    // =========================================================
-    std::vector<BrokenBlock*> blockPtrs;
-    for (auto& b : brokenBlocks_) {
-        blockPtrs.push_back(b.get());
-    }
-    player_->SetBrokenBlocks(blockPtrs);
-
     player_->Update();
 
     // ゴールの更新処理
@@ -652,7 +679,12 @@ void GameScene::Update()
         for (auto& enemy : enemies_) {
             enemy->RequestPathReplan();
         }
+
+        if (player_->GetRemainingThreadCount() <= 0) {
+            player_->CheckRouteToGoal();
+        }
     }
+        player_->DrawRouteWarningImGui();
 
     // 1. すでに捕まっている敵のキーを収集
     std::vector<uint64_t> occupiedKeys;
@@ -715,6 +747,9 @@ void GameScene::Update()
     eggSprite_->Update();
     hpSprite_->SetSize(Vector2{ 15.0f * egg_->GetHP(), 50.0f });
     hpSprite_->Update();
+
+    notEnougthThreadSprite_->Update();
+
 
     for (auto& button : buttonSprite_)
     {
@@ -931,6 +966,9 @@ void GameScene::Draw() {
         }
     }
 
+    if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
+        notEnougthThreadSprite_->Draw();
+    }
 
     fade_->Draw();
 }
