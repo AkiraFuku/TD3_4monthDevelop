@@ -66,7 +66,7 @@ void GameScene::Initialize() {
 
         std::uniform_real_distribution<float> rotation(-std::numbers::pi_v<float>, std::numbers::pi_v<float>);
         ParticleManager::Particle particle;
-         particle.transform.scale = { 2.0f,2.0f,2.0f };
+        particle.transform.scale = { 2.0f,2.0f,2.0f };
         particle.transform.rotate = { 0.0f,0.0f,0.0f };
         particle.transform.translate = emitterPosition;
         particle.velocity = { 0.0f, 0.0f, 0.0f };
@@ -80,9 +80,9 @@ void GameScene::Initialize() {
     ParticleManager::ParticleUpdateFunc update = [](ParticleManager::Particle& particle, float deltaTime) {
         // パーティクルの更新処理
         // 例: 速度に基づいて位置を更新し、寿命を減少させる
-        particle.uvTransform.offset.x += deltaTime/2;
+        particle.uvTransform.offset.x += deltaTime / 2;
         };
-    TextureManager::GetInstance()->LoadTexture( "resources/gradationLine.png");
+    TextureManager::GetInstance()->LoadTexture("resources/gradationLine.png");
     ParticleManager::GetInstance()->CreateParticleGroup(
         "Test", "resources/gradationLine.png", ParticleManager::EffectType::Cylinder, initialize, update);
     /*   std::vector<Sprite*> sprites;
@@ -188,9 +188,9 @@ void GameScene::Initialize() {
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
     goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
-   
-    Vector3 ePos=goalPos;
-    ePos.y=-1.0f;
+
+    Vector3 ePos = goalPos;
+    ePos.y = -1.0f;
 
     emitter->SetTranslate(ePos);
     emitter->Emit();
@@ -301,52 +301,64 @@ void GameScene::Initialize() {
         // 1つずつ生成する
         auto threadLimit = std::make_unique<Sprite>();
         threadLimit->Initialize(path);
-        threadLimit->SetPosition(Vector2{ 260.0f,550.0f });
+        threadLimit->SetPosition(Vector2{ 730.0f,0.0f });
+        threadLimit->SetSize(Vector2{ 100.0f,100.0f });
         threadLimitSprites_.push_back(std::move(threadLimit));
 
         auto threadCount = std::make_unique<Sprite>();
         threadCount->Initialize(path);
-        threadCount->SetPosition(Vector2{ 60.0f,550.0f });
+        threadCount->SetPosition(Vector2{ 630.0f,0.0f });
+        threadCount->SetSize(Vector2{ 100.0f,100.0f });
         threadCountSprites_.push_back(std::move(threadCount));
 
         auto nestLimit = std::make_unique<Sprite>();
         nestLimit->Initialize(path);
-        nestLimit->SetPosition(Vector2{ 680.0f,550.0f });
+        nestLimit->SetPosition(Vector2{ 940.0f,0.0f });
+        nestLimit->SetSize(Vector2{ 100.0f,100.0f });
         nestMaterialSprites_.push_back(std::move(nestLimit));
 
         auto nestCount = std::make_unique<Sprite>();
         nestCount->Initialize(path);
-        nestCount->SetPosition(Vector2{ 480.0f,550.0f });
+        nestCount->SetPosition(Vector2{ 840.0f,0.0f });
+        nestCount->SetSize(Vector2{ 100.0f,100.0f });
         nestCountSprites_.push_back(std::move(nestCount));
     }
 
     slashSprite_ = std::make_unique<Sprite>();
     slashSprite_->Initialize("resources/numbers/slash.png");
+    slashSprite_->SetSize(Vector2{ 100.0f,100.0f });
     slashNestSprite_ = std::make_unique<Sprite>();
     slashNestSprite_->Initialize("resources/numbers/slash.png");
+    slashNestSprite_->SetSize(Vector2{ 100.0f,100.0f });
     threadIconSprite_ = std::make_unique<Sprite>();
     threadIconSprite_->Initialize("resources/icon/thread.png");
+    threadIconSprite_->SetSize(Vector2{ 100.0f,100.0f });
     nestIconSprite_ = std::make_unique<Sprite>();
     nestIconSprite_->Initialize("resources/icon/nestMaterial.png");
+    nestIconSprite_->SetSize(Vector2{ 100.0f,100.0f });
     eggSprite_ = std::make_unique<Sprite>();
     eggSprite_->Initialize("resources/icon/egg.png");
+    eggSprite_->SetSize(Vector2{ 100.0f,100.0f });
     hpSprite_ = std::make_unique<Sprite>();
     hpSprite_->Initialize("resources/icon/hp.png");
     clearSprite_ = std::make_unique<Sprite>();
     clearSprite_->Initialize("resources/icon/clear.png");
+    clearSprite_->SetSize(Vector2{ 100.0f,100.0f });
 
+    threadIconSprite_->SetPosition(Vector2{ 580.0f,0.0f });
+    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 630.0f,0.0f });
+    slashSprite_->SetPosition(Vector2{ 680.0f,0.0f });
     threadLimit_ = player_->GetThreadCount();
-    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 60.0f,550.0f });
-    slashSprite_->SetPosition(Vector2{ 160.0f,550.0f });
-    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 260.0f,550.0f });
-    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 480.0f,550.0f });
-    slashNestSprite_->SetPosition(Vector2{ 580.0f,550.0f });
-    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 680.0f,550.0f });
-    threadIconSprite_->SetPosition(Vector2{ -10.0f,510.0f });
-    nestIconSprite_->SetPosition(Vector2{ 380.0f,550.0f });
-    eggSprite_->SetPosition(Vector2{ 800.0f,550.0f });
-    hpSprite_->SetPosition(Vector2{ 960.0f,600.0f });
-    clearSprite_->SetPosition(Vector2{ 00.0f,100.0f });
+    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 730.0f,0.0f });
+
+    nestIconSprite_->SetPosition(Vector2{ 790.0f,0.0f });
+    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 840.0f,0.0f });
+    slashNestSprite_->SetPosition(Vector2{ 890.0f,0.0f });
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 940.0f,0.0f });
+
+    eggSprite_->SetPosition(Vector2{ 1000.0f,0.0f });
+    hpSprite_->SetPosition(Vector2{ 1100.0f,30.0f });
+    clearSprite_->SetPosition(Vector2{ 0.0f,100.0f });
 
     // メニューUIの初期化
     for (int i = 0; i < 4; i++)
@@ -354,7 +366,7 @@ void GameScene::Initialize() {
         std::string path = "resources/Menu/" + std::to_string(i) + ".png";
         auto pauseSprite = std::make_unique<Sprite>();
         pauseSprite->Initialize(path);
-        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (430.0f * i))});
+        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (430.0f * i)) });
         pauseSprite_.push_back(std::move(pauseSprite));
     }
 
@@ -366,9 +378,34 @@ void GameScene::Initialize() {
     cursorSprite_->Initialize("resources/Menu/cursor.png");
     cursorSprite_->SetPosition(pauseSprite_[0]->GetPosition());
 
+
     notEnougthThreadSprite_ = std::make_unique<Sprite>();
     notEnougthThreadSprite_->Initialize("resources/uvChecker.png");
     notEnougthThreadSprite_->SetPosition({0.0f, 0.0f});
+
+    // コントローラーUIの初期化
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/button/" + std::to_string(i) + ".png";
+        auto button = std::make_unique<Sprite>();
+        button->Initialize(path);
+        button->SetPosition(Vector2{ 0.0f ,0.0f});
+        button->SetSize(Vector2{ 100.0f,100.0f });
+        buttonSprite_.push_back(std::move(button));
+    }
+    buttonSprite_[1]->SetPosition(Vector2{ 100.0f,0.0f });
+    buttonSprite_[3]->SetPosition(Vector2{ 100.0f,0.0f });
+
+    keyboard_ = std::make_unique<Sprite>();
+    keyboard_->Initialize("resources/keyboard.png");
+    keyboard_->SetPosition(Vector2{ 0.0f,620.0f });
+    keyboard_->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.85f });
+    keyboard_->SetBlendMode(BlendMode::Add);
+    pad_ = std::make_unique<Sprite>();
+    pad_->Initialize("resources/pad.png");
+    pad_->SetPosition(Vector2{ 0.0f,600.0f });
+    pad_->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.95f });
+    pad_->SetBlendMode(BlendMode::Add);
 
 
     fade_ = std::make_unique<Fade>();
@@ -419,8 +456,8 @@ void GameScene::Finalize() {
 
 void GameScene::Update()
 {
-   /* emitter->SetTranslate(player_->GetPosition());
-    emitter->Update();*/
+    /* emitter->SetTranslate(player_->GetPosition());
+     emitter->Update();*/
 
     XINPUT_STATE state;
 
@@ -433,7 +470,8 @@ void GameScene::Update()
         debugCamera_.Update(camera->GetTransform());
         camera->SetTranslate(debugCamera_.GetTranslate());
         camera->SetWorldMatrix(debugCamera_.GetWorldMatrix());
-    } else
+    }
+    else
     {
         camera->Update();
     }
@@ -493,7 +531,8 @@ void GameScene::Update()
     if (player_->OnThread()) {
         // 糸の上なら 緑色 で表示
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON THREAD: YES");
-    } else {
+    }
+    else {
         // 地面なら 赤色 で表示
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
     }
@@ -547,14 +586,16 @@ void GameScene::Update()
         // IsInside (プレイヤーの中心座標がブロック内にあるか)
         if (isInside) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsInside: True (Player center is in block)");
-        } else {
+        }
+        else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsInside: False");
         }
 
         // IsRider (ブロックがプレイヤーの乗降をどう認識しているか)
         if (isRider) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsRider : True (Player is riding)");
-        } else {
+        }
+        else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsRider : False");
         }
 
@@ -589,7 +630,8 @@ void GameScene::Update()
     {
         Pause();
         return;
-    } else
+    }
+    else
     {
         if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) || Input::GetInstance()->TriggerKeyDown(DIK_Q))
         {
@@ -625,7 +667,8 @@ void GameScene::Update()
     Vector3 targetPos;
     if (egg_->IsOnPlayer()) {
         targetPos = player_->GetPosition();
-    } else {
+    }
+    else {
         targetPos = egg_->GetWorldPosition();
     }
 
@@ -702,9 +745,20 @@ void GameScene::Update()
     threadIconSprite_->Update();
     nestIconSprite_->Update();
     eggSprite_->Update();
-    hpSprite_->SetSize(Vector2{ 30.0f * egg_->GetHP(), 100.0f });
+    hpSprite_->SetSize(Vector2{ 15.0f * egg_->GetHP(), 50.0f });
     hpSprite_->Update();
+
     notEnougthThreadSprite_->Update();
+
+
+    for (auto& button : buttonSprite_)
+    {
+        button->Update();
+    }
+
+    keyboard_->Update();
+    pad_->Update();
+
 
     if (!isClear_)
     {
@@ -840,7 +894,7 @@ void GameScene::Draw() {
 
     if (egg_->IsDead())
     {
-        if (t_ >= 1.0f)
+        if (!isFadeStart_)
         {
             for (auto& pauseSprite : pauseSprite_)
             {
@@ -861,7 +915,8 @@ void GameScene::Draw() {
         }
 
         cursorSprite_->Draw();
-    } else  if (isClear_)
+    }
+    else  if (isClear_)
     {
         if (t_ >= 1.0f)
         {
@@ -874,7 +929,8 @@ void GameScene::Draw() {
             cursorSprite_->Draw();
             clearSprite_->Draw();
         }
-    } else
+    }
+    else
     {
         threadCountSprites_[player_->GetThreadCount()]->Draw();
         slashSprite_->Draw();
@@ -889,6 +945,24 @@ void GameScene::Draw() {
         if (!egg_->IsDead())
         {
             hpSprite_->Draw();
+        }
+
+        if (Input::GetInstance()->GetConnectedStickNum() == 0)
+        {
+            keyboard_->Draw();
+
+            for (int i = 2; i < 4; i++)
+            {
+                buttonSprite_[i]->Draw();
+            }
+        }
+        else
+        {
+            pad_->Draw();
+            for (int i = 0; i < 2; i++)
+            {
+                buttonSprite_[i]->Draw();
+            }
         }
     }
 
@@ -905,7 +979,7 @@ void GameScene::CheckAllCollisions() {
     AABB eggAABB = egg_->GetAABB();
 
     if (isCollision(playerAABB, eggAABB)) {
-        if(!egg_->IsOnPlayer())
+        if (!egg_->IsOnPlayer())
         {
             egg_->OnCollision(player_.get());
             ResolveCollision(player_.get(), playerAABB, eggAABB);
@@ -927,7 +1001,7 @@ void GameScene::CheckAllCollisions() {
         if (isCollision(enemyAABB, eggAABB)) {
             enemy->OnCollision(egg_.get());
 
-            if(!egg_->IsOnPlayer())
+            if (!egg_->IsOnPlayer())
             {
                 ResolveCollision(enemy.get(), enemyAABB, eggAABB);
             }
@@ -1003,13 +1077,15 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
         {
             currentPos.x += overlapX; // 右へ
         }
-    } else
+    }
+    else
     {
         // Z軸方向の押し戻し
         if (playerAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        } else
+        }
+        else
         {
             currentPos.z += overlapZ; // 奥へ
         }
@@ -1023,17 +1099,20 @@ void GameScene::ResolveCollision(Player* player, const AABB& playerAABB, const A
             if (playerAABB.min.x < otherAABB.min.x)
             {
                 currentPos.x += (overlapX * 2.0f);
-            } else
+            }
+            else
             {
                 currentPos.x -= (overlapX * 2.0f);
             }
-        } else
+        }
+        else
         {
             // Z軸方向の押し戻し
             if (playerAABB.min.z < otherAABB.min.z)
             {
                 currentPos.z += (overlapZ * 2.0f);
-            } else
+            }
+            else
             {
                 currentPos.z -= (overlapZ * 2.0f);
             }
@@ -1065,21 +1144,25 @@ void GameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB
         {
             currentPos.x += overlapX; // 右へ
         }
-    } else if (overlapZ < overlapX && overlapZ < overlapY) {
+    }
+    else if (overlapZ < overlapX && overlapZ < overlapY) {
         // Z軸方向の押し戻し
         if (enemyAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        } else
+        }
+        else
         {
             currentPos.z += overlapZ; // 奥へ
         }
-    } else {
+    }
+    else {
         // Y軸方向の押し戻し（床や天井）
         if (enemyAABB.min.y < otherAABB.min.y)
         {
             currentPos.y -= overlapY; // 下へ
-        } else
+        }
+        else
         {
             currentPos.y += overlapY; // 上へ
         }
@@ -1141,8 +1224,9 @@ void GameScene::Clear()
         pos.y += 200.0f;
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
-        pauseIndex_ = 1;
-    } else
+        pauseIndex_ = 2;
+    }
+    else
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
@@ -1196,7 +1280,8 @@ void GameScene::Clear()
                     if (num == maxNum)
                     {
                         CollisionMask::GetInstance()->SetCurrentStageID(0);
-                    } else
+                    }
+                    else
                     {
                         CollisionMask::GetInstance()->SetCurrentStageID(num + 1);
                     }
@@ -1204,7 +1289,8 @@ void GameScene::Clear()
                     SceneManager::GetInstance()->ChangeScene("GameScene");
                 }
             }
-        } else
+        }
+        else
         {
             if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
                 Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
@@ -1212,21 +1298,25 @@ void GameScene::Clear()
                 if (pauseIndex_ < 2)
                 {
                     pauseIndex_++;
-                } else
+                }
+                else
                 {
                     pauseIndex_ = 1;
                 }
-            } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+            }
+            else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
                 Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
             {
                 if (pauseIndex_ > 1)
                 {
                     pauseIndex_--;
-                } else
+                }
+                else
                 {
                     pauseIndex_ = 2;
                 }
-            } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+            }
+            else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
@@ -1246,7 +1336,7 @@ void GameScene::Clear()
         menuSprite_->Update();
         cursorSprite_->Update();
         clearSprite_->Update();
-        
+
     }
 
 }
