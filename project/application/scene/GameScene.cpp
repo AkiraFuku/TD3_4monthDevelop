@@ -1186,7 +1186,7 @@ void GameScene::Clear()
         pos.y += 200.0f;
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
-        pauseIndex_ = 1;
+        pauseIndex_ = 2;
     }
     else
     {
