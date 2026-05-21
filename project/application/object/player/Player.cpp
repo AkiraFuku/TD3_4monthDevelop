@@ -91,8 +91,6 @@ void Player::Update()
         }
 
     }
-
-    // ★これを追加！！
     if (onThread_) {
 
         // 糸に沿った移動補正、Y座標の追従、糸への重さ適用
@@ -222,7 +220,7 @@ void Player::IsCollisionSDF()
     float hH = kHeight * 0.5f;
 
     // =========================================================
-    // ★ 追加: BrokenBlock から意図せず壁の中に落ちないようにする制限処理
+    // BrokenBlock から意図せず壁の中に落ちないようにする制限処理
     // =========================================================
     BrokenBlock* activeBlock = nullptr;
     // 現在、プレイヤーの中心がどのブロックに乗っているかを取得
@@ -281,7 +279,7 @@ void Player::IsCollisionSDF()
     };
 
     // =========================================================
-    // ★追加: ループの前に「どのくらい OneWayObject に乗っているか」を判定する
+    // ループの前に「どのくらい OneWayObject に乗っているか」を判定する
     // =========================================================
     OneWayObject* activeOneWay = nullptr;
     for (auto* oneWay : oneWayObjects_) {
@@ -303,10 +301,9 @@ void Player::IsCollisionSDF()
         }
     }
 
-    // ★修正点: 4つの頂点「すべて」に対して順番にめり込み判定と押し戻しを行う
     for (const auto& corner : corners) {
         // =========================================================
-        // ★ 修正: この頂点が BrokenBlock の中にあるか判定する
+        // この頂点が BrokenBlock の中にあるか判定する
         // =========================================================
         bool isCornerOnBrokenBlock = false;
         for (auto* block : brokenBlocks_) {
@@ -340,7 +337,7 @@ void Player::IsCollisionSDF()
                 Vector2 pushVec = {normal.x * pushBack, normal.y * pushBack};
 
                 // =========================================================
-                // ★修正: 事前に判定した activeOneWay の結果を使うように変更
+                // 事前に判定した activeOneWay の結果を使うように変更
                 // =========================================================
                 bool isOnOneWay = false;
                 OneWayObject::Direction overrideDir = OneWayObject::Direction::PositiveZ; // 初期化
@@ -431,7 +428,7 @@ void Player::FireThread()
     Vector3 end = {rayResult_.exitPos.x, targetY, rayResult_.exitPos.y};
 
     // =========================================================
-    // ★ 追加: 既存の糸と近すぎないか（重複しないか）チェック
+    // 既存の糸と近すぎないか（重複しないか）チェック
     // =========================================================
     if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) {
         return; // 近すぎる場合はここで処理を抜け、予測線を描画しない
@@ -446,8 +443,6 @@ void Player::FireThread()
         const float extend = 0.2f;
         start.x -= dir.x * extend;
         start.z -= dir.z * extend;
-        //end.x += dir.x * extend;
-        //end.z += dir.z * extend;
     }
 
     thread_->AddThread(start, end);
@@ -770,13 +765,15 @@ void Player::InitializeModel()
 {
 
     ModelManager::GetInstance()->LoadModel("resources", "player/player.obj");
-    ModelManager::GetInstance()->LoadModel("resources", "player/Arm/playerArm.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "player/Arm/LeftArm.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "player/Arm/RightArm.obj");
     ModelManager::GetInstance()->LoadModel("resources", "player/Leg/playerLeg.obj");
 
     if (object_)
     {
         object_->AddModel("player/player.obj", "Body");
-        object_->AddModel("player/Arm/playerArm.obj", "Arm", "Body");
+        object_->AddModel("player/Arm/RightArm.obj", "RightArm", "Body");
+        object_->AddModel("player/Arm/LeftArm.obj", "LeftArm", "Body");
         object_->AddModel("player/Leg/playerLeg.obj", "Leg", "Body");
 
     }

@@ -17,13 +17,7 @@ void GameScene::Initialize() {
     camera->SetTranslate({ 0.0f, 30.0f, -30.0f });
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->SetCamera(camera.get());
-
-    //  BGMhandle_ = Audio::GetInstance()->LoadAudio("resources/fanfare.mp3");
-
-  //    Audio::GetInstance()->PlayAudio(BGMhandle_, true);
-      // LightManager::GetInstance()->AddDirectionalLight( { 1,1,1,1 }, { 0,-1,0
-      // }, 1.0f); // メインライト LightManager::GetInstance()->AddDirectionalLight(
-      // { 1,1,1,1 }, { 0,-1,0 }, 1.0f); // メインライト
+    // メインライト
     LightManager::GetInstance()->AddSpotLight(
         { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.0f, 1.25f, 0.0f }, 4.0f,
         Normalize(Vector3{ -1.0f, -1.0f, 0.0f }), 7.0f, 2.0f,
@@ -66,7 +60,7 @@ void GameScene::Initialize() {
 
         std::uniform_real_distribution<float> rotation(-std::numbers::pi_v<float>, std::numbers::pi_v<float>);
         ParticleManager::Particle particle;
-         particle.transform.scale = { 2.0f,2.0f,2.0f };
+        particle.transform.scale = { 2.0f,2.0f,2.0f };
         particle.transform.rotate = { 0.0f,0.0f,0.0f };
         particle.transform.translate = emitterPosition;
         particle.velocity = { 0.0f, 0.0f, 0.0f };
@@ -80,9 +74,9 @@ void GameScene::Initialize() {
     ParticleManager::ParticleUpdateFunc update = [](ParticleManager::Particle& particle, float deltaTime) {
         // パーティクルの更新処理
         // 例: 速度に基づいて位置を更新し、寿命を減少させる
-        particle.uvTransform.offset.x += deltaTime/2;
+        particle.uvTransform.offset.x += deltaTime / 2;
         };
-    TextureManager::GetInstance()->LoadTexture( "resources/gradationLine.png");
+    TextureManager::GetInstance()->LoadTexture("resources/gradationLine.png");
     ParticleManager::GetInstance()->CreateParticleGroup(
         "Test", "resources/gradationLine.png", ParticleManager::EffectType::Cylinder, initialize, update);
     /*   std::vector<Sprite*> sprites;
@@ -188,9 +182,9 @@ void GameScene::Initialize() {
     goal_->SetEgg(egg_.get());
     goal_->SetPlayer(player_.get());
     goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
-   
-    Vector3 ePos=goalPos;
-    ePos.y=-1.0f;
+
+    Vector3 ePos = goalPos;
+    ePos.y = -1.0f;
 
     emitter->SetTranslate(ePos);
     emitter->Emit();
@@ -214,9 +208,7 @@ void GameScene::Initialize() {
     }
 
 
-    // ========================================================
-    // ▼ ここから下（関数の最後）に以下のコードを丸ごと追加！ ▼
-    // ========================================================
+
     stageOneWays_.clear();
     std::vector<OneWayObject*> playerOneWayPtrs;
 
@@ -324,7 +316,7 @@ void GameScene::Initialize() {
         std::string path = "resources/Menu/" + std::to_string(i) + ".png";
         auto pauseSprite = std::make_unique<Sprite>();
         pauseSprite->Initialize(path);
-        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (430.0f * i))});
+        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (430.0f * i)) });
         pauseSprite_.push_back(std::move(pauseSprite));
     }
 
@@ -362,18 +354,6 @@ void GameScene::Finalize() {
 
     Audio::GetInstance()->StopAudio(handle_);
 
-    /*player_->Finalize();
-    delete player_;
-
-    terrain_->Finalize();
-    delete terrain_;
-
-    egg_->Finalize();
-    delete egg_;
-
-    goal_->Finalize();
-    delete goal_;*/
-
 #ifdef _DEBUG
 
 
@@ -384,8 +364,7 @@ void GameScene::Finalize() {
 
 void GameScene::Update()
 {
-   /* emitter->SetTranslate(player_->GetPosition());
-    emitter->Update();*/
+
 
     XINPUT_STATE state;
 
@@ -465,7 +444,7 @@ void GameScene::Update()
     ImGui::End();
 
     // =========================================================
-    // ★ 追加: Player と BrokenBlock の当たり判定デバッグウィンドウ
+    // Player と BrokenBlock の当たり判定デバッグウィンドウ
     // =========================================================
     ImGui::Begin("Collision Debug");
 
@@ -574,7 +553,7 @@ void GameScene::Update()
     }
 
     // =========================================================
-    // ★ 追加: プレイヤーに現在の BrokenBlock リストを渡す
+    // プレイヤーに現在の BrokenBlock リストを渡す
     // =========================================================
     std::vector<BrokenBlock*> blockPtrs;
     for (auto& b : brokenBlocks_) {
@@ -613,17 +592,9 @@ void GameScene::Update()
     }
 
     //// 2. 敵の更新（リストを渡す）
-    //for (auto& enemy : enemies_) {
-    //    // 第5引数に occupiedKeys を渡す
-    //    enemy->Update(playerPos_, thread_.get(), oneWayObjects_, brokenBlocks_, occupiedKeys);
-    //}
 
-    // 【変更】すべての敵のUpdateを呼ぶ
+
     for (auto& enemy : enemies_) {
-        /*if (enemy->GetCanMove())
-        {
-            enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
-        }*/
 
         enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
     }
@@ -723,10 +694,6 @@ void GameScene::Update()
 
         player_->ResetNestMaterial();
 
-        // ※補足：位置以外の変数（体力、発射回数、スコアなど）をリセットする必要があればここに書きます
-        // threadLimit_ = 0; 
-        // player_->ResetHP(); // 例
-
         // 2. リセットが完了したら、フェードインを開始する
         fade_->StartFadeIn(0.02f);
 
@@ -748,8 +715,6 @@ void GameScene::Draw() {
         return;
     }
 
-    // player_->Draw();
-    // terrain_->Draw();
 
     stageModel_->Draw();
 
@@ -786,7 +751,6 @@ void GameScene::Draw() {
 
     ParticleManager::GetInstance()->Draw();
     ///////スプライトの描画
-    // sprite->Draw();
 
     player_->Draw();
 
@@ -850,13 +814,12 @@ void GameScene::CheckAllCollisions() {
     AABB eggAABB = egg_->GetAABB();
 
     if (isCollision(playerAABB, eggAABB)) {
-        if(!egg_->IsOnPlayer())
+        if (!egg_->IsOnPlayer())
         {
             egg_->OnCollision(player_.get());
             ResolveCollision(player_.get(), playerAABB, eggAABB);
         }
-    }
-    else {
+    } else {
         egg_->SetHitFlag(false);
     }
 
@@ -872,12 +835,11 @@ void GameScene::CheckAllCollisions() {
         if (isCollision(enemyAABB, eggAABB)) {
             enemy->OnCollision(egg_.get());
 
-            if(!egg_->IsOnPlayer())
+            if (!egg_->IsOnPlayer())
             {
                 ResolveCollision(enemy.get(), enemyAABB, eggAABB);
             }
-        }
-        else {
+        } else {
             enemy->SetHitFlag(false);
         }
 
@@ -900,7 +862,7 @@ void GameScene::CheckAllCollisions() {
     }
 
     // =========================================================
-    // ★ 追加: BrokenBlock とプレイヤーの乗降判定
+    // BrokenBlock とプレイヤーの乗降判定
     // =========================================================
     for (auto& brokenBlock : brokenBlocks_) {
         // プレイヤーがブロックに乗っているかを毎フレームチェック
@@ -1099,8 +1061,7 @@ void GameScene::Clear()
                 if (pauseIndex_ == 1)
                 {
                     SceneManager::GetInstance()->ChangeScene("SelectScene");
-                }
-                else if (pauseIndex_ == 2)
+                } else if (pauseIndex_ == 2)
                 {
                     // ステージナンバーを設定
                     int num = CollisionMask::GetInstance()->GetCurrentStageID();
@@ -1160,7 +1121,7 @@ void GameScene::Clear()
         menuSprite_->Update();
         cursorSprite_->Update();
         clearSprite_->Update();
-        
+
     }
 
 }
@@ -1276,12 +1237,6 @@ void GameScene::LoadStageData()
         (*itEnemy)->Reset(CollisionMask::GetInstance()->GetEnemyStartPos(i));
         ++i;
     }
-    /* i = 0;
-     for (auto itNestMaterial = nestMaterials_.begin(); itNestMaterial != nestMaterials_.end(); ++itNestMaterial)
-     {
-         (*itNestMaterial)->SetTranslate(collisionMask_->GetNestMaterialPos(i));
-         ++i;
-     }*/
 
     for (auto itNestMaterial = nestMaterial_.begin(); itNestMaterial != nestMaterial_.end(); ++itNestMaterial)
     {
