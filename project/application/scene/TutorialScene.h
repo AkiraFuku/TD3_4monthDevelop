@@ -16,6 +16,8 @@ public:
 
     void OnClear() override;
 
+    bool IsGameFreeze() const override;
+
 private:
     enum class TutorialPhase
     {

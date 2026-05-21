@@ -49,20 +49,24 @@ public:
     // ポーズメニュー処理
     void Pause();
 
-    virtual void OnClear() = 0;
 
+    void UpdatePauseGray();
+    void DrawPauseGray();
+    virtual void OnClear() = 0;
+    virtual bool IsGameFreeze() const { return false; }
     virtual void UpdateExtra() = 0;
     virtual void DrawExtra() = 0;
+    virtual void LoadStage() = 0;
 
 public:
 
     void LoadStageData();
 
-    virtual void LoadStage() = 0;
+   
 
    
 
-protected:
+private:
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Sprite> sprite;
     std::unique_ptr<Object3d> object3d2;

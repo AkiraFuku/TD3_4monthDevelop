@@ -27,8 +27,6 @@ void TutorialScene::Initialize()
 
     phase_ = TutorialPhase::kExplanation;
 
-
-
     BaseGameScene::Initialize();
 
 }
@@ -45,6 +43,9 @@ void TutorialScene::UpdateExtra()
     switch (phase_)
     {
     case TutorialPhase::kExplanation:
+
+        BaseGameScene::UpdatePauseGray();
+
         if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) ||
             Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
@@ -81,6 +82,8 @@ void TutorialScene::DrawExtra()
     switch (phase_)
     {
     case TutorialPhase::kExplanation:
+
+        BaseGameScene::DrawPauseGray(); // 背景などの基本的な描画を行う
 
         for (const auto& explanationSprite : explanationSprites_)
         {
@@ -120,7 +123,13 @@ void TutorialScene::OnClear()
     } 
     else
     {
+        BaseGameScene::Clear();
         // チュートリアル全ステージクリア → タイトルかセレクト画面へ
-        SceneManager::GetInstance()->ChangeScene("SelectScene");
+        //SceneManager::GetInstance()->ChangeScene("SelectScene");
     }
+}
+
+bool TutorialScene::IsGameFreeze() const
+{
+    return phase_ == TutorialPhase::kExplanation;
 }

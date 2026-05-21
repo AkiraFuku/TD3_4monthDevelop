@@ -16,8 +16,6 @@ public:
     void LoadStage() override;
 
     void OnClear() override;
-
 private:
 
-    void Clear();
 };

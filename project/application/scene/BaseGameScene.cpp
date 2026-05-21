@@ -497,6 +497,13 @@ void BaseGameScene::Update()
         }
     }
 
+    if (fade_->IsFinished() && IsGameFreeze())
+    {
+        UpdateExtra();
+        fade_->Update();
+        return;
+    }
+
     // クリアフラグが立っている場合
     if (isClear_)
     {
@@ -1213,6 +1220,7 @@ void BaseGameScene::Pause()
     menuSprite_->Update();
     cursorSprite_->Update();
 }
+
 void BaseGameScene::LoadStageData()
 {
     player_->SetPosition(CollisionMask::GetInstance()->GetStartPos());
@@ -1246,4 +1254,14 @@ void BaseGameScene::LoadStageData()
 
     std::vector<Vector3> oneWayObjectPos_;
     thread_->ClearThreads();
+}
+
+
+void BaseGameScene::UpdatePauseGray()
+{
+    menuSprite_->Update();
+}
+void BaseGameScene::DrawPauseGray()
+{
+    menuSprite_->Draw();
 }
