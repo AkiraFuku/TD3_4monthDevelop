@@ -8,7 +8,7 @@
 #include"ThreadManager.h"
 #include "Egg.h"
 #include "OneWayObject.h"
-#include "GameScene.h"
+#include "BaseGameScene.h"
 
 #include <cmath>
 #include <numbers>

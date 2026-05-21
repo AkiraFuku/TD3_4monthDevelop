@@ -3,7 +3,7 @@
 #include "CollisionMask.h"
 #include "ThreadManager.h"
 #include "Egg.h"
-#include "GameScene.h"
+#include "BaseGameScene.h"
 #include "Object3dCommon.h"
 
 // キー生成関数 (SpiderWebManager.cpp と同じアルゴリズム)

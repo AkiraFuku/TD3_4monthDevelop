@@ -15,7 +15,7 @@ class ThreadManager;
 class Egg;
 class OneWayObject;
 class BrokenBlock;
-class GameScene;
+class BaseGameScene;
 
 class Player
 {
@@ -152,7 +152,7 @@ public:
     int GetThreadCount() const { return remainingThreadCount_; }
 
     // ゲームシーンのポインタをセット
-    void SetGameScene(GameScene* scene) { gameScene_ = scene; }
+    void SetGameScene(BaseGameScene* scene) { gameScene_ = scene; }
 
     void UpdateHeight();
 
@@ -206,7 +206,7 @@ private:
     // ThreadManager
     ThreadManager* thread_ = nullptr;
     // ゲームシーンのポインタ
-    GameScene* gameScene_ = nullptr;
+    BaseGameScene* gameScene_ = nullptr;
 
 private:
     bool TryMoveOnThread(const Vector3& moveDirection);

@@ -10,7 +10,7 @@
 #include <vector>
 
 class Player;
-class GameScene;
+class BaseGameScene;
 
 class Egg
 {
@@ -41,7 +41,7 @@ public:
     // プレイヤーのポインタ
     void SetPlayer(Player* player) { player_ = player; }
     // ゲームシーンのポインタ
-    void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
+    void SetGameScene(BaseGameScene* gameScene) { gameScene_ = gameScene; }
 
     // 卵の状況を取得
     bool IsOnPlayer() const { return onPlayer_; }
@@ -79,7 +79,7 @@ private:
     // プレイヤーのポインタ
     Player* player_ = nullptr;
     // ゲームシーンのポインタ
-    GameScene* gameScene_ = nullptr;
+    BaseGameScene* gameScene_ = nullptr;
 
     // HP
     float HP_ = 10.0f;

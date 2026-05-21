@@ -5,7 +5,7 @@
 #include "Player.h"
 #include "CollisionMask.h"
 #include "SceneManager.h"
-#include "GameScene.h"
+#include "BaseGameScene.h"
 
 void Egg::Initialize(const Vector3& pos) {
     object_ = std::make_unique<Object3d>();

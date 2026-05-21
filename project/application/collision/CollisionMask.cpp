@@ -25,9 +25,9 @@ void CollisionMask::Finalize()
 
 void CollisionMask::Initialize()
 {
-    stageDatas_.resize(6);
+    stageDatas_.resize(7);
 
-    for (size_t i = 0; i < 6; i++)
+    for (size_t i = 0; i < 7; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -42,16 +42,13 @@ void CollisionMask::Initialize()
         stageDatas_[i]->maskData_->object = std::move(object);
         
         stageDatas_[i]->startPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
-        stageDatas_[i]->eggStartPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+       
         stageDatas_[i]->goalPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
-        stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
-        stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
-        stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
-        stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
+        
 
     }
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         CreateJsonData(i);
         LoadJsonData(i);
@@ -222,7 +219,7 @@ void CollisionMask::Update()
     ImGui::Begin("MaskMap Setting");
 
     int maskMapIndex = static_cast<int>(currentStageID_);
-    const char* items[] = {"Map0", "Map1", "Map2", "Map3","Map4","Map5"};
+    const char* items[] = {"Map0", "Map1", "Map2", "Map3","Map4","Map5", "Map6"};
     if (ImGui::Combo("Mask Map", &maskMapIndex, items, IM_ARRAYSIZE(items)))
     {
         SetMaskMapRequest(static_cast<StageID>(maskMapIndex));

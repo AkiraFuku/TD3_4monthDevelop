@@ -4,7 +4,7 @@
 #include "Egg.h"
 #include "Player.h"
 #include "SceneManager.h"
-#include "GameScene.h"
+#include "BaseGameScene.h"
 
 void Goal::Initialize(const Vector3& pos)
 {

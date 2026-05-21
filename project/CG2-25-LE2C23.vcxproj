@@ -24,6 +24,7 @@
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg\Egg.cpp" />
+    <ClCompile Include="application\scene\BaseGameScene.cpp" />
     <ClCompile Include="BrokenBlock.cpp" />
     <ClCompile Include="application\object\enemy\Enemy.cpp" />
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
@@ -87,9 +88,10 @@
     <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
-    <ClCompile Include="SelectScene.cpp" />
+    <ClCompile Include="application\scene\SelectScene.cpp" />
     <ClCompile Include="SpiderWebManager.cpp" />
     <ClCompile Include="application\object\StageModel.cpp" />
+    <ClCompile Include="application\scene\TutorialScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
@@ -101,6 +103,7 @@
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg\Egg.h" />
+    <ClInclude Include="application\scene\BaseGameScene.h" />
     <ClInclude Include="BrokenBlock.h" />
     <ClInclude Include="application\object\enemy\Enemy.h" />
     <ClInclude Include="application\object\Egg\EggAnima.h" />
@@ -165,9 +168,10 @@
     <ClInclude Include="application\object\thread\ThreadRenderer.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
-    <ClInclude Include="SelectScene.h" />
+    <ClInclude Include="application\scene\SelectScene.h" />
     <ClInclude Include="SpiderWebManager.h" />
     <ClInclude Include="application\object\StageModel.h" />
+    <ClInclude Include="application\scene\TutorialScene.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
