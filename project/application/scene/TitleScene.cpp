@@ -17,12 +17,14 @@ void TitleScene::Initialize() {
     mo_ = std::make_unique<Object3d>();
     ri_ = std::make_unique<Object3d>();
     pressSpace_ = std::make_unique<Object3d>();
+    pressA_ = std::make_unique<Object3d>();
     background_ = std::make_unique<Object3d>();
 
     ku_->Initialize();
     mo_->Initialize();
     ri_->Initialize();
     pressSpace_->Initialize();
+    pressA_->Initialize();
     background_->Initialize();
 
     TextureManager::GetInstance()->LoadTexture("resources/Menu/cursor.png");
@@ -33,23 +35,27 @@ void TitleScene::Initialize() {
     ModelManager::GetInstance()->LoadModel("resources", "titleLogo/mo.obj");
     ModelManager::GetInstance()->LoadModel("resources", "titleLogo/ri.obj");
     ModelManager::GetInstance()->LoadModel("resources", "pressSpace.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "pressA.obj");
     ModelManager::GetInstance()->LoadModel("resources", "backGround/background.obj");
 
     ku_->AddModel("titleLogo/ku.obj", "ku");
     mo_->AddModel("titleLogo/mo.obj", "mo");
     ri_->AddModel("titleLogo/ri.obj", "ri");
     pressSpace_->AddModel("pressSpace.obj", "pressSpace");
+    pressA_->AddModel("pressA.obj", "pressA");
     background_->AddModel("backGround/background.obj", "background");
 
     ku_->SetTranslate(Vector3{ -2.5f,4.0f,12.0f });
     mo_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     ri_->SetTranslate(Vector3{ 2.5f,4.0f,12.0f });
     pressSpace_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
+    pressA_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     background_->SetTranslate(Vector3{ 0.0f,0.0f,66.0f });
     background_->SetScale(Vector3{4.0f, 5.0f, 1.0f});
     cursor_->SetPosition(Vector2{ 400.0f,0.0f });
 
     pressSpace_->SetBlendMode(BlendMode::Add);
+    pressA_->SetBlendMode(BlendMode::Add);
     
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/title.wav");
@@ -97,6 +103,9 @@ void TitleScene::Update() {
         Vector3 press = pressSpace_->GetTranslate();
         press = Vector3Lerp(press, pressPos_, t_);
         pressSpace_->SetTranslate(press);
+        Vector3 pressA = pressA_->GetTranslate();
+        pressA = Vector3Lerp(pressA, pressPos_, t_);
+        pressA_->SetTranslate(pressA);
         Vector2 cursor = cursor_->GetPosition();
         cursor = Vector2Lerp(cursor, cursorPos_, t_);
         cursor_->SetPosition(cursor);
@@ -143,6 +152,7 @@ void TitleScene::Update() {
     mo_->Update();
     ri_->Update();
     pressSpace_->Update();
+    pressA_->Update();
     background_->Update();
 
     if (!isFinished_ &&
@@ -166,7 +176,16 @@ void TitleScene::Draw() {
     ku_->Draw();
     mo_->Draw();
     ri_->Draw();
-    pressSpace_->Draw();
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        pressSpace_->Draw();
+    }
+    else
+    {
+        pressA_->Draw();
+    }
+
     cursor_->Draw();
 
     fade_->Draw();

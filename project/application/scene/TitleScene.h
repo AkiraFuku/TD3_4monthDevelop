@@ -30,6 +30,7 @@ private:
     std::unique_ptr<Object3d> mo_;
     std::unique_ptr<Object3d> ri_;
     std::unique_ptr<Object3d> pressSpace_;
+    std::unique_ptr<Object3d> pressA_;
     std::unique_ptr<Object3d> background_;
 
     // フェード機能
