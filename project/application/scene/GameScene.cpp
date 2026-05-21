@@ -259,6 +259,36 @@ void GameScene::Initialize() {
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 
+    // =========================================================
+    // プレイヤーに現在の BrokenBlock リストを渡す
+    // =========================================================
+    std::vector<BrokenBlock*> blockPtrs;
+    for (auto& b : brokenBlocks_) {
+        blockPtrs.push_back(b.get());
+    }
+    player_->SetBrokenBlocks(blockPtrs);
+
+    // =========================================================
+    // ゴール座標、未回収素材、およびルート計算用の障害物を渡す
+    // =========================================================
+    // 1. ゴール座標をセット
+    player_->SetGoalPosition(goalPos);
+
+    // 2. 未回収の素材座標リストを作成してセット
+    std::vector<Vector3> uncollectedMaterialPositions;
+    for (auto& nestMaterial : nestMaterial_) {
+        if (!nestMaterial->IsDead()) {
+            uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+        }
+    }
+    player_->SetMaterialPositions(uncollectedMaterialPositions);
+
+    // 3. ポインタリストの作成は不要なので削除！
+
+    // 4. GameScene が持っている unique_ptr の配列を、そのままアドレス(&)で渡す！
+    player_->SetRouteCheckObjects(&stageOneWays_, &brokenBlocks_);
+    // =========================================================
+
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
     // サウンド再生
@@ -586,36 +616,6 @@ void GameScene::Update()
         ow->Update();
     }
 
-    // =========================================================
-    // プレイヤーに現在の BrokenBlock リストを渡す
-    // =========================================================
-    std::vector<BrokenBlock*> blockPtrs;
-    for (auto& b : brokenBlocks_) {
-        blockPtrs.push_back(b.get());
-    }
-    player_->SetBrokenBlocks(blockPtrs);
-
-    // =========================================================
-    // ゴール座標、未回収素材、およびルート計算用の障害物を渡す
-    // =========================================================
-    // 1. ゴール座標をセット
-    player_->SetGoalPosition(goalPos);
-
-    // 2. 未回収の素材座標リストを作成してセット
-    std::vector<Vector3> uncollectedMaterialPositions;
-    for (auto& nestMaterial : nestMaterial_) {
-        if (!nestMaterial->IsDead()) {
-            uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
-        }
-    }
-    player_->SetMaterialPositions(uncollectedMaterialPositions);
-
-    // 3. ポインタリストの作成は不要なので削除！
-
-    // 4. GameScene が持っている unique_ptr の配列を、そのままアドレス(&)で渡す！
-    player_->SetRouteCheckObjects(&stageOneWays_, &brokenBlocks_);
-    // =========================================================
-
     player_->Update();
 
     // ゴールの更新処理
@@ -637,7 +637,9 @@ void GameScene::Update()
             enemy->RequestPathReplan();
         }
 
-        player_->CheckRouteToGoal();
+        if (player_->GetRemainingThreadCount() <= 0) {
+            player_->CheckRouteToGoal();
+        }
     }
         player_->DrawRouteWarningImGui();
 
@@ -890,7 +892,7 @@ void GameScene::Draw() {
         }
     }
 
-    if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() == 0) {
+    if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
         notEnougthThreadSprite_->Draw();
     }
 
