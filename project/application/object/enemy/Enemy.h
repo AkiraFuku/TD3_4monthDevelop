@@ -13,7 +13,7 @@
 
 class ThreadManager;
 class Egg;
-class GameScene;
+class BaseGameScene;
 
 class Enemy {
 public:
@@ -64,7 +64,7 @@ public:
     void Reset(const Vector3& pos);
 
     // ゲームシーンのポインタをセット
-    void SetGameScene(GameScene* scene) { gameScene_ = scene; }
+    void SetGameScene(BaseGameScene* scene) { gameScene_ = scene; }
 
     void UpdateHeight(ThreadManager* tm); // ★追加: Y座標のみを更新する関数
 
@@ -112,6 +112,6 @@ private:
     Audio::SoundHandle attack_ = 0;
 
     // ゲームシーンのポインタ
-    GameScene* gameScene_ = nullptr;
+    BaseGameScene* gameScene_ = nullptr;
 
 };

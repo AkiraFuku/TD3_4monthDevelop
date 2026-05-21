@@ -20,7 +20,7 @@ class ThreadManager;
 class Egg;
 class OneWayObject;
 class BrokenBlock;
-class GameScene;
+class BaseGameScene;
 
 class Player {
 public:
@@ -154,7 +154,7 @@ public:
     int GetThreadCount() const { return remainingThreadCount_; }
 
     // ゲームシーンのポインタをセット
-    void SetGameScene(GameScene* scene) { gameScene_ = scene; }
+    void SetGameScene(BaseGameScene* scene) { gameScene_ = scene; }
 
     void UpdateHeight();
 
@@ -229,7 +229,7 @@ private:
     // ThreadManager
     ThreadManager* thread_ = nullptr;
     // ゲームシーンのポインタ
-    GameScene* gameScene_ = nullptr;
+    BaseGameScene* gameScene_ = nullptr;
 
 public:
     // 状態クラス（PlayerState）から回転だけを呼び出せるように public へ移動

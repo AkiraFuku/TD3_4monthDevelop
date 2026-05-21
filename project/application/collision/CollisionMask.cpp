@@ -25,9 +25,7 @@ void CollisionMask::Finalize()
 
 void CollisionMask::Initialize()
 {
-    stageDatas_.resize(6);
-
-    for (size_t i = 0; i < 6; i++)
+    for (size_t i = 0; i < 7; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -37,21 +35,19 @@ void CollisionMask::Initialize()
         object->SetRotate(Vector3{ -90.0f / 180.0f * PI, 0.0f, 0.0f });
         object->SetTranslate(translate_);
         
-        stageDatas_[i] = std::make_unique<StageData>();
-        stageDatas_[i]->maskData_ = std::make_unique<MaskData>();
-        stageDatas_[i]->maskData_->object = std::move(object);
+        stageData = std::make_unique<StageData>();
+        stageData->maskData_ = std::make_unique<MaskData>();
+        stageData->maskData_->object = std::move(object);
         
-        stageDatas_[i]->startPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
-        stageDatas_[i]->eggStartPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
-        stageDatas_[i]->goalPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
-        stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
-        stageDatas_[i]->enemyStartPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
-        stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 0.0f, 0.0f, 0.0f });
-        stageDatas_[i]->nestMaterialPos_.push_back(Vector3{ 1.0f, 1.0f, 1.0f });
+        stageData->startPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+        stageData->eggStartPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+        stageData->goalPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
+       
+        stageDatas_.push_back(std::move(stageData));
 
     }
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         CreateJsonData(i);
         LoadJsonData(i);

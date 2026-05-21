@@ -24,6 +24,7 @@
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
     <ClCompile Include="application\object\Egg\Egg.cpp" />
+    <ClCompile Include="application\scene\TutorialScene.cpp" />
     <ClCompile Include="BrokenBlock.cpp" />
     <ClCompile Include="application\object\enemy\Enemy.cpp" />
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
@@ -53,10 +54,11 @@
     <ClCompile Include="engine\Tool\Logger.cpp" />
     <ClCompile Include="engine\GAME\Framework.cpp" />
     <ClCompile Include="engine\GAME\GameEngine.cpp" />
-    <ClCompile Include="application\scene\GameScene.cpp" />
+    <ClCompile Include="application\scene\BaseGameScene.cpp" />
     <ClCompile Include="engine\Tool\LightManager.cpp" />
     <ClCompile Include="application\object\Goal.cpp" />
     <ClCompile Include="Fade.cpp" />
+    <ClCompile Include="application\scene\GameScene.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -87,7 +89,7 @@
     <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
-    <ClCompile Include="SelectScene.cpp" />
+    <ClCompile Include="application\scene\SelectScene.cpp" />
     <ClCompile Include="SpiderWebManager.cpp" />
     <ClCompile Include="application\object\StageModel.cpp" />
   </ItemGroup>
@@ -101,6 +103,7 @@
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
     <ClInclude Include="application\object\Egg\Egg.h" />
+    <ClInclude Include="application\scene\TutorialScene.h" />
     <ClInclude Include="BrokenBlock.h" />
     <ClInclude Include="application\object\enemy\Enemy.h" />
     <ClInclude Include="application\object\Egg\EggAnima.h" />
@@ -147,7 +150,7 @@
     <ClInclude Include="engine\Tool\ParicleEmitter.h" />
     <ClInclude Include="engine\GAME\Framework.h" />
     <ClInclude Include="engine\GAME\GameEngine.h" />
-    <ClInclude Include="application\scene\GameScene.h" />
+    <ClInclude Include="application\scene\BaseGameScene.h" />
     <ClInclude Include="engine\scene\Scene.h" />
     <ClInclude Include="engine\scene\SceneManager.h" />
     <ClInclude Include="application\scene\TitleScene.h" />
@@ -157,6 +160,7 @@
     <ClInclude Include="application\object\NestMaterial.h" />
     <ClInclude Include="application\object\OneWayObject.h" />
     <ClInclude Include="Fade.h" />
+    <ClInclude Include="application\scene\GameScene.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\player\PlayerState.h" />
@@ -165,7 +169,7 @@
     <ClInclude Include="application\object\thread\ThreadRenderer.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
-    <ClInclude Include="SelectScene.h" />
+    <ClInclude Include="application\scene\SelectScene.h" />
     <ClInclude Include="SpiderWebManager.h" />
     <ClInclude Include="application\object\StageModel.h" />
   </ItemGroup>

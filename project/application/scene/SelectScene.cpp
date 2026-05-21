@@ -176,7 +176,7 @@ void SelectScene::MoveCursor()
     if (isFinished_ && fade_->IsFinished()) {
         // ゲームシーンに移行
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
-        CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 3);
+        CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 4);
         SceneManager::GetInstance()->ChangeScene("GameScene");
     }
 

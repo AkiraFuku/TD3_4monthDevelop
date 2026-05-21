@@ -5,6 +5,7 @@
 #include "TextureManager.h"
 #include "ModelManager.h"
 #include "ImGuiManager.h"
+#include "CollisionMask.h"
 
 void TitleScene::Initialize() {
 
@@ -167,7 +168,8 @@ void TitleScene::Update() {
     fade_->Update();
 
     if (isFinished_ && fade_->IsFinished()) {
-        SceneManager::GetInstance()->ChangeScene("SelectScene");
+        CollisionMask::GetInstance()->SetCurrentStageID(0);
+        SceneManager::GetInstance()->ChangeScene("TutorialScene");
     }
 }
 void TitleScene::Draw() {
