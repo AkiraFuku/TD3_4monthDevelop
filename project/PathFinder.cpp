@@ -239,7 +239,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             // --- ここで優先度をつける ---
             if (hasThread) {
                 // 糸の上は最優先（コストをそのまま、あるいは少し下げる）
-                moveCost *= 0.5f;
+                moveCost *= 0.05f;
             }
             else if (!isWall) {
                 // 地面の上は次点
