@@ -626,6 +626,13 @@ void Player::TurnToDirection(const Vector3& direction) {
 
     rotationY_ += difference * kTurnSpeed;
 
+    while (rotationY_ > std::numbers::pi_v<float>) {
+        rotationY_ -= 2.0f * std::numbers::pi_v<float>;
+    }
+    while (rotationY_ < -std::numbers::pi_v<float>) {
+        rotationY_ += 2.0f * std::numbers::pi_v<float>;
+    }
+
     rotate_ = {0.0f, rotationY_, 0.0f};
     object_->SetRotate(rotate_);
 }
