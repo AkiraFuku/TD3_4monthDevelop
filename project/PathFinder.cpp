@@ -171,12 +171,35 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                     }
                     // 今調べている次のマスが「空中（isWall）」のとき
                     else {
-                        for (size_t i = 0; i < nodes.size(); ++i) {
-                            float dx = nodes[i].currentPos.x - worldX;
-                            float dz = nodes[i].currentPos.z - worldZ;
+                        // 🌟 隣の糸を誤検知しないよう、判定半径はマスのサイズ（0.64f = 0.8マス分）に絞る
+                        float radiusSq = 0.64f;
 
-                            if ((dx * dx + dz * dz) < radiusSq) {
-                                if (current->isConnectedToThread) {
+                        // 🌟 1歩前のマス（current）が、今調べているこの一本の糸（physics）に
+                        // そもそも「乗っていたのか」を事前にチェックする
+                        bool isSameThread = false;
+
+                        // 1歩前のマスのワールド座標
+                        float curWorldX = (float)current->pos.x - 256.0f + 0.5f;
+                        float curWorldZ = (float)current->pos.y - 256.0f + 0.5f;
+
+                        // 1歩前のマスが、この糸のどれかのノードの近くにあるか調べる
+                        for (const auto& node : nodes) {
+                            float cdx = node.currentPos.x - curWorldX;
+                            float cdz = node.currentPos.z - curWorldZ;
+                            if ((cdx * cdx + cdz * cdz) < radiusSq) {
+                                isSameThread = true;
+                                break;
+                            }
+                        }
+
+                        // 🌟「1歩前がこの糸に乗っている」かつ「次のマスにもこの糸のノードがある」
+                        // 場合のみ、正当な空中ルートとして開通させる！
+                        if (current->isConnectedToThread && isSameThread) {
+                            for (const auto& node : nodes) {
+                                float dx = node.currentPos.x - worldX;
+                                float dz = node.currentPos.z - worldZ;
+
+                                if ((dx * dx + dz * dz) < radiusSq) {
                                     hasThread = true;
                                     break;
                                 }
