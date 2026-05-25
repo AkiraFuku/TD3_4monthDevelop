@@ -32,12 +32,17 @@ void SelectScene::Initialize()
         objects_.push_back(std::move(object));
     }
 
+    TextureManager::GetInstance()->LoadTexture("resources/backTitle.png");
+    titleSprite_ = std::make_unique<Sprite>();
+    titleSprite_->Initialize("resources/backTitle.png");
+    titleSprite_->SetPosition(Vector2{ 0.0f,0.0f });
+
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/Menu/cursor.png");
-    arrowPos_.x = objects_[0]->GetTranslate().x * 100.0f;
-    arrowPos_.x += 450.0f;
-    arrowPos_.y = objects_[0]->GetTranslate().y - 400.0f;
+    arrowPos_ = titleSprite_->GetPosition();
+    arrowPos_.y -= 600.0f;
     arrowSprite_->SetPosition(arrowPos_);
+    stageIndex = -1;
 
     background_ = std::make_unique<Object3d>();
     background_->Initialize();
@@ -71,17 +76,20 @@ void SelectScene::Update()
     MoveCursor();
 
     // 選択されているモデルを動かす
-    Vector3 pos = objects_[stageIndex]->GetTranslate();
-    pos.y = sinf(theta) * amplitude;
-    theta += float(M_PI) / 60.0f; // 1秒で1周期の速度
-    objects_[stageIndex]->SetTranslate(pos);
-
+    if (stageIndex >= 0 && stageIndex <= 2)
+    {
+        Vector3 pos = objects_[stageIndex]->GetTranslate();
+        pos.y = sinf(theta) * amplitude;
+        theta += float(M_PI) / 60.0f; // 1秒で1周期の速度
+        objects_[stageIndex]->SetTranslate(pos);
+    }
     // モデルの更新処理
     for (const std::unique_ptr <Object3d>& object : objects_)
     {
         object->Update();
     }
 
+    titleSprite_->Update();
     arrowSprite_->Update();
     background_->Update();
 
@@ -91,6 +99,7 @@ void SelectScene::Update()
 void SelectScene::Draw()
 {
     background_->Draw();
+    titleSprite_->Draw();
 
     for (const std::unique_ptr <Object3d>& object : objects_)
     {
@@ -145,22 +154,21 @@ void SelectScene::MoveCursor()
         stageIndex++;
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
-        if (stageIndex >= 3)
+        if (stageIndex == 3)
         {
-            stageIndex = 0;
+            stageIndex = -1;
         }
     }
     else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
         Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
     {
-        if (stageIndex <= 0)
+        stageIndex--;
+
+        if (stageIndex == -2)
         {
             stageIndex = 2;
         }
-        else
-        {
-            stageIndex--;
-        }
+        
 
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
@@ -174,21 +182,43 @@ void SelectScene::MoveCursor()
     }
 
     if (isFinished_ && fade_->IsFinished()) {
-        // ゲームシーンに移行
+
         Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
-        CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 4);
-        SceneManager::GetInstance()->ChangeScene("GameScene");
+
+        if (stageIndex == -1)
+        {
+            SceneManager::GetInstance()->ChangeScene("TitleScene");
+        }
+        else
+        {
+            // ゲームシーンに移行
+            CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 4);
+            SceneManager::GetInstance()->ChangeScene("GameScene");
+        }
+       
     }
 
     if (preIndex != stageIndex)
     {
-        Vector2 pos;
-        pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
-        pos.x += 450.0f;
-        pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
-        arrowSprite_->SetPosition(pos);
+        if (stageIndex == -1)
+        {
+            Vector2 pos = titleSprite_->GetPosition();
+            pos.y -= 600.0f;
+            arrowSprite_->SetPosition(pos);
+        }
+        else
+        {
+            Vector2 pos;
+            pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
+            pos.x += 450.0f;
+            pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
+            arrowSprite_->SetPosition(pos);
+        }
 
-        Vector3 objectPos = stagePos_[preIndex];
-        objects_[preIndex]->SetTranslate(objectPos);
+        if (preIndex != -1)
+        {
+            Vector3 objectPos = stagePos_[preIndex];
+            objects_[preIndex]->SetTranslate(objectPos);
+        }
     }
 }
