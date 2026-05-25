@@ -65,6 +65,12 @@ public:
     virtual void DrawExtra() = 0;
     virtual void LoadStage() = 0;
 
+    void ShowStuck() {
+        if (!isShowStuck_) {
+            isShowStuck_ = true;
+            stuckAnimTime_ = 0.0f;
+        }
+    }
 
 public:
 
@@ -160,8 +166,16 @@ protected:
   std::unique_ptr<Sprite> cursorSprite_;
 
   
-  // 失敗時に「糸が足りません！」
-  std::unique_ptr<Sprite> notEnougthThreadSprite_;
+  // フレーム
+  std::unique_ptr<Sprite> frameSprite_;
+  // 失敗時に「巣の素材が足りません！」
+  std::unique_ptr<Sprite> stuckSprite_;
+  bool isShowStuck_ = false;
+  Vector2 stuckSpriteOriginalSize_ = { 0.0f, 0.0f };
+  float stuckAnimTime_ = 0.0f;
+  std::unique_ptr<Sprite> rKeySprite_;
+  std::unique_ptr<Sprite> resetButtonSprite_;
+  
 
   std::vector <std::unique_ptr<Sprite>> buttonSprite_;
   std::unique_ptr<Sprite> keyboard_;
@@ -199,5 +213,5 @@ protected:
   const float kStickMax = 32767.0f;
   const float kDeadZone = 0.3f;
 
- 
+  private: 
 };

@@ -10,6 +10,14 @@
 #include "Transform.h"
 #include "ParticleManager.h"
 
+namespace {
+    float easeOutElastic(float x) {
+        const float c4 = (2.0f * PI) / 3.0f;
+        return x == 0.0f ? 0.0f : x == 1.0f ? 1.0f :
+            std::pow(2.0f, -10.0f * x) * std::sin((x * 10.0f - 0.75f) * c4) + 1.0f;
+    }
+}
+
 void BaseGameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
@@ -370,10 +378,28 @@ void BaseGameScene::Initialize() {
     cursorSprite_->Initialize("resources/Menu/cursor.png");
     cursorSprite_->SetPosition(pauseSprite_[0]->GetPosition());
 
+    // フレーム
+    frameSprite_ = std::make_unique<Sprite>();
+    frameSprite_->Initialize("resources/frame.png");
+    frameSprite_->SetAnchorPoint({0.5f, 0.5f});
+    frameSprite_->SetPosition({640.0f, -300.0f});
 
-    notEnougthThreadSprite_ = std::make_unique<Sprite>();
-    notEnougthThreadSprite_->Initialize("resources/uvChecker.png");
-    notEnougthThreadSprite_->SetPosition({0.0f, 0.0f});
+    // 失敗時の文章
+    stuckSprite_ = std::make_unique<Sprite>();
+    stuckSprite_->Initialize("resources/stuck.png");
+    stuckSprite_->SetAnchorPoint({0.5f, 0.5f});
+    stuckSprite_->SetPosition({640.0f, -300.0f});
+    stuckSpriteOriginalSize_ = stuckSprite_->GetSize();
+
+    resetButtonSprite_ = std::make_unique<Sprite>();
+    resetButtonSprite_->Initialize("resources/resetButton.png");
+    resetButtonSprite_->SetAnchorPoint({0.5f, 0.5f});
+    resetButtonSprite_->SetPosition({530.0f, -245.0f});
+
+    rKeySprite_ = std::make_unique<Sprite>();
+    rKeySprite_->Initialize("resources/rKey.png");
+    rKeySprite_->SetAnchorPoint({0.5f, 0.5f});
+    rKeySprite_->SetPosition({530.0f, -245.0f});
 
     // コントローラーUIの初期化
     for (int i = 0; i < 4; i++)
@@ -670,6 +696,16 @@ void BaseGameScene::Update()
         }
 
         if (player_->GetRemainingThreadCount() <= 0) {
+            // ★追加: 現在の未回収素材リストを更新して渡す
+            std::vector<Vector3> uncollectedMaterialPositions;
+            for (auto& nestMaterial : nestMaterial_) {
+                if (!nestMaterial->IsDead()) {
+                    uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+                }
+            }
+            player_->SetMaterialPositions(uncollectedMaterialPositions);
+
+            // 経路チェック
             player_->CheckRouteToGoal();
         }
     }
@@ -729,8 +765,65 @@ void BaseGameScene::Update()
     hpSprite_->SetSize(Vector2{ 15.0f * egg_->GetHP(), 50.0f });
     hpSprite_->Update();
 
-    notEnougthThreadSprite_->Update();
+    // Check if we are no longer stuck (e.g. remaining thread count > 0 or route check succeeded)
+    if (isShowStuck_) {
+        if (!player_->GetRouteCheckFailed() || player_->GetRemainingThreadCount() > 0) {
+            isShowStuck_ = false;
+            stuckAnimTime_ = 0.0f;
+            if (frameSprite_) {
+                frameSprite_->SetPosition({ 640.0f, -300.0f });
+                frameSprite_->Update();
+            }
+            if (stuckSprite_) {
+                stuckSprite_->SetPosition({ 640.0f, -300.0f });
+                stuckSprite_->Update();
+            }
+            if (rKeySprite_) {
+                rKeySprite_->SetPosition({ 540.0f, -240.0f });
+                rKeySprite_->Update();
+            }
+            if (resetButtonSprite_) {
+                resetButtonSprite_->SetPosition({ 540.0f, -240.0f });
+                resetButtonSprite_->Update();
+            }
+        }
+    }
 
+    if (isShowStuck_ && stuckSprite_) {
+        // Easing animation for stuckSprite and frameSprite (dropping from above)
+        if (stuckAnimTime_ < 1.0f) {
+            stuckAnimTime_ += 1.0f / 60.0f; // Animate over 0.6 seconds
+            if (stuckAnimTime_ > 1.0f) {
+                stuckAnimTime_ = 1.0f;
+            }
+        }
+
+        // Apply easeOutElastic
+        float t_elastic = easeOutElastic(stuckAnimTime_);
+
+        // Calculate Y positions with overshoot
+        float frameY = -300.0f + (360.0f - (-300.0f)) * t_elastic;
+        float stuckY = -340.0f + (320.0f - (-340.0f)) * t_elastic;
+        float buttonY = -245.0f + (420.0f - (-245.0f)) * t_elastic;
+
+        if (frameSprite_) {
+            frameSprite_->SetPosition({ 640.0f, frameY });
+            frameSprite_->Update();
+        }
+        stuckSprite_->SetPosition({ 640.0f, stuckY });
+        stuckSprite_->Update();
+
+        if (rKeySprite_) {
+            rKeySprite_->SetPosition({ 530.0f, buttonY });
+        }
+        if (resetButtonSprite_) {
+            resetButtonSprite_->SetPosition({ 530.0f, buttonY });
+        }
+    } else {
+        if (frameSprite_) {
+            frameSprite_->Update();
+        }
+    }
 
     for (auto& button : buttonSprite_)
     {
@@ -739,6 +832,8 @@ void BaseGameScene::Update()
 
     keyboard_->Update();
     pad_->Update();
+    rKeySprite_->Update();
+    resetButtonSprite_->Update();
 
 
     if (!isClear_)
@@ -788,6 +883,7 @@ void BaseGameScene::Update()
         if (JSONManager::GetInstance()->TryGetInt("Player", "remainingThreadCount", remaining)) {
             player_->SetMaxThreadCount(remaining);
         }
+        player_->SetRouteCheckFailed(false);
 
         // 巣の素材データをリセット
         for (auto& nestMaterial : nestMaterial_)
@@ -796,6 +892,25 @@ void BaseGameScene::Update()
         }
 
         player_->ResetNestMaterial();
+
+        isShowStuck_ = false;
+        stuckAnimTime_ = 0.0f;
+        if (frameSprite_) {
+            frameSprite_->SetPosition({ 640.0f, -300.0f });
+            frameSprite_->Update();
+        }
+        if (stuckSprite_) {
+            stuckSprite_->SetPosition({ 640.0f, -300.0f });
+            stuckSprite_->Update();
+        }
+        if (rKeySprite_) {
+            rKeySprite_->SetPosition({ 530.0f, -245.0f });
+            rKeySprite_->Update();
+        }
+        if (resetButtonSprite_) {
+            resetButtonSprite_->SetPosition({ 530.0f, -245.0f });
+            resetButtonSprite_->Update();
+        }
 
         // 2. リセットが完了したら、フェードインを開始する
         fade_->StartFadeIn(0.02f);
@@ -925,6 +1040,7 @@ void BaseGameScene::Draw() {
         {
             keyboard_->Draw();
 
+
             for (int i = 2; i < 4; i++)
             {
                 buttonSprite_[i]->Draw();
@@ -941,7 +1057,17 @@ void BaseGameScene::Draw() {
     }
 
     if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
-        notEnougthThreadSprite_->Draw();
+        frameSprite_->Draw();
+
+        if (isShowStuck_ && stuckSprite_) {
+            stuckSprite_->Draw();
+        }
+
+        if (Input::GetInstance()->GetConnectedStickNum() == 0) {
+            rKeySprite_->Draw();
+        } else {
+            resetButtonSprite_->Draw();
+        }
     }
 
     // GameScene並びにTutorialSceneでの描画

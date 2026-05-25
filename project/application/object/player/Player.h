@@ -178,6 +178,7 @@ public:
 
     // 経路チェックが失敗したかどうかを取得する
     bool GetRouteCheckFailed() const { return routeCheckFailed_; }
+    void SetRouteCheckFailed(bool failed) { routeCheckFailed_ = failed; }
 
 private:
     // 現在乗っているOneWayObjectのポインタ
