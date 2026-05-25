@@ -893,6 +893,10 @@ void BaseGameScene::Update()
 
         player_->ResetNestMaterial();
 
+        // 卵のデータをリセット
+        egg_->ResetHP(10.0f);
+        egg_->SetOnPlayer(false);
+
         isShowStuck_ = false;
         stuckAnimTime_ = 0.0f;
         if (frameSprite_) {

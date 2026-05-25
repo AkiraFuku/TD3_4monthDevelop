@@ -37,6 +37,7 @@ public:
 
     // ヒットフラグをセット
     void SetHitFlag(bool isHit) { isHit_ = isHit; }
+    void SetOnPlayer(bool onPlayer) { onPlayer_ = onPlayer; }
 
     // プレイヤーのポインタ
     void SetPlayer(Player* player) { player_ = player; }
@@ -49,6 +50,7 @@ public:
     // HPを減らす
     void SetHP(float hp);
     float GetHP() const { return HP_; }
+    void ResetHP(float hp) { HP_ = hp; }
 
     // 死亡判定
     void Death();
