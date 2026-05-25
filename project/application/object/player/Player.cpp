@@ -887,6 +887,7 @@ static void RescuePoint(
     }
 }
 
+
 // =============================================================
 // CheckRouteToGoal
 // 「現在の糸の本数（remainingThreadCount_）が 0 の状態」つまり
@@ -896,7 +897,7 @@ static void RescuePoint(
 //   1. プレイヤー → 未収集素材1 → 未収集素材2 → … → ゴール
 //      という順序で順番に PathFinder を呼ぶ。
 //   2. いずれか1区間でも経路が見つからなければ「到達不可」とみなす。
-//   3. 結果は routeCheckFailed_ と routeFailReason_ にキャッシュする。
+//   3. 結果は routeCheckFailed_ にキャッシュし、失敗時は常に「糸が足りない」と表示する。
 // =============================================================
 void Player::CheckRouteToGoal() {
     // 前提情報が足りない場合は何もしない
@@ -909,49 +910,64 @@ void Player::CheckRouteToGoal() {
     // グリッド変換ラムダ（staticヘルパーに渡すため）
     auto g2w = [this](const Point& p) { return PlayerGridToWorld(p); };
 
-    // ---- 巡回順序: Player → 各素材 → ゴール ----
-    std::vector<Vector3> waypoints;
-    waypoints.push_back(translate_);                         // 出発点
-    for (const auto& mat : materialPositions_) {
-        waypoints.push_back(mat);                            // 素材（収集順は追加順）
-    }
-    waypoints.push_back(goalPos_);                           // ゴール
+    // 素材のリストをコピーしてソート（全パターン探索用）
+    std::vector<Vector3> mats = materialPositions_;
+    auto comp = [](const Vector3& a, const Vector3& b) {
+        if (a.x != b.x) return a.x < b.x;
+        if (a.y != b.y) return a.y < b.y;
+        return a.z < b.z;
+        };
+    std::sort(mats.begin(), mats.end(), comp);
 
-    for (size_t i = 0; i + 1 < waypoints.size(); ++i) {
-        Point start = PlayerWorldToGrid(waypoints[i]);
-        Point goal = PlayerWorldToGrid(waypoints[i + 1]);
+    bool anyRouteFound = false;
 
-        RescuePoint(start, thread_, routeOneWays_, routeBrokenBlocks_, g2w);
-        RescuePoint(goal, thread_, routeOneWays_, routeBrokenBlocks_, g2w);
-
-        std::vector<Point> path = PathFinder::FindPath(
-            start, goal,
-            512, 512,
-            thread_,
-            *routeOneWays_,
-            *routeBrokenBlocks_);
-
-        if (path.empty()) {
-            routeCheckFailed_ = true;
-
-            // 失敗した区間を日本語で記録する（ImGui 表示用）
-            if (i == 0 && materialPositions_.empty()) {
-                routeFailReason_ = "Player -> Goal: can't move!";
-            } else if (i == 0) {
-                routeFailReason_ = "Player -> material[0]: can't move!";
-            } else if (i < materialPositions_.size()) {
-                routeFailReason_ = "material[" + std::to_string(i - 1) + "] -> material["
-                    + std::to_string(i) + "]: can't move!";
-            } else {
-                routeFailReason_ = "material[" + std::to_string(i - 1) + "] -> Goal: can't move!";
-            }
-            return;
+    // すべての素材回収順序パターンを試す
+    do {
+        // ---- 巡回順序: Player → (順列による各素材) → ゴール ----
+        std::vector<Vector3> waypoints;
+        waypoints.push_back(translate_); // 出発点
+        for (const auto& mat : mats) {
+            waypoints.push_back(mat); // 素材
         }
-    }
+        waypoints.push_back(goalPos_); // ゴール
 
-    // 全区間で経路が見つかった
-    routeCheckFailed_ = false;
-    routeFailReason_.clear();
+        bool currentRouteOk = true;
+        for (size_t i = 0; i + 1 < waypoints.size(); ++i) {
+            Point start = PlayerWorldToGrid(waypoints[i]);
+            Point goal = PlayerWorldToGrid(waypoints[i + 1]);
+
+            RescuePoint(start, thread_, routeOneWays_, routeBrokenBlocks_, g2w);
+            RescuePoint(goal, thread_, routeOneWays_, routeBrokenBlocks_, g2w);
+
+            std::vector<Point> path = PathFinder::FindPath(
+                start, goal, 512, 512, thread_, *routeOneWays_, *routeBrokenBlocks_);
+
+            if (path.empty()) {
+                currentRouteOk = false;
+                break; // このルート（順序）は通れないので次のパターンへ
+            }
+        }
+
+        if (currentRouteOk) {
+            anyRouteFound = true;
+            break; // 1つでもゴールまで繋がるルートがあれば探索成功！
+        }
+
+    } while (std::next_permutation(mats.begin(), mats.end(), comp));
+
+    // 結果の反映
+    if (!anyRouteFound) {
+        routeCheckFailed_ = true;
+        routeFailReason_ = "Route not found."; // デバッグ表示用に簡略化
+        if (gameScene_) {
+            // ★どの区間で失敗したかに関わらず、常に「素材が足りません」を描画
+            gameScene_->ShowStuck();
+        }
+    } else {
+        // 全区間で経路が見つかった
+        routeCheckFailed_ = false;
+        routeFailReason_.clear();
+    }
 }
 
 // =============================================================

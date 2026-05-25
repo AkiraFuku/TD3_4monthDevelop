@@ -10,6 +10,14 @@
 #include "Transform.h"
 #include "ParticleManager.h"
 
+namespace {
+    float easeOutElastic(float x) {
+        const float c4 = (2.0f * PI) / 3.0f;
+        return x == 0.0f ? 0.0f : x == 1.0f ? 1.0f :
+            std::pow(2.0f, -10.0f * x) * std::sin((x * 10.0f - 0.75f) * c4) + 1.0f;
+    }
+}
+
 void BaseGameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
@@ -370,10 +378,19 @@ void BaseGameScene::Initialize() {
     cursorSprite_->Initialize("resources/Menu/cursor.png");
     cursorSprite_->SetPosition(pauseSprite_[0]->GetPosition());
 
+    // フレーム
+    frameSprite_ = std::make_unique<Sprite>();
+    frameSprite_->Initialize("resources/frame.png");
+    frameSprite_->SetAnchorPoint({0.5f, 0.5f});
+    frameSprite_->SetPosition({640.0f, 360.0f});
 
-    notEnougthThreadSprite_ = std::make_unique<Sprite>();
-    notEnougthThreadSprite_->Initialize("resources/uvChecker.png");
-    notEnougthThreadSprite_->SetPosition({0.0f, 0.0f});
+    // 失敗時の文章
+    stuckSprite_ = std::make_unique<Sprite>();
+    stuckSprite_->Initialize("resources/stuck.png");
+    stuckSprite_->SetAnchorPoint({0.5f, 0.5f});
+    stuckSprite_->SetPosition({640.0f, 320.0f});
+    stuckSpriteOriginalSize_ = stuckSprite_->GetSize();
+    stuckSprite_->SetSize({ 0.0f, 0.0f });
 
     // コントローラーUIの初期化
     for (int i = 0; i < 4; i++)
@@ -670,6 +687,16 @@ void BaseGameScene::Update()
         }
 
         if (player_->GetRemainingThreadCount() <= 0) {
+            // ★追加: 現在の未回収素材リストを更新して渡す
+            std::vector<Vector3> uncollectedMaterialPositions;
+            for (auto& nestMaterial : nestMaterial_) {
+                if (!nestMaterial->IsDead()) {
+                    uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+                }
+            }
+            player_->SetMaterialPositions(uncollectedMaterialPositions);
+
+            // 経路チェック
             player_->CheckRouteToGoal();
         }
     }
@@ -729,8 +756,33 @@ void BaseGameScene::Update()
     hpSprite_->SetSize(Vector2{ 15.0f * egg_->GetHP(), 50.0f });
     hpSprite_->Update();
 
-    notEnougthThreadSprite_->Update();
+    // Check if we are no longer stuck (e.g. remaining thread count > 0 or route check succeeded)
+    if (isShowStuck_) {
+        if (!player_->GetRouteCheckFailed() || player_->GetRemainingThreadCount() > 0) {
+            isShowStuck_ = false;
+            stuckAnimTime_ = 0.0f;
+            if (stuckSprite_) {
+                stuckSprite_->SetSize({ 0.0f, 0.0f });
+                stuckSprite_->Update();
+            }
+        }
+    }
 
+    frameSprite_->Update();
+    if (isShowStuck_ && stuckSprite_) {
+        // Easing animation for stuckSprite
+        if (stuckAnimTime_ < 1.0f) {
+            stuckAnimTime_ += 1.0f / 30.0f; // Animate over 0.5 seconds
+            if (stuckAnimTime_ > 1.0f) {
+                stuckAnimTime_ = 1.0f;
+            }
+        }
+
+        // Apply easeOutElastic
+        float t_elastic = easeOutElastic(stuckAnimTime_);
+        stuckSprite_->SetSize({ stuckSpriteOriginalSize_.x * t_elastic, stuckSpriteOriginalSize_.y * t_elastic });
+        stuckSprite_->Update();
+    }
 
     for (auto& button : buttonSprite_)
     {
@@ -788,6 +840,7 @@ void BaseGameScene::Update()
         if (JSONManager::GetInstance()->TryGetInt("Player", "remainingThreadCount", remaining)) {
             player_->SetMaxThreadCount(remaining);
         }
+        player_->SetRouteCheckFailed(false);
 
         // 巣の素材データをリセット
         for (auto& nestMaterial : nestMaterial_)
@@ -796,6 +849,13 @@ void BaseGameScene::Update()
         }
 
         player_->ResetNestMaterial();
+
+        isShowStuck_ = false;
+        stuckAnimTime_ = 0.0f;
+        if (stuckSprite_) {
+            stuckSprite_->SetSize({ 0.0f, 0.0f });
+            stuckSprite_->Update();
+        }
 
         // 2. リセットが完了したら、フェードインを開始する
         fade_->StartFadeIn(0.02f);
@@ -941,7 +1001,11 @@ void BaseGameScene::Draw() {
     }
 
     if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
-        notEnougthThreadSprite_->Draw();
+        frameSprite_->Draw();
+
+        if (isShowStuck_ && stuckSprite_) {
+            stuckSprite_->Draw();
+        }
     }
 
     // GameScene並びにTutorialSceneでの描画
