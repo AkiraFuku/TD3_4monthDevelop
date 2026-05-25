@@ -84,9 +84,9 @@ void BaseGameScene::Initialize() {
         // 例: 速度に基づいて位置を更新し、寿命を減少させる
         particle.uvTransform.offset.x += deltaTime / 2;
         };
-    TextureManager::GetInstance()->LoadTexture("resources/gradationLine.png");
+    TextureManager::GetInstance()->LoadTexture("resources/Cylinder.png");
     ParticleManager::GetInstance()->CreateParticleGroup(
-        "Test", "resources/gradationLine.png", ParticleManager::EffectType::Cylinder, initialize, update);
+        "Test", "resources/Cylinder.png", ParticleManager::EffectType::Cylinder, initialize, update);
     /*   std::vector<Sprite*> sprites;
        for (uint32_t i = 0; i < 5; i++)
        {*/
