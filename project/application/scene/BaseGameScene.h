@@ -173,6 +173,9 @@ protected:
   bool isShowStuck_ = false;
   Vector2 stuckSpriteOriginalSize_ = { 0.0f, 0.0f };
   float stuckAnimTime_ = 0.0f;
+  std::unique_ptr<Sprite> rKeySprite_;
+  std::unique_ptr<Sprite> resetButtonSprite_;
+  
 
   std::vector <std::unique_ptr<Sprite>> buttonSprite_;
   std::unique_ptr<Sprite> keyboard_;

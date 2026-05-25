@@ -382,15 +382,24 @@ void BaseGameScene::Initialize() {
     frameSprite_ = std::make_unique<Sprite>();
     frameSprite_->Initialize("resources/frame.png");
     frameSprite_->SetAnchorPoint({0.5f, 0.5f});
-    frameSprite_->SetPosition({640.0f, 360.0f});
+    frameSprite_->SetPosition({640.0f, -300.0f});
 
     // 失敗時の文章
     stuckSprite_ = std::make_unique<Sprite>();
     stuckSprite_->Initialize("resources/stuck.png");
     stuckSprite_->SetAnchorPoint({0.5f, 0.5f});
-    stuckSprite_->SetPosition({640.0f, 320.0f});
+    stuckSprite_->SetPosition({640.0f, -300.0f});
     stuckSpriteOriginalSize_ = stuckSprite_->GetSize();
-    stuckSprite_->SetSize({ 0.0f, 0.0f });
+
+    resetButtonSprite_ = std::make_unique<Sprite>();
+    resetButtonSprite_->Initialize("resources/resetButton.png");
+    resetButtonSprite_->SetAnchorPoint({0.5f, 0.5f});
+    resetButtonSprite_->SetPosition({530.0f, -245.0f});
+
+    rKeySprite_ = std::make_unique<Sprite>();
+    rKeySprite_->Initialize("resources/rKey.png");
+    rKeySprite_->SetAnchorPoint({0.5f, 0.5f});
+    rKeySprite_->SetPosition({530.0f, -245.0f});
 
     // コントローラーUIの初期化
     for (int i = 0; i < 4; i++)
@@ -761,18 +770,29 @@ void BaseGameScene::Update()
         if (!player_->GetRouteCheckFailed() || player_->GetRemainingThreadCount() > 0) {
             isShowStuck_ = false;
             stuckAnimTime_ = 0.0f;
+            if (frameSprite_) {
+                frameSprite_->SetPosition({ 640.0f, -300.0f });
+                frameSprite_->Update();
+            }
             if (stuckSprite_) {
-                stuckSprite_->SetSize({ 0.0f, 0.0f });
+                stuckSprite_->SetPosition({ 640.0f, -300.0f });
                 stuckSprite_->Update();
+            }
+            if (rKeySprite_) {
+                rKeySprite_->SetPosition({ 540.0f, -240.0f });
+                rKeySprite_->Update();
+            }
+            if (resetButtonSprite_) {
+                resetButtonSprite_->SetPosition({ 540.0f, -240.0f });
+                resetButtonSprite_->Update();
             }
         }
     }
 
-    frameSprite_->Update();
     if (isShowStuck_ && stuckSprite_) {
-        // Easing animation for stuckSprite
+        // Easing animation for stuckSprite and frameSprite (dropping from above)
         if (stuckAnimTime_ < 1.0f) {
-            stuckAnimTime_ += 1.0f / 30.0f; // Animate over 0.5 seconds
+            stuckAnimTime_ += 1.0f / 60.0f; // Animate over 0.6 seconds
             if (stuckAnimTime_ > 1.0f) {
                 stuckAnimTime_ = 1.0f;
             }
@@ -780,8 +800,29 @@ void BaseGameScene::Update()
 
         // Apply easeOutElastic
         float t_elastic = easeOutElastic(stuckAnimTime_);
-        stuckSprite_->SetSize({ stuckSpriteOriginalSize_.x * t_elastic, stuckSpriteOriginalSize_.y * t_elastic });
+
+        // Calculate Y positions with overshoot
+        float frameY = -300.0f + (360.0f - (-300.0f)) * t_elastic;
+        float stuckY = -340.0f + (320.0f - (-340.0f)) * t_elastic;
+        float buttonY = -245.0f + (420.0f - (-245.0f)) * t_elastic;
+
+        if (frameSprite_) {
+            frameSprite_->SetPosition({ 640.0f, frameY });
+            frameSprite_->Update();
+        }
+        stuckSprite_->SetPosition({ 640.0f, stuckY });
         stuckSprite_->Update();
+
+        if (rKeySprite_) {
+            rKeySprite_->SetPosition({ 530.0f, buttonY });
+        }
+        if (resetButtonSprite_) {
+            resetButtonSprite_->SetPosition({ 530.0f, buttonY });
+        }
+    } else {
+        if (frameSprite_) {
+            frameSprite_->Update();
+        }
     }
 
     for (auto& button : buttonSprite_)
@@ -791,6 +832,8 @@ void BaseGameScene::Update()
 
     keyboard_->Update();
     pad_->Update();
+    rKeySprite_->Update();
+    resetButtonSprite_->Update();
 
 
     if (!isClear_)
@@ -852,9 +895,21 @@ void BaseGameScene::Update()
 
         isShowStuck_ = false;
         stuckAnimTime_ = 0.0f;
+        if (frameSprite_) {
+            frameSprite_->SetPosition({ 640.0f, -300.0f });
+            frameSprite_->Update();
+        }
         if (stuckSprite_) {
-            stuckSprite_->SetSize({ 0.0f, 0.0f });
+            stuckSprite_->SetPosition({ 640.0f, -300.0f });
             stuckSprite_->Update();
+        }
+        if (rKeySprite_) {
+            rKeySprite_->SetPosition({ 530.0f, -245.0f });
+            rKeySprite_->Update();
+        }
+        if (resetButtonSprite_) {
+            resetButtonSprite_->SetPosition({ 530.0f, -245.0f });
+            resetButtonSprite_->Update();
         }
 
         // 2. リセットが完了したら、フェードインを開始する
@@ -985,6 +1040,7 @@ void BaseGameScene::Draw() {
         {
             keyboard_->Draw();
 
+
             for (int i = 2; i < 4; i++)
             {
                 buttonSprite_[i]->Draw();
@@ -1005,6 +1061,12 @@ void BaseGameScene::Draw() {
 
         if (isShowStuck_ && stuckSprite_) {
             stuckSprite_->Draw();
+        }
+
+        if (Input::GetInstance()->GetConnectedStickNum() == 0) {
+            rKeySprite_->Draw();
+        } else {
+            resetButtonSprite_->Draw();
         }
     }
 
