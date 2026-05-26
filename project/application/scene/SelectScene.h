@@ -26,7 +26,7 @@ private:
     std::unique_ptr<Object3d> background_;
     std::unique_ptr<Sprite> arrowSprite_;
     std::unique_ptr<Sprite> titleSprite_;
-    const uint32_t kStageNum_ = 3;
+    const uint32_t kStageNum_ = 4;
     int stageIndex = -1;
     uint32_t preIndex = 0;
     std::vector<Vector3> stagePos_;

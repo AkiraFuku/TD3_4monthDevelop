@@ -382,25 +382,25 @@ void BaseGameScene::Initialize() {
     // フレーム
     frameSprite_ = std::make_unique<Sprite>();
     frameSprite_->Initialize("resources/frame.png");
-    frameSprite_->SetAnchorPoint({0.5f, 0.5f});
-    frameSprite_->SetPosition({640.0f, -300.0f});
+    frameSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    frameSprite_->SetPosition({ 640.0f, -300.0f });
 
     // 失敗時の文章
     stuckSprite_ = std::make_unique<Sprite>();
     stuckSprite_->Initialize("resources/stuck.png");
-    stuckSprite_->SetAnchorPoint({0.5f, 0.5f});
-    stuckSprite_->SetPosition({640.0f, -300.0f});
+    stuckSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    stuckSprite_->SetPosition({ 640.0f, -300.0f });
     stuckSpriteOriginalSize_ = stuckSprite_->GetSize();
 
     resetButtonSprite_ = std::make_unique<Sprite>();
     resetButtonSprite_->Initialize("resources/resetButton.png");
-    resetButtonSprite_->SetAnchorPoint({0.5f, 0.5f});
-    resetButtonSprite_->SetPosition({530.0f, -245.0f});
+    resetButtonSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    resetButtonSprite_->SetPosition({ 530.0f, -245.0f });
 
     rKeySprite_ = std::make_unique<Sprite>();
     rKeySprite_->Initialize("resources/rKey.png");
-    rKeySprite_->SetAnchorPoint({0.5f, 0.5f});
-    rKeySprite_->SetPosition({530.0f, -245.0f});
+    rKeySprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    rKeySprite_->SetPosition({ 530.0f, -245.0f });
 
     // コントローラーUIの初期化
     for (int i = 0; i < 4; i++)
@@ -408,7 +408,7 @@ void BaseGameScene::Initialize() {
         std::string path = "resources/button/" + std::to_string(i) + ".png";
         auto button = std::make_unique<Sprite>();
         button->Initialize(path);
-        button->SetPosition(Vector2{ 0.0f ,0.0f});
+        button->SetPosition(Vector2{ 0.0f ,0.0f });
         button->SetSize(Vector2{ 100.0f,100.0f });
         buttonSprite_.push_back(std::move(button));
     }
@@ -438,6 +438,12 @@ void BaseGameScene::Initialize() {
     backgroundModel_->SetModel("backGround.obj");
     backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
     backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
+
+    // ステージナンバーを設定
+    num = CollisionMask::GetInstance()->GetCurrentStageID();
+
+    maxNum = static_cast<int>(CollisionMask::GetInstance()->GetMaxStageID());
+
 
 
 }
@@ -707,6 +713,7 @@ void BaseGameScene::Update()
         }
 
     }
+    player_->DrawRouteWarningImGui();
 
     // 1. すでに捕まっている敵のキーを収集
     std::vector<uint64_t> occupiedKeys;
@@ -828,7 +835,8 @@ void BaseGameScene::Update()
         if (resetButtonSprite_) {
             resetButtonSprite_->SetPosition({ 530.0f, buttonY });
         }
-    } else {
+    }
+    else {
         if (frameSprite_) {
             frameSprite_->Update();
         }
@@ -1022,10 +1030,18 @@ void BaseGameScene::Draw() {
     {
         if (t_ >= 1.0f)
         {
-
-            for (int i = 1; i < 3; i++)
+            if (num == maxNum)
             {
-                pauseSprite_[i]->Draw();
+
+                pauseSprite_[1]->Draw();
+
+            }
+            else
+            {
+                for (int i = 1; i < 3; i++)
+                {
+                    pauseSprite_[i]->Draw();
+                }
             }
 
             cursorSprite_->Draw();
@@ -1078,7 +1094,8 @@ void BaseGameScene::Draw() {
 
         if (Input::GetInstance()->GetConnectedStickNum() == 0) {
             rKeySprite_->Draw();
-        } else {
+        }
+        else {
             resetButtonSprite_->Draw();
         }
     }
@@ -1100,7 +1117,8 @@ void BaseGameScene::CheckAllCollisions() {
             egg_->OnCollision(player_.get());
             ResolveCollision(player_.get(), playerAABB, eggAABB);
         }
-    } else {
+    }
+    else {
         egg_->SetHitFlag(false);
     }
 
@@ -1120,7 +1138,8 @@ void BaseGameScene::CheckAllCollisions() {
             {
                 ResolveCollision(enemy.get(), enemyAABB, eggAABB);
             }
-        } else {
+        }
+        else {
             enemy->SetHitFlag(false);
         }
 
@@ -1287,6 +1306,8 @@ void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const 
 
 void BaseGameScene::Clear()
 {
+    
+
     // コントローラー入力を取得
     XINPUT_STATE joyState{};
     bool stickRightTrigger = false;
@@ -1334,11 +1355,25 @@ void BaseGameScene::Clear()
         {
             pauseSprite_[i]->SetPosition(Vector2{ (20.0f + (500.0f * (i - 1))), 500.0f });
         }
-        Vector2 pos = pauseSprite_[2]->GetPosition();
+
+        Vector2 pos; 
+
+        if (num == maxNum)
+        {
+            pos = pauseSprite_[1]->GetPosition();
+            pauseIndex_ = 1;
+        }
+        else
+        {
+            pos= pauseSprite_[2]->GetPosition();
+            pauseIndex_ = 2;
+        }
+ 
+
         pos.y += 200.0f;
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
-        pauseIndex_ = 2;
+
     }
     else
     {
@@ -1383,58 +1418,54 @@ void BaseGameScene::Clear()
                 if (pauseIndex_ == 1)
                 {
                     SceneManager::GetInstance()->ChangeScene("SelectScene");
-                } else if (pauseIndex_ == 2)
+                }
+                else if (pauseIndex_ == 2)
                 {
-                    // ステージナンバーを設定
-                    int num = CollisionMask::GetInstance()->GetCurrentStageID();
-
-                    int maxNum = static_cast<int>(CollisionMask::GetInstance()->GetMaxStageID());
-
-                    if (num == maxNum)
-                    {
-                        CollisionMask::GetInstance()->SetCurrentStageID(0);
-                    }
-                    else
-                    {
-                        CollisionMask::GetInstance()->SetCurrentStageID(num + 1);
-                    }
-
+                    CollisionMask::GetInstance()->SetCurrentStageID(num + 1);
                     SceneManager::GetInstance()->ChangeScene("GameScene");
                 }
             }
         }
         else
         {
-            if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
-                Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
-            {
-                if (pauseIndex_ < 2)
-                {
-                    pauseIndex_++;
-                }
-                else
-                {
-                    pauseIndex_ = 1;
-                }
-            }
-            else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
-                Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
-            {
-                if (pauseIndex_ > 1)
-                {
-                    pauseIndex_--;
-                }
-                else
-                {
-                    pauseIndex_ = 2;
-                }
-            }
-            else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+           
+            if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
+                return;
             }
+            
+            if (num != maxNum)
+            {
 
+                if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+                    Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
+                {
+                    if (pauseIndex_ < 2)
+                    {
+                        pauseIndex_++;
+                    }
+                    else
+                    {
+                        pauseIndex_ = 1;
+                    }
+                }
+                else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+                    Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
+                {
+                    if (pauseIndex_ > 1)
+                    {
+                        pauseIndex_--;
+                    }
+                    else
+                    {
+                        pauseIndex_ = 2;
+                    }
+                }
+
+            }
+            
         }
 
         Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
