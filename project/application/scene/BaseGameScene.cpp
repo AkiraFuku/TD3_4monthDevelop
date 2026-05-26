@@ -713,8 +713,7 @@ void BaseGameScene::Update()
         }
 
     }
-    player_->DrawRouteWarningImGui();
-
+    
     // 1. すでに捕まっている敵のキーを収集
     std::vector<uint64_t> occupiedKeys;
     for (auto& enemy : enemies_) {
