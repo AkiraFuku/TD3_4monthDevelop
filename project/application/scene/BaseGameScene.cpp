@@ -690,7 +690,10 @@ void BaseGameScene::Update()
     player_->SetMaterialPositions(uncollectedMaterialPositions);
     player_->SetNeedNestMaterialCount(goal_->GetNeedNestCount());
 
-    player_->Update();
+    if(!isShowStuck_)
+    {
+        player_->Update();
+    }
 
     // ゴールの更新処理
     goal_->Update();
@@ -724,10 +727,12 @@ void BaseGameScene::Update()
 
     //// 2. 敵の更新（リストを渡す）
 
+    if(!isShowStuck_)
+    {
+        for (auto& enemy : enemies_) {
 
-    for (auto& enemy : enemies_) {
-
-        enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
+            enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
+        }
     }
 
     // 糸の更新処理
