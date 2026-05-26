@@ -40,10 +40,13 @@ void SelectScene::Initialize()
 
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/Menu/cursor.png");
-    arrowPos_ = titleSprite_->GetPosition();
-    arrowPos_.y -= 600.0f;
-    arrowSprite_->SetPosition(arrowPos_);
-    stageIndex = -1;
+    stageIndex = 0;
+    Vector2 pos;
+    pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
+    pos.x += 450.0f;
+    pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
+    arrowSprite_->SetPosition(pos);
+    
 
     background_ = std::make_unique<Object3d>();
     background_->Initialize();
