@@ -167,6 +167,8 @@
     <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
     <ClInclude Include="application\scene\TutorialScene.h" />
     <ClInclude Include="application\scene\GameScene.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="engine\Tool\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
@@ -177,5 +179,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="IconResource.rc" />
   </ItemGroup>
 </Project>
