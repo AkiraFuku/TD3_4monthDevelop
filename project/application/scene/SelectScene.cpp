@@ -16,11 +16,11 @@ void SelectScene::Initialize()
     // テクスチャの読み込み
     stagePos_ =
     {
-        {-3.5f,0.0f,12.0f},
+        {-4.0f,0.0f,12.0f},
         {-2.0f,0.0f,12.0f},
-        {-0.5f,0.0f,12.0f},
-        {1.0f,0.0f,12.0f},
-        { 3.5f,0.0f,12.0f }
+        {0.0f,0.0f,12.0f},
+        {2.0f,0.0f,12.0f},
+        { 4.0f,0.0f,12.0f }
     };
 
     for (uint32_t i = 0; i < kStageNum_; i++)
@@ -31,6 +31,7 @@ void SelectScene::Initialize()
         ModelManager::GetInstance()->LoadModel("resources", path);
         object->AddModel(path, "egg");
         object->SetTranslate(stagePos_[i]);
+        object->SetScale(Vector3{ 0.8f,0.8f,0.8f });
         objects_.push_back(std::move(object));
     }
 
