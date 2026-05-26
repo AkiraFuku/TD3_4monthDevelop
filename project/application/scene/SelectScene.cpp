@@ -196,7 +196,8 @@ void SelectScene::MoveCursor()
         else
         {
             // ゲームシーンに移行
-            CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 4);
+           // CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 4);
+            CollisionMask::GetInstance()->SetCurrentStageID(8);
             SceneManager::GetInstance()->ChangeScene("GameScene");
         }
        

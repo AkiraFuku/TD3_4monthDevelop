@@ -28,14 +28,7 @@ void JSONManager::Finalize()
 
 void JSONManager::RegisterGroup(const std::string& groupName, Group group)
 {
-    //// グループを検索
-   //std::map<std::string, Group>::iterator itGroup = datas_.find(groupName);
 
-   //// 未登録チェック
-   //if (itGroup != datas_.end())
-   //{
-
-   //}
 
     if (datas_.contains(groupName))
     {

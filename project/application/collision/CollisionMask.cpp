@@ -25,7 +25,7 @@ void CollisionMask::Finalize()
 
 void CollisionMask::Initialize()
 {
-    for (size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < 9; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -53,33 +53,7 @@ void CollisionMask::Initialize()
         LoadJsonData(i);
     }
 
-   /* LoadFromFile("resources/Mask/Mask.png", stageDatas_[0]->maskData_->textureData);
-    stageDatas_[0]->maskData_->name = "mapMaskData";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[0]->maskData_->name, "resources/Mask/Mask.png");
-    
-    LoadFromFile("resources/Mask/Mask(1).png", stageDatas_[1]->maskData_->textureData);
-    stageDatas_[1]->maskData_->name = "mapMaskData1";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[1]->maskData_->name, "resources/Mask/Mask(1).png");
-    
-    LoadFromFile("resources/Mask/Mask(2).png", stageDatas_[2]->maskData_->textureData);
-    stageDatas_[2]->maskData_->name = "mapMaskData2";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[2]->maskData_->name, "resources/Mask/Mask(2).png");
-    
-    LoadFromFile("resources/Mask/Mask(3).png", stageDatas_[3]->maskData_->textureData);
-    stageDatas_[3]->maskData_->name = "mapMaskData3";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[3]->maskData_->name, "resources/Mask/Mask(3).png");*/
-
-    /*for (size_t i = 0; i < 4; i++)
-    {
-        GenerateSDF(stageDatas_[i]->maskData_.get());
-
-        stageDatas_[i]->maskData_->object->SetModel(stageDatas_[i]->maskData_->name);
-
-        auto model = ModelManager::GetInstance()->findModel(stageDatas_[i]->maskData_->name);
-
-        stageDatas_[i]->maskData_->max_ = model->GetModelData().vertices[1].position;
-        stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
-    }*/
+  
     
     currentStageID_ = static_cast<StageID>(stageID_);
 
@@ -224,10 +198,7 @@ void CollisionMask::Update()
         SetMaskMapRequest(static_cast<StageID>(maskMapIndex));
     }
 
-   /* if (ImGui::Button("Save"))
-    {
-        SaveJsonData();
-    }*/
+  
 
     if (ImGui::Button("Load"))
     {
