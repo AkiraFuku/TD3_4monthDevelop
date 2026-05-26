@@ -165,8 +165,8 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
                 // 糸の先端（t=0 や t=1）に無理やり引っ張られるのを防ぐため、
                 // 糸の中間部分にいる時だけX, Z座標を糸の上に補正する
                 if (query.t > 0.01f && query.t < 0.99f) {
-                    currentPos.x += (query.closestPoint.x - currentPos.x) * 0.3f;
-                    currentPos.z += (query.closestPoint.z - currentPos.z) * 0.3f;
+                    currentPos.x += (query.closestPoint.x - currentPos.x) * 0.15f;
+                    currentPos.z += (query.closestPoint.z - currentPos.z) * 0.15f;
                 }
             }
         }
@@ -302,7 +302,9 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
                 float distSq = diff.x * diff.x + diff.z * diff.z;
 
                 // 交差点の半径内に入ったかチェック
-                if (distSq <= intersect.radius * intersect.radius) {
+                float hitRadius = intersect.radius + 0.3f;
+
+                if (distSq <= hitRadius * hitRadius) {
                     // 捕獲成功！
                     isTrapped_ = true;      // 蜘蛛の巣フラグをON
                     if (webEffect_) 
