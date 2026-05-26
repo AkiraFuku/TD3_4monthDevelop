@@ -56,6 +56,7 @@ public:
         Map3,
         Map5,
         Map6,
+        Map7,
 
         Unknown,
     };
