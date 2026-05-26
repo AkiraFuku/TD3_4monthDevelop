@@ -269,3 +269,13 @@ float TutorialScene::EaseInBack(float t) const
     const float c3 = c1 + 1.0f;
     return c3 * t * t * t - c1 * t * t;
 }
+
+bool TutorialScene::IfPause()
+{
+    if (phase_ == TutorialPhase::kPlaying)
+    {
+        return true;
+    }
+
+    return false;
+}

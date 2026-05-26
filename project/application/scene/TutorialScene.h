@@ -18,6 +18,8 @@ public:
 
     bool IsGameFreeze() const override;
 
+    bool IfPause() override;
+
 
     // イージング関数
     float EaseOutBounce(float t) const;  // 降ってくる用

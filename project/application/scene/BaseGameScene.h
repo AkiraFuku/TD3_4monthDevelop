@@ -64,6 +64,7 @@ public:
     virtual void UpdateExtra() = 0;
     virtual void DrawExtra() = 0;
     virtual void LoadStage() = 0;
+    virtual bool IfPause() = 0;
 
     void ShowStuck() {
         if (!isShowStuck_) {

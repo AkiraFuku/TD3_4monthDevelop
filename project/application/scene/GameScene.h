@@ -16,6 +16,8 @@ public:
     void LoadStage() override;
 
     void OnClear() override;
+
+    bool IfPause() override;
 private:
 
 };

@@ -647,8 +647,11 @@ void BaseGameScene::Update()
     {
         if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) || Input::GetInstance()->TriggerKeyDown(DIK_Q))
         {
-            openPause_ = true;
-            return;
+            if(IfPause())
+            {
+                openPause_ = true;
+                return;
+            }
         }
     }
 
