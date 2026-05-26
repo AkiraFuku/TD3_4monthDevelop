@@ -154,7 +154,7 @@ void PlayerStateMove::Update(Player* player) {
     // ==========================================
     // VキーまたはLBボタンが押されているか（狙いを定めている状態か）判定
     bool isAiming = false;
-    if (Input::GetInstance()->PushedKeyDown(DIK_V) || Input::GetInstance()->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER)) {
+    if (Input::GetInstance()->PushedKeyDown(DIK_LSHIFT) || Input::GetInstance()->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER)) {
         isAiming = true;
     }
 
