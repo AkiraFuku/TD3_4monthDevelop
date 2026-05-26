@@ -16,9 +16,10 @@ void SelectScene::Initialize()
     // テクスチャの読み込み
     stagePos_ =
     {
-        {-2.5f,0.0f,12.0f},
-        {0.0f,0.0f,12.0f},
-        {2.5f,0.0f,12.0f}
+        {-3.5f,0.0f,12.0f},
+        {-1.0f,0.0f,12.0f},
+        {1.5f,0.0f,12.0f},
+        {4.0f,0.0f,12.0f}
     };
 
     for (uint32_t i = 0; i < kStageNum_; i++)
@@ -76,7 +77,7 @@ void SelectScene::Update()
     MoveCursor();
 
     // 選択されているモデルを動かす
-    if (stageIndex >= 0 && stageIndex <= 2)
+    if (stageIndex >= 0 && stageIndex <= 3)
     {
         Vector3 pos = objects_[stageIndex]->GetTranslate();
         pos.y = sinf(theta) * amplitude;
@@ -154,7 +155,7 @@ void SelectScene::MoveCursor()
         stageIndex++;
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
-        if (stageIndex == 3)
+        if (stageIndex == 4)
         {
             stageIndex = -1;
         }
@@ -166,7 +167,7 @@ void SelectScene::MoveCursor()
 
         if (stageIndex == -2)
         {
-            stageIndex = 2;
+            stageIndex = 3;
         }
         
 
