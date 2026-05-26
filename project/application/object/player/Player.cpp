@@ -641,7 +641,7 @@ void Player::UpdatePredictionLine() {
     canDrawPrediction_ = false;
 
     // 1. キーが押されていなければ終了
-    if (!(Input::GetInstance()->PushedKeyDown(DIK_V) || Input::GetInstance()->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))) {
+    if (!(Input::GetInstance()->PushedKeyDown(DIK_LSHIFT) || Input::GetInstance()->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))) {
         return;
     }
 
