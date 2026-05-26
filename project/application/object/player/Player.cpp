@@ -9,12 +9,12 @@
 #include "Egg.h"
 #include "OneWayObject.h"
 #include "GameScene.h"
-#include "PathFinder.h"
 
 #include <cmath>
 #include <numbers>
 #include <algorithm>
 #include <string>
+#include <deque>
 
 #include "PSOManager.h"
 #include "Logger.h"
@@ -88,7 +88,6 @@ void Player::Update() {
         if (state_) {
             state_->Update(this);
         }
-
     }
     if (onThread_) {
 
@@ -815,199 +814,6 @@ void Player::LoadJson() {
     ResultMove();
 }
 
-// =============================================================
-// グリッド変換ユーティリティ（Enemy と同じアルゴリズム）
-// =============================================================
-Point Player::PlayerWorldToGrid(const Vector3& pos) const {
-    const float offset = 256.0f;
-    int gx = static_cast<int>(std::floor(pos.x + offset));
-    int gz = static_cast<int>(std::floor(pos.z + offset));
-    if (gx < 0) gx = 0; if (gx >= 512) gx = 511;
-    if (gz < 0) gz = 0; if (gz >= 512) gz = 511;
-    return {gx, gz};
-}
-
-Vector3 Player::PlayerGridToWorld(const Point& grid) const {
-    const float offset = 256.0f;
-    return {
-        static_cast<float>(grid.x) - offset + 0.5f,
-        0.0f,
-        static_cast<float>(grid.y) - offset + 0.5f
-    };
-}
-
-// =============================================================
-// スタート/ゴール点を壁の外へ引き出すヘルパー（Enemy と同じ）
-// =============================================================
-static void RescuePoint(
-    Point& p,
-    ThreadManager* tm,
-    const std::vector<std::unique_ptr<OneWayObject>>* oneWays,
-    const std::vector<std::unique_ptr<BrokenBlock>>* brokenBlocks,
-    const std::function<Vector3(const Point&)>& gridToWorld) {
-    auto IsBlocked = [&](const Point& pt) -> bool {
-        if (pt.x < 0 || pt.x >= 512 || pt.y < 0 || pt.y >= 512) return true;
-        Vector3 wp = gridToWorld(pt);
-
-        bool isWall = CollisionMask::GetInstance()->IsWall(wp.x, wp.z);
-
-        // 壊れるブロック上なら通れる
-        if (isWall && brokenBlocks) {
-            for (const auto& br : *brokenBlocks) {
-                if (br && br->IsInside(wp) && !br->IsBroken()) {
-                    isWall = false;
-                    break;
-                }
-            }
-        }
-
-        // 糸の上なら通れる
-        if (isWall && tm) {
-            for (auto& physics : tm->GetPhysicsList()) {
-                for (const auto& node : physics->GetNodes()) {
-                    float dx = node.currentPos.x - wp.x;
-                    float dz = node.currentPos.z - wp.z;
-                    if ((dx * dx + dz * dz) < 0.64f) {
-                        isWall = false;
-                        break;
-                    }
-                }
-                if (!isWall) break;
-            }
-        }
-        return isWall;
-        };
-
-    if (!IsBlocked(p)) return;
-
-    for (int dist = 1; dist <= 5; ++dist) {
-        for (int dx = -dist; dx <= dist; ++dx) {
-            for (int dy = -dist; dy <= dist; ++dy) {
-                if (std::abs(dx) != dist && std::abs(dy) != dist) continue;
-                Point test = {p.x + dx, p.y + dy};
-                if (!IsBlocked(test)) {
-                    p = test;
-                    return;
-                }
-            }
-        }
-    }
-}
-
-
-// =============================================================
-// CheckRouteToGoal
-// 「現在の糸の本数（remainingThreadCount_）が 0 の状態」つまり
-// これ以上糸を張れない前提で、全素材 → ゴールへの経路が存在するかを確認する。
-//
-// 判定ロジック：
-//   1. プレイヤー → 未収集素材1 → 未収集素材2 → … → ゴール
-//      という順序で順番に PathFinder を呼ぶ。
-//   2. いずれか1区間でも経路が見つからなければ「到達不可」とみなす。
-//   3. 結果は routeCheckFailed_ にキャッシュし、失敗時は常に「糸が足りない」と表示する。
-// =============================================================
-void Player::CheckRouteToGoal() {
-    // 前提情報が足りない場合は何もしない
-    if (!thread_ || !routeOneWays_ || !routeBrokenBlocks_) {
-        routeCheckFailed_ = false;
-        routeFailReason_.clear();
-        return;
-    }
-
-    // グリッド変換ラムダ（staticヘルパーに渡すため）
-    auto g2w = [this](const Point& p) { return PlayerGridToWorld(p); };
-
-    // 素材のリストをコピーしてソート（全パターン探索用）
-    std::vector<Vector3> mats = materialPositions_;
-    auto comp = [](const Vector3& a, const Vector3& b) {
-        if (a.x != b.x) return a.x < b.x;
-        if (a.y != b.y) return a.y < b.y;
-        return a.z < b.z;
-        };
-    std::sort(mats.begin(), mats.end(), comp);
-
-    bool anyRouteFound = false;
-
-    // すべての素材回収順序パターンを試す
-    do {
-        // ---- 巡回順序: Player → (順列による各素材) → ゴール ----
-        std::vector<Vector3> waypoints;
-        waypoints.push_back(translate_); // 出発点
-        for (const auto& mat : mats) {
-            waypoints.push_back(mat); // 素材
-        }
-        waypoints.push_back(goalPos_); // ゴール
-
-        bool currentRouteOk = true;
-        for (size_t i = 0; i + 1 < waypoints.size(); ++i) {
-            Point start = PlayerWorldToGrid(waypoints[i]);
-            Point goal = PlayerWorldToGrid(waypoints[i + 1]);
-
-            RescuePoint(start, thread_, routeOneWays_, routeBrokenBlocks_, g2w);
-            RescuePoint(goal, thread_, routeOneWays_, routeBrokenBlocks_, g2w);
-
-            std::vector<Point> path = PathFinder::FindPath(
-                start, goal, 512, 512, thread_, *routeOneWays_, *routeBrokenBlocks_);
-
-            if (path.empty()) {
-                currentRouteOk = false;
-                break; // このルート（順序）は通れないので次のパターンへ
-            }
-        }
-
-        if (currentRouteOk) {
-            anyRouteFound = true;
-            break; // 1つでもゴールまで繋がるルートがあれば探索成功！
-        }
-
-    } while (std::next_permutation(mats.begin(), mats.end(), comp));
-
-    // 結果の反映
-    if (!anyRouteFound) {
-        routeCheckFailed_ = true;
-        routeFailReason_ = "Route not found."; // デバッグ表示用に簡略化
-        if (gameScene_) {
-            // ★どの区間で失敗したかに関わらず、常に「素材が足りません」を描画
-            gameScene_->ShowStuck();
-        }
-    } else {
-        // 全区間で経路が見つかった
-        routeCheckFailed_ = false;
-        routeFailReason_.clear();
-    }
-}
-
-// =============================================================
-// DrawRouteWarningImGui
-// 「糸を使い切ったのに到達不可」なときだけ警告ウィンドウを出す
-// =============================================================
-void Player::DrawRouteWarningImGui() {
-#ifdef USE_IMGUI
-    // 糸がまだ残っている間は表示しない
-    if (remainingThreadCount_ > 0) return;
-    // 到達可能なら表示しない
-    if (!routeCheckFailed_) return;
-
-    ImGui::SetNextWindowBgAlpha(0.85f);
-    ImGui::Begin("Route Warning", nullptr,
-                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-
-    ImGui::TextColored({1.0f, 0.3f, 0.3f, 1.0f}, "not enougth Thread!");
-    ImGui::Separator();
-
-    if (!routeFailReason_.empty()) {
-        ImGui::TextUnformatted(routeFailReason_.c_str());
-    }
-
-    ImGui::Spacing();
-    ImGui::Text("material: %d  /  FireThread: %d",
-                static_cast<int>(materialPositions_.size()) - nestMaterialNum_,
-                remainingThreadCount_);
-
-    ImGui::End();
-#endif
-}
-
 bool Player::TryMoveOnThread(const Vector3& moveDirection) {
     if (!thread_) {
         return false;
@@ -1214,4 +1020,255 @@ void Player::ResolveThreadMove() {
 
     // 3. 糸への重さの適用
     thread_->ApplyWeight(query.closestPoint, kThreadWeightRadius, kThreadWeight);
+}
+
+bool Player::CheckRoute() {
+    struct GridPoint {
+        int x, z;
+        bool operator==(const GridPoint& other) const { return x == other.x && z == other.z; }
+    };
+
+    struct BFSNode {
+        GridPoint pos;
+        bool isConnectedToThread;
+    };
+
+    auto WorldToGrid = [](const Vector3& pos) -> GridPoint {
+        const float offset = 256.0f;
+        int gx = (int)std::floor(pos.x + offset);
+        int gz = (int)std::floor(pos.z + offset);
+        if (gx < 0) gx = 0; if (gx >= 512) gx = 511;
+        if (gz < 0) gz = 0; if (gz >= 512) gz = 511;
+        return { gx, gz };
+    };
+
+    Vector3 playerPos = GetPosition();
+    GridPoint startGrid = WorldToGrid(playerPos);
+
+    bool startIsWall = CollisionMask::GetInstance()->IsWall(playerPos.x, playerPos.z);
+    
+    if (startIsWall) {
+        if (routeOneWays_) {
+            for (const auto& ow : *routeOneWays_) {
+                if (ow->IsInside(playerPos)) {
+                    startIsWall = false;
+                    break;
+                }
+            }
+        }
+        if (routeBrokenBlocks_ && startIsWall) {
+            for (const auto& br : *routeBrokenBlocks_) {
+                if (br->IsInside(playerPos) && !br->IsBroken()) {
+                    startIsWall = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    bool startConnectedToThread = false;
+    if (thread_) {
+        float checkRadiusSq = 2.54f; // 地上からでも糸の端点を検知できるように少し広めの判定にする
+        for (auto& physics : thread_->GetPhysicsList()) {
+            std::vector<PhysicsNode> tempNodes;
+            const auto* pNodes = &physics->GetNodes();
+            if (physics->IsAnimating()) {
+                Vector3 sPos = physics->GetStartPos();
+                Vector3 ePos = physics->GetEndPos();
+                size_t nCount = physics->GetNodes().size();
+                tempNodes.resize(nCount);
+                for (size_t idx = 0; idx < nCount; ++idx) {
+                    float tVal = static_cast<float>(idx) / (nCount - 1);
+                    tempNodes[idx].currentPos = sPos + (ePos - sPos) * tVal;
+                }
+                pNodes = &tempNodes;
+            }
+            const auto& nodes = *pNodes;
+
+            for (const auto& node : nodes) {
+                float dx = node.currentPos.x - playerPos.x;
+                float dz = node.currentPos.z - playerPos.z;
+                if ((dx * dx + dz * dz) < checkRadiusSq) {
+                    startConnectedToThread = true;
+                    break;
+                }
+            }
+            if (startConnectedToThread) break;
+        }
+    }
+
+    std::deque<BFSNode> queue;
+    queue.push_back({ startGrid, startConnectedToThread });
+
+    std::vector<uint8_t> visited(512 * 512, 0);
+    visited[startGrid.x + startGrid.z * 512] = startConnectedToThread ? 2 : 1;
+
+    bool reachedGoal = false;
+    std::vector<bool> reachedMaterials(materialPositions_.size(), false);
+
+    GridPoint directions[] = {
+        {0, 1}, {0, -1}, {1, 0}, {-1, 0},
+        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+
+    while (!queue.empty()) {
+        BFSNode current = queue.front();
+        queue.pop_front();
+
+        float curWorldX = (float)current.pos.x - 256.0f + 0.5f;
+        float curWorldZ = (float)current.pos.z - 256.0f + 0.5f;
+
+        if (std::abs(curWorldX - goalPos_.x) < 1.5f && std::abs(curWorldZ - goalPos_.z) < 1.5f) {
+            reachedGoal = true;
+        }
+
+        for (size_t i = 0; i < materialPositions_.size(); ++i) {
+            if (std::abs(curWorldX - materialPositions_[i].x) < 1.5f &&
+                std::abs(curWorldZ - materialPositions_[i].z) < 1.5f) {
+                reachedMaterials[i] = true;
+            }
+        }
+
+        for (const auto& dir : directions) {
+            GridPoint nextGrid = { current.pos.x + dir.x, current.pos.z + dir.z };
+
+            if (nextGrid.x < 0 || nextGrid.x >= 512 || nextGrid.z < 0 || nextGrid.z >= 512) {
+                continue;
+            }
+
+            float worldX = (float)nextGrid.x - 256.0f + 0.5f;
+            float worldZ = (float)nextGrid.z - 256.0f + 0.5f;
+            Vector3 worldPos = { worldX, playerPos.y, worldZ };
+
+            bool isWall = CollisionMask::GetInstance()->IsWall(worldX, worldZ);
+            bool onOneWay = false;
+            bool canPassOneWay = true;
+
+            if (routeOneWays_) {
+                for (const auto& ow : *routeOneWays_) {
+                    if (ow->IsInside(worldPos)) {
+                        Vector3 moveDir = { (float)dir.x, 0.0f, (float)dir.z };
+                        Vector3 curWorldPos = { curWorldX, 0.0f, curWorldZ };
+                        if (!ow->CanPass(moveDir, curWorldPos)) {
+                            canPassOneWay = false;
+                            break;
+                        }
+                        isWall = false;
+                        onOneWay = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!canPassOneWay) {
+                continue;
+            }
+
+            bool onBrokenBlock = false;
+            if (routeBrokenBlocks_) {
+                for (const auto& br : *routeBrokenBlocks_) {
+                    if (br->IsInside(worldPos) && !br->IsBroken()) {
+                        Vector3 curWorldPos = { curWorldX, 0.0f, curWorldZ };
+                        if (br->IsImpassable() && !br->IsInside(curWorldPos)) {
+                            continue;
+                        }
+                        isWall = false;
+                        onBrokenBlock = true;
+                        break;
+                    }
+                }
+            }
+
+            bool hasThread = false;
+            if (thread_) {
+                float radiusSq = 2.54f;
+                for (auto& physics : thread_->GetPhysicsList()) {
+                    std::vector<PhysicsNode> tempNodes;
+                    const auto* pNodes = &physics->GetNodes();
+                    if (physics->IsAnimating()) {
+                        Vector3 sPos = physics->GetStartPos();
+                        Vector3 ePos = physics->GetEndPos();
+                        size_t nCount = physics->GetNodes().size();
+                        tempNodes.resize(nCount);
+                        for (size_t idx = 0; idx < nCount; ++idx) {
+                            float tVal = static_cast<float>(idx) / (nCount - 1);
+                            tempNodes[idx].currentPos = sPos + (ePos - sPos) * tVal;
+                        }
+                        pNodes = &tempNodes;
+                    }
+                    const auto& nodes = *pNodes;
+
+                    if (nodes.empty()) continue;
+
+                    const auto& edgeStartNode = nodes.front();
+                    const auto& edgeEndNode = nodes.back();
+
+                    if (!isWall) {
+                        float dxStart = edgeStartNode.currentPos.x - worldX;
+                        float dzStart = edgeStartNode.currentPos.z - worldZ;
+                        float dxEnd = edgeEndNode.currentPos.x - worldX;
+                        float dzEnd = edgeEndNode.currentPos.z - worldZ;
+
+                        if ((dxStart * dxStart + dzStart * dzStart) < radiusSq ||
+                            (dxEnd * dxEnd + dzEnd * dzEnd) < radiusSq) {
+                            hasThread = true;
+                            break;
+                        }
+                    } else {
+                        float airRadiusSq = 0.64f;
+                        bool isSameThread = false;
+
+                        for (const auto& node : nodes) {
+                            float cdx = node.currentPos.x - curWorldX;
+                            float cdz = node.currentPos.z - curWorldZ;
+                            if ((cdx * cdx + cdz * cdz) < airRadiusSq) {
+                                isSameThread = true;
+                                break;
+                            }
+                        }
+
+                        if (current.isConnectedToThread && isSameThread) {
+                            for (const auto& node : nodes) {
+                                float dx = node.currentPos.x - worldX;
+                                float dz = node.currentPos.z - worldZ;
+                                if ((dx * dx + dz * dz) < airRadiusSq) {
+                                    hasThread = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (hasThread) break;
+                }
+            }
+
+            bool canPass = !isWall || hasThread;
+            if (!canPass) {
+                continue;
+            }
+
+            bool nextConnectedToThread = (!isWall && hasThread) || current.isConnectedToThread;
+            if (!isWall && !hasThread) {
+                nextConnectedToThread = false;
+            }
+
+            int index = nextGrid.x + nextGrid.z * 512;
+            int bitMask = nextConnectedToThread ? 2 : 1;
+
+            if (!(visited[index] & bitMask)) {
+                visited[index] |= bitMask;
+                queue.push_back({ nextGrid, nextConnectedToThread });
+            }
+        }
+    }
+
+    size_t reachedCount = 0;
+    for (bool r : reachedMaterials) {
+        if (r) reachedCount++;
+    }
+    bool allMaterialsReachable = (reachedCount == materialPositions_.size());
+
+    bool stuck = !reachedGoal || !allMaterialsReachable;
+    routeCheckFailed_ = stuck;
+    return stuck;
 }
