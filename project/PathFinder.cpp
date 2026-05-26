@@ -182,7 +182,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                         // -----------------------------------------------------------
                         if (!currentIsWall) {
                             // 🌟 ズレを吸収するため、結び目（端ノード）の感知半径を 2.54f に広げる
-                            float transitionRadiusSq = 2.54f;
+                            float transitionRadiusSq = 1.5f;
 
                             float dxStart = edgeStartNode.currentPos.x - worldX;
                             float dzStart = edgeStartNode.currentPos.z - worldZ;
