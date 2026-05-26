@@ -1,0 +1,39 @@
+{
+    "Stage8": {
+        "eggStartPos": {
+            "x": -10.0,
+            "y": 0.0,
+            "z": -4.0
+        },
+        "enemyStartPos": [
+            {
+                "x": -10.0,
+                "y": 0.0,
+                "z": 8.0
+            }
+        ],
+        "goalPos": {
+            "x": 10.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "nestMaterialPos": [
+            {
+                "x": -10.0,
+                "y": 0.0,
+                "z": 8.0
+            },
+            {
+                "x": 10.0,
+                "y": 0.0,
+                "z": 8.0
+            }
+        ],
+        "startPos": {
+            "x": -10.0,
+            "y": 0.0,
+            "z": -4.0
+        },
+        "texturePass": "resources/Mask/Mask(8).png"
+    }
+}

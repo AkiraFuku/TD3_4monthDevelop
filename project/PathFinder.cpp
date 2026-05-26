@@ -172,7 +172,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                     }
                     // 今調べている次のマスが「空中（isWall）」のとき
                     else {
-                        // 1歩前のマス（current）が地面だったか空中だったかを判定
+                        // 1歩前のマス（current＝今いる地面）のワールド座標を正確に計算
                         float curWorldX = (float)current->pos.x - 256.0f + 0.5f;
                         float curWorldZ = (float)current->pos.y - 256.0f + 0.5f;
                         bool currentIsWall = CollisionMask::GetInstance()->IsWall(curWorldX, curWorldZ);
@@ -181,34 +181,35 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                         // パターンA：【地面 ⇒ 空中】まさに今、崖から糸へ飛び移ろうとしている瞬間
                         // -----------------------------------------------------------
                         if (!currentIsWall) {
-                            // 🌟 ズレを吸収するため、結び目（端ノード）の感知半径を 2.54f に広げる
-                            float transitionRadiusSq = 1.5f;
+                            // ★【ここがポイント】
+                            // 判定基準を「次の空中マスの中心」ではなく、「今いる地面（崖のフチ）の中心」にする！
+                            // これにより、地面と糸が物理的に繋がっている時だけ半径内に収まるようになります。
+                            float transitionRadiusSq = 1.44f; // 1.2マスの距離（これだけあればズレは100%吸収可能）
 
-                            float dxStart = edgeStartNode.currentPos.x - worldX;
-                            float dzStart = edgeStartNode.currentPos.z - worldZ;
-                            float dxEnd = edgeEndNode.currentPos.x - worldX;
-                            float dzEnd = edgeEndNode.currentPos.z - worldZ;
+                            float dxStart = edgeStartNode.currentPos.x - curWorldX;
+                            float dzStart = edgeStartNode.currentPos.z - curWorldZ;
+                            float dxEnd = edgeEndNode.currentPos.x - curWorldX;
+                            float dzEnd = edgeEndNode.currentPos.z - curWorldZ;
 
-                            // 糸のどちらかの端っこ（結び目）が、この次の空中マスの近くにあるなら進入OK！
+                            // 糸のどちらかの端っこ（結び目）が、今自分がいる「地面マス」のすぐ近くにあるなら進入OK！
                             if ((dxStart * dxStart + dzStart * dzStart) < transitionRadiusSq ||
                                 (dxEnd * dxEnd + dzEnd * dzEnd) < transitionRadiusSq)
                             {
                                 hasThread = true;
+                            }
+                            else {
+                                // 結び目が地面の近くにない＝浮いている糸なので、絶対に進入させない
+                                hasThread = false;
                             }
                         }
                         // -----------------------------------------------------------
                         // パターンB：【空中 ⇒ 空中】すでに糸の上に乗っていて、糸を伝って前進している時
                         // -----------------------------------------------------------
                         else {
-                            // 判定半径（0.64f = 0.8マス分）
-                            float radiusSq = 0.64f;
+                            float radiusSq = 0.64f; // 0.8マス分（空中移動用のタイトな判定）
 
-                            // 1歩前のマス（current）がすでに糸ルートに乗っていることが大前提
                             if (current->isConnectedToThread) {
-
-                                // 🌟【並走フライング防止】
-                                // 1歩前のマス（curWorldX, curWorldZ）が、
-                                // 「今まさに精査しているこの一本の糸（physics）」に本当に乗っていたかをチェックする！
+                                // 【並走フライング防止】1歩前がこの一本の糸に本当に乗っていたか
                                 bool isSameThread = false;
                                 for (const auto& node : nodes) {
                                     float cdx = node.currentPos.x - curWorldX;
@@ -219,7 +220,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                                     }
                                 }
 
-                                // 1歩前がこの糸に乗っていた場合のみ、この糸の先への前進（または交差点での乗り換え）を許可する
+                                // 1歩前がこの糸に乗っていたなら、次の空中マス（worldX, worldZ）にノードがあるか
                                 if (isSameThread) {
                                     for (const auto& node : nodes) {
                                         float dx = node.currentPos.x - worldX;

@@ -302,7 +302,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
                 float distSq = diff.x * diff.x + diff.z * diff.z;
 
                 // 交差点の半径内に入ったかチェック
-                float hitRadius = intersect.radius + 0.3f;
+                float hitRadius = intersect.radius + 0.4f;
 
                 if (distSq <= hitRadius * hitRadius) {
                     // 捕獲成功！

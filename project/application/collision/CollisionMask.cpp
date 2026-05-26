@@ -25,7 +25,7 @@ void CollisionMask::Finalize()
 
 void CollisionMask::Initialize()
 {
-    for (size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < 9; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -47,7 +47,7 @@ void CollisionMask::Initialize()
 
     }
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 9; i++)
     {
         CreateJsonData(i);
         LoadJsonData(i);
@@ -107,7 +107,7 @@ void CollisionMask::Initialize()
 
 
 
-        rootParameters.resize(8);
+        rootParameters.resize(9);
 
 
 
@@ -198,7 +198,7 @@ void CollisionMask::Initialize()
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
 
-    for (size_t i = 0; i < 7; i++)
+    for (size_t i = 0; i < 9; i++)
     {
         stageDatas_[i]->maskData_.get()->object->SetPsoName("MaskMap");
     }
