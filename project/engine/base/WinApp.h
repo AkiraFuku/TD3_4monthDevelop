@@ -42,7 +42,7 @@ private: // メンバ変数
     // シングルトンインスタンス
     static std::unique_ptr<WinApp> instance;
     HWND hwnd = nullptr;
-    WNDCLASS wc{};
+    WNDCLASSEX wc{};
     //メッセージ
 
 };

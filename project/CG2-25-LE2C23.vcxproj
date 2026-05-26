@@ -124,6 +124,7 @@
     <ClInclude Include="engine\base\DXCommon.h" />
     <ClInclude Include="engine\audio\Audio.h" />
     <ClInclude Include="engine\Tool\ImGuiManager.h" />
+    <ClInclude Include="engine\Tool\resource.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />
     <ClInclude Include="externals\imgui\imgui.h" />
     <ClInclude Include="externals\imgui\imgui_impl_dx12.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="application\collision\Vector4Function.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
     <ClInclude Include="application\scene\SelectScene.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SpiderWebManager.h" />
     <ClInclude Include="application\object\StageModel.h" />
   </ItemGroup>
@@ -245,6 +247,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="IconResource.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
