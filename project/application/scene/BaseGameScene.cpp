@@ -273,6 +273,7 @@ void BaseGameScene::Initialize() {
     // =========================================================
     // 1. ゴール座標をセット
     player_->SetGoalPosition(goalPos);
+    player_->SetNeedNestMaterialCount(goal_->GetNeedNestCount());
 
     // 2. 未回収の素材座標リストを作成してセット
     std::vector<Vector3> uncollectedMaterialPositions;
@@ -673,6 +674,16 @@ void BaseGameScene::Update()
         ow->Update();
     }
 
+    // 毎フレーム、最新の未回収素材の位置リストを取得してプレイヤーに設定する
+    std::vector<Vector3> uncollectedMaterialPositions;
+    for (auto& nestMaterial : nestMaterial_) {
+        if (!nestMaterial->IsDead()) {
+            uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+        }
+    }
+    player_->SetMaterialPositions(uncollectedMaterialPositions);
+    player_->SetNeedNestMaterialCount(goal_->GetNeedNestCount());
+
     player_->Update();
 
     // ゴールの更新処理
@@ -695,21 +706,7 @@ void BaseGameScene::Update()
             enemy->RequestPathReplan();
         }
 
-        if (player_->GetRemainingThreadCount() <= 0) {
-            // ★追加: 現在の未回収素材リストを更新して渡す
-            std::vector<Vector3> uncollectedMaterialPositions;
-            for (auto& nestMaterial : nestMaterial_) {
-                if (!nestMaterial->IsDead()) {
-                    uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
-                }
-            }
-            player_->SetMaterialPositions(uncollectedMaterialPositions);
-
-            // 経路チェック
-            player_->CheckRouteToGoal();
-        }
     }
-        player_->DrawRouteWarningImGui();
 
     // 1. すでに捕まっている敵のキーを収集
     std::vector<uint64_t> occupiedKeys;
@@ -764,6 +761,18 @@ void BaseGameScene::Update()
     eggSprite_->Update();
     hpSprite_->SetSize(Vector2{ 15.0f * egg_->GetHP(), 50.0f });
     hpSprite_->Update();
+
+    // 糸の物理更新完了後に最新のスタック状態を判定
+    if (player_->GetRemainingThreadCount() <= 0) {
+        player_->CheckRoute();
+    } else {
+        player_->SetRouteCheckFailed(false);
+    }
+
+    // Player stuck check: trigger ShowStuck if stuck and out of threads
+    if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
+        ShowStuck();
+    }
 
     // Check if we are no longer stuck (e.g. remaining thread count > 0 or route check succeeded)
     if (isShowStuck_) {

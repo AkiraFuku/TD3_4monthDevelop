@@ -8,7 +8,6 @@
 #include "CollisionMask.h"
 #include "Audio.h"
 #include "PlayerAnima.h"
-#include "PathFinder.h"
 #include "Vector3.h"
 
 #include "JSONManager.h"
@@ -170,15 +169,16 @@ public:
         routeOneWays_ = oneWays;
         routeBrokenBlocks_ = brokenBlocks;
     }
-    // 現在の糸の本数で全素材＋ゴールに到達可能か判定しキャッシュする
-    // 糸を張るたびなど変化点で呼ぶ想定（毎フレーム呼んでも動くが重い）
-    void CheckRouteToGoal();
-    // ImGuiで到達不可警告を描画する
-    void DrawRouteWarningImGui();
 
     // 経路チェックが失敗したかどうかを取得する
     bool GetRouteCheckFailed() const { return routeCheckFailed_; }
     void SetRouteCheckFailed(bool failed) { routeCheckFailed_ = failed; }
+
+    // ゴールに必要な素材の数をセットする
+    void SetNeedNestMaterialCount(int count) { needNestMaterialCount_ = count; }
+
+    // 独自のスタック判定用経路探索 (BFS)
+    bool CheckRoute();
 
 private:
     // 現在乗っているOneWayObjectのポインタ
@@ -302,15 +302,12 @@ public:
 private:
     JSONManager::Group playerGroup_;
 
-    // ---- 経路チェック用メンバ ----
-    // グリッド変換ユーティリティ（Enemy と同じアルゴリズム）
-    Point PlayerWorldToGrid(const Vector3& pos) const;
-    Vector3 PlayerGridToWorld(const Point& grid) const;
-
     // ゴール座標（GameSceneからセット）
     Vector3 goalPos_ = {0.0f, 0.0f, 0.0f};
     // 収集すべき素材の座標リスト（GameSceneからセット）
     std::vector<Vector3> materialPositions_;
+    // ゴールに必要な素材の数
+    int needNestMaterialCount_ = 0;
 
     // 経路探索に使う外部オブジェクトリスト（所有権なし・ポインタのみ保持）
     const std::vector<std::unique_ptr<OneWayObject>>* routeOneWays_ = nullptr;

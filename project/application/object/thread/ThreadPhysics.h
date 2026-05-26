@@ -49,6 +49,10 @@ public:
     /// </summary>
     Vector3 GetNodePosition(int nodeIndex) const { return nodes_[nodeIndex].currentPos; }
 
+    const Vector3& GetStartPos() const { return startPos_; }
+    const Vector3& GetEndPos() const { return endPos_; }
+    bool IsAnimating() const { return isAnimating_; }
+
     /// <summary>
     /// 指定したノードに直接位置のオフセット（補正）を加える（交差点の引き寄せ用）
     /// </summary>
