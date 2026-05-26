@@ -239,7 +239,7 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
 
             // 2. 【修正】そのマスの「中」にある実際の糸の座標を探す
             Vector3 actualThreadTarget = targetGridPos; // 見つからない時のバックアップ
-            float closestDist = 2.0f; // 探す範囲（1.5〜2.0くらいが適当）
+            float closestDist = 2.5f; // 探す範囲（1.5〜2.0くらいが適当）
 
             if (tm) {
                 for (auto& physics : tm->GetPhysicsList()) {
