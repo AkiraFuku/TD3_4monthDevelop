@@ -292,6 +292,8 @@ void BaseGameScene::Initialize() {
 
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
+    enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
+    select_ = Audio::GetInstance()->LoadAudio("resources/sounds/select.wav");
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
@@ -482,8 +484,7 @@ void BaseGameScene::Update()
         debugCamera_.Update(camera->GetTransform());
         camera->SetTranslate(debugCamera_.GetTranslate());
         camera->SetWorldMatrix(debugCamera_.GetWorldMatrix());
-    }
-    else
+    } else
     {
         camera->Update();
     }
@@ -543,8 +544,7 @@ void BaseGameScene::Update()
     if (player_->OnThread()) {
         // 糸の上なら 緑色 で表示
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON THREAD: YES");
-    }
-    else {
+    } else {
         // 地面なら 赤色 で表示
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
     }
@@ -598,16 +598,14 @@ void BaseGameScene::Update()
         // IsInside (プレイヤーの中心座標がブロック内にあるか)
         if (isInside) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsInside: True (Player center is in block)");
-        }
-        else {
+        } else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsInside: False");
         }
 
         // IsRider (ブロックがプレイヤーの乗降をどう認識しているか)
         if (isRider) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsRider : True (Player is riding)");
-        }
-        else {
+        } else {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsRider : False");
         }
 
@@ -642,12 +640,11 @@ void BaseGameScene::Update()
     {
         Pause();
         return;
-    }
-    else
+    } else
     {
         if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) || Input::GetInstance()->TriggerKeyDown(DIK_Q))
         {
-            if(IfPause())
+            if (IfPause())
             {
                 openPause_ = true;
                 return;
@@ -693,7 +690,7 @@ void BaseGameScene::Update()
     player_->SetMaterialPositions(uncollectedMaterialPositions);
     player_->SetNeedNestMaterialCount(goal_->GetNeedNestCount());
 
-    if(!isShowStuck_)
+    if (!isShowStuck_)
     {
         player_->Update();
     }
@@ -705,8 +702,7 @@ void BaseGameScene::Update()
     Vector3 targetPos;
     if (egg_->IsOnPlayer()) {
         targetPos = player_->GetPosition();
-    }
-    else {
+    } else {
         targetPos = egg_->GetWorldPosition();
     }
 
@@ -719,7 +715,7 @@ void BaseGameScene::Update()
         }
 
     }
-    
+
     // 1. すでに捕まっている敵のキーを収集
     std::vector<uint64_t> occupiedKeys;
     for (auto& enemy : enemies_) {
@@ -730,7 +726,7 @@ void BaseGameScene::Update()
 
     //// 2. 敵の更新（リストを渡す）
 
-    if(!isShowStuck_)
+    if (!isShowStuck_)
     {
         for (auto& enemy : enemies_) {
 
@@ -842,8 +838,7 @@ void BaseGameScene::Update()
         if (resetButtonSprite_) {
             resetButtonSprite_->SetPosition({ 530.0f, buttonY });
         }
-    }
-    else {
+    } else {
         if (frameSprite_) {
             frameSprite_->Update();
         }
@@ -1021,8 +1016,7 @@ void BaseGameScene::Draw() {
             cursorSprite_->Draw();
             clearSprite_->Draw();
         }
-    }
-    else if (openPause_)
+    } else if (openPause_)
     {
         menuSprite_->Draw();
 
@@ -1032,8 +1026,7 @@ void BaseGameScene::Draw() {
         }
 
         cursorSprite_->Draw();
-    }
-    else  if (isClear_)
+    } else  if (isClear_)
     {
         if (t_ >= 1.0f)
         {
@@ -1042,8 +1035,7 @@ void BaseGameScene::Draw() {
 
                 pauseSprite_[1]->Draw();
 
-            }
-            else
+            } else
             {
                 for (int i = 1; i < 3; i++)
                 {
@@ -1054,8 +1046,7 @@ void BaseGameScene::Draw() {
             cursorSprite_->Draw();
             clearSprite_->Draw();
         }
-    }
-    else
+    } else
     {
         threadCountSprites_[player_->GetThreadCount()]->Draw();
         slashSprite_->Draw();
@@ -1081,8 +1072,7 @@ void BaseGameScene::Draw() {
             {
                 buttonSprite_[i]->Draw();
             }
-        }
-        else
+        } else
         {
             pad_->Draw();
             for (int i = 0; i < 2; i++)
@@ -1101,8 +1091,7 @@ void BaseGameScene::Draw() {
 
         if (Input::GetInstance()->GetConnectedStickNum() == 0) {
             rKeySprite_->Draw();
-        }
-        else {
+        } else {
             resetButtonSprite_->Draw();
         }
     }
@@ -1124,8 +1113,7 @@ void BaseGameScene::CheckAllCollisions() {
             egg_->OnCollision(player_.get());
             ResolveCollision(player_.get(), playerAABB, eggAABB);
         }
-    }
-    else {
+    } else {
         egg_->SetHitFlag(false);
     }
 
@@ -1145,8 +1133,7 @@ void BaseGameScene::CheckAllCollisions() {
             {
                 ResolveCollision(enemy.get(), enemyAABB, eggAABB);
             }
-        }
-        else {
+        } else {
             enemy->SetHitFlag(false);
         }
 
@@ -1217,15 +1204,13 @@ void BaseGameScene::ResolveCollision(Player* player, const AABB& playerAABB, con
         {
             currentPos.x += overlapX; // 右へ
         }
-    }
-    else
+    } else
     {
         // Z軸方向の押し戻し
         if (playerAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        }
-        else
+        } else
         {
             currentPos.z += overlapZ; // 奥へ
         }
@@ -1239,20 +1224,17 @@ void BaseGameScene::ResolveCollision(Player* player, const AABB& playerAABB, con
             if (playerAABB.min.x < otherAABB.min.x)
             {
                 currentPos.x += (overlapX * 2.0f);
-            }
-            else
+            } else
             {
                 currentPos.x -= (overlapX * 2.0f);
             }
-        }
-        else
+        } else
         {
             // Z軸方向の押し戻し
             if (playerAABB.min.z < otherAABB.min.z)
             {
                 currentPos.z += (overlapZ * 2.0f);
-            }
-            else
+            } else
             {
                 currentPos.z -= (overlapZ * 2.0f);
             }
@@ -1284,25 +1266,21 @@ void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const 
         {
             currentPos.x += overlapX; // 右へ
         }
-    }
-    else if (overlapZ < overlapX && overlapZ < overlapY) {
+    } else if (overlapZ < overlapX && overlapZ < overlapY) {
         // Z軸方向の押し戻し
         if (enemyAABB.min.z < otherAABB.min.z)
         {
             currentPos.z -= overlapZ; // 手前へ
-        }
-        else
+        } else
         {
             currentPos.z += overlapZ; // 奥へ
         }
-    }
-    else {
+    } else {
         // Y軸方向の押し戻し（床や天井）
         if (enemyAABB.min.y < otherAABB.min.y)
         {
             currentPos.y -= overlapY; // 下へ
-        }
-        else
+        } else
         {
             currentPos.y += overlapY; // 上へ
         }
@@ -1313,7 +1291,7 @@ void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const 
 
 void BaseGameScene::Clear()
 {
-    
+
 
     // コントローラー入力を取得
     XINPUT_STATE joyState{};
@@ -1363,26 +1341,24 @@ void BaseGameScene::Clear()
             pauseSprite_[i]->SetPosition(Vector2{ (20.0f + (500.0f * (i - 1))), 500.0f });
         }
 
-        Vector2 pos; 
+        Vector2 pos;
 
         if (num == maxNum)
         {
             pos = pauseSprite_[1]->GetPosition();
             pauseIndex_ = 1;
-        }
-        else
+        } else
         {
-            pos= pauseSprite_[2]->GetPosition();
+            pos = pauseSprite_[2]->GetPosition();
             pauseIndex_ = 2;
         }
- 
+
 
         pos.y += 200.0f;
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
 
-    }
-    else
+    } else
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
@@ -1425,24 +1401,22 @@ void BaseGameScene::Clear()
                 if (pauseIndex_ == 1)
                 {
                     SceneManager::GetInstance()->ChangeScene("SelectScene");
-                }
-                else if (pauseIndex_ == 2)
+                } else if (pauseIndex_ == 2)
                 {
                     CollisionMask::GetInstance()->SetCurrentStageID(num + 1);
                     SceneManager::GetInstance()->ChangeScene("GameScene");
                 }
             }
-        }
-        else
+        } else
         {
-           
+
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
                 return;
             }
-            
+
             if (num != maxNum)
             {
 
@@ -1452,27 +1426,24 @@ void BaseGameScene::Clear()
                     if (pauseIndex_ < 2)
                     {
                         pauseIndex_++;
-                    }
-                    else
+                    } else
                     {
                         pauseIndex_ = 1;
                     }
-                }
-                else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+                } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
                     Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
                 {
                     if (pauseIndex_ > 1)
                     {
                         pauseIndex_--;
-                    }
-                    else
+                    } else
                     {
                         pauseIndex_ = 2;
                     }
                 }
 
             }
-            
+
         }
 
         Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
@@ -1506,8 +1477,7 @@ void BaseGameScene::Pause()
                 SceneManager::GetInstance()->ChangeScene("SelectScene");
             }
         }
-    }
-    else
+    } else
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
@@ -1543,40 +1513,37 @@ void BaseGameScene::Pause()
         if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
         {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
             if (pauseIndex_ < 1)
             {
                 pauseIndex_++;
-            }
-            else
+            } else
             {
                 pauseIndex_ = 0;
             }
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
         {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
             if (pauseIndex_ > 0)
             {
                 pauseIndex_--;
-            }
-            else
+            } else
             {
                 pauseIndex_ = 1;
             }
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
         {
             openPause_ = false;
             return;
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
+            Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
             if (pauseIndex_ == 0)
             {
                 openPause_ = false;
                 return;
-            }
-            else
+            } else
             {
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
@@ -1612,14 +1579,12 @@ void BaseGameScene::GameOver()
             if (pauseIndex_ == 1)
             {
                 SceneManager::GetInstance()->ChangeScene("SelectScene");
-            }
-            else if (pauseIndex_ == 3)
+            } else if (pauseIndex_ == 3)
             {
                 SceneManager::GetInstance()->ChangeScene("GameScene");
             }
         }
-    }
-    else
+    } else
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
@@ -1658,25 +1623,21 @@ void BaseGameScene::GameOver()
             if (pauseIndex_ < 3)
             {
                 pauseIndex_ = 3;
-            }
-            else
+            } else
             {
                 pauseIndex_ = 1;
             }
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
         {
             if (pauseIndex_ > 1)
             {
                 pauseIndex_ = 1;
-            }
-            else
+            } else
             {
                 pauseIndex_ = 3;
             }
-        }
-        else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
             fade_->StartFadeOut(0.02f);
             isFadeStart_ = true;

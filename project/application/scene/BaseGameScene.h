@@ -41,8 +41,12 @@ public:
     void ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB); // 敵を押し戻す関数
 
     // クリアフラグ
-    bool IsClear() const { return isClear_; }
-    void SetClear(bool isClear) { isClear_ = isClear; }
+    bool IsClear() const {
+        return isClear_;
+    }
+    void SetClear(bool isClear) {
+        isClear_ = isClear;
+    }
     // クリア時の処理
     void Clear();
 
@@ -53,14 +57,18 @@ public:
     void GameOver();
 
     // setter
-    void SetPauseIndex(int index) { pauseIndex_ = index; }
+    void SetPauseIndex(int index) {
+        pauseIndex_ = index;
+    }
 
 public:
 
     void UpdatePauseGray();
     void DrawPauseGray();
     virtual void OnClear() = 0;
-    virtual bool IsGameFreeze() const { return false; }
+    virtual bool IsGameFreeze() const {
+        return false;
+    }
     virtual void UpdateExtra() = 0;
     virtual void DrawExtra() = 0;
     virtual void LoadStage() = 0;
@@ -148,6 +156,8 @@ protected:
 
     // サウンド
     Audio::SoundHandle handle_ = 0;
+    Audio::SoundHandle enter_ = 0;
+    Audio::SoundHandle select_ = 0;
 
     // UI
     std::vector<std::unique_ptr <Sprite>> threadLimitSprites_;
