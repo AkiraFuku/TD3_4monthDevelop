@@ -48,6 +48,11 @@ private:
 
     std::unique_ptr<Sprite> objectiveSprite_;
 
+    std::unique_ptr<Sprite> moveKey_;
+    std::unique_ptr<Sprite> movePad_;
+    std::unique_ptr<Sprite> liftKey_;
+    std::unique_ptr<Sprite> liftPad_;
+
     static constexpr int kTutorialStageID = 0;
     static constexpr int kTutorialMaxStage = 3; // チュートリアルのステージ数（0〜2の3ステージなら2）
 
@@ -63,6 +68,8 @@ private:
 
     // スプライトの最終到達Y座標（定位置）
     static constexpr float kTargetY = 360.0f;
+    static constexpr float kMoveTargetY = 520.0f;
+    static constexpr float kLiftTargetY = 540.0f;
     // 画面外の開始Y座標（上）
     static constexpr float kOffscreenY = -400.0f;
     // バウンド時のオーバーシュート量

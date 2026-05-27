@@ -6,31 +6,31 @@
 
 void TutorialScene::Initialize()
 {
-    std::string path = "resources/tutorial/tutorial0.png";
+    //std::string path = "resources/tutorial/tutorial0.png";
 
-    // 1つずつ生成する
-    auto explanationSprite = std::make_unique<Sprite>();
-    explanationSprite->Initialize(path);
-    explanationSprite->SetPosition(Vector2{ 640.0f, kOffscreenY });
-    explanationSprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // 中央に配置
-    explanationSprite->SetColor(Vector4{ 0.7f, 0.7f, 0.7f, 1.0f });
-    explanationSpritesKeyboard_.push_back(std::move(explanationSprite));
+    //// 1つずつ生成する
+    //auto explanationSprite = std::make_unique<Sprite>();
+    //explanationSprite->Initialize(path);
+    //explanationSprite->SetPosition(Vector2{ 640.0f, kOffscreenY });
+    //explanationSprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // 中央に配置
+    //explanationSprite->SetColor(Vector4{ 0.7f, 0.7f, 0.7f, 1.0f });
+    //explanationSpritesKeyboard_.push_back(std::move(explanationSprite));
 
-    path = "resources/tutorial/tutorial1.png";
+    //path = "resources/tutorial/tutorial1.png";
 
-    // 1つずつ生成する
-    explanationSprite = std::make_unique<Sprite>();
-    explanationSprite->Initialize(path);
-    explanationSprite->SetPosition(Vector2{ 640.0f, kOffscreenY });
-    explanationSprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // 中央に配置
-    explanationSprite->SetColor(Vector4{ 0.7f, 0.7f, 0.7f, 1.0f });
-    explanationSpritesKeyboard_.push_back(std::move(explanationSprite));
+    //// 1つずつ生成する
+    //explanationSprite = std::make_unique<Sprite>();
+    //explanationSprite->Initialize(path);
+    //explanationSprite->SetPosition(Vector2{ 640.0f, kOffscreenY });
+    //explanationSprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // 中央に配置
+    //explanationSprite->SetColor(Vector4{ 0.7f, 0.7f, 0.7f, 1.0f });
+    //explanationSpritesKeyboard_.push_back(std::move(explanationSprite));
 
     for (int i = 0; i < explanationNum_[kTutorialMaxStage + 1]; ++i)
     {
-        //std::string path = "resources/explanation/" + std::to_string(i) + ".png";
+        std::string path = "resources/tutorial/tutorial" + std::to_string(i) + ".png";
 
-        path = "resources/tutorial/tutorial0.png";
+        //path = "resources/tutorial/tutorial0.png";
 
         // 1つずつ生成する
         auto explanationSprite = std::make_unique<Sprite>();
@@ -41,7 +41,25 @@ void TutorialScene::Initialize()
         explanationSpritesKeyboard_.push_back(std::move(explanationSprite));
     }
 
+    moveKey_ = std::make_unique<Sprite>();
+    moveKey_->Initialize("resources/tutorial/moveKeyboard.png");
+    moveKey_->SetPosition({640.0f, kOffscreenY});
+    moveKey_->SetAnchorPoint({0.5f, 0.5f});
 
+    movePad_ = std::make_unique<Sprite>();
+    movePad_->Initialize("resources/tutorial/movePad.png");
+    movePad_->SetPosition({640.0f, kOffscreenY});
+    movePad_->SetAnchorPoint({0.5f, 0.5f});
+
+    liftKey_ = std::make_unique<Sprite>();
+    liftKey_->Initialize("resources/tutorial/liftKeyboard.png");
+    liftKey_->SetPosition({640.0f, kOffscreenY});
+    liftKey_->SetAnchorPoint({0.5f, 0.5f});
+
+    liftPad_ = std::make_unique<Sprite>();
+    liftPad_->Initialize("resources/tutorial/liftPad.png");
+    liftPad_->SetPosition({640.0f, kOffscreenY});
+    liftPad_->SetAnchorPoint({0.5f, 0.5f});
 
     animTimer_ = 0.0f;
     animState_ = AnimState::kAnimIn;
@@ -90,10 +108,36 @@ void TutorialScene::UpdateExtra()
             float posY = kOffscreenY + (kTargetY - kOffscreenY) * eased;
             explanationSpritesKeyboard_[currentPage_]->SetPosition(Vector2{ 640.0f, posY });
 
+            float movePosY = kOffscreenY + (kMoveTargetY - kOffscreenY) * eased;
+            float liftPosY = kOffscreenY + (kLiftTargetY - kOffscreenY) * eased;
+
+            switch(currentPage_)
+            {
+            case 0:
+                moveKey_->SetPosition(Vector2{640.0f, movePosY});
+                movePad_->SetPosition(Vector2{640.0f, movePosY});
+                break;
+            case 1:
+                liftKey_->SetPosition(Vector2{640.0f, liftPosY});
+                liftPad_->SetPosition(Vector2{640.0f, liftPosY});
+                break;
+            }
+
             if (animTimer_ >= 1.0f)
             {
                 // 定位置に固定して入力待ちへ
                 explanationSpritesKeyboard_[currentPage_]->SetPosition(Vector2{ 640.0f, kTargetY });
+
+                switch (currentPage_) {
+                case 0:
+                    moveKey_->SetPosition(Vector2{640.0f, kMoveTargetY});
+                    movePad_->SetPosition(Vector2{640.0f, kMoveTargetY});
+                    break;
+                case 1:
+                    liftKey_->SetPosition(Vector2{640.0f, kLiftTargetY});
+                    liftPad_->SetPosition(Vector2{640.0f, kLiftTargetY});
+                    break;
+                }
                 animState_ = AnimState::kWaiting;
             }
             break;
@@ -119,6 +163,20 @@ void TutorialScene::UpdateExtra()
             float posY = kTargetY + (kOffscreenY - kTargetY) * eased;
             explanationSpritesKeyboard_[currentPage_]->SetPosition(Vector2{ 640.0f, posY });
 
+            float movePosY = kMoveTargetY + (kOffscreenY - kMoveTargetY) * eased;
+            float liftPosY = kLiftTargetY + (kOffscreenY - kLiftTargetY) * eased;
+            switch(currentPage_)
+            {
+            case 0:
+                moveKey_->SetPosition(Vector2{640.0f, movePosY});
+                movePad_->SetPosition(Vector2{640.0f, movePosY});
+                break;
+            case 1:
+                liftKey_->SetPosition(Vector2{640.0f, liftPosY});
+                liftPad_->SetPosition(Vector2{640.0f, liftPosY});
+                break;
+            }
+
             if (animTimer_ >= 1.0f)
             {
                 
@@ -131,6 +189,12 @@ void TutorialScene::UpdateExtra()
                 {
                     // 次ページを画面外上部にリセットしてアニメイン開始
                     explanationSpritesKeyboard_[currentPage_]->SetPosition(Vector2{ 640.0f, kOffscreenY });
+
+                    moveKey_->SetPosition(Vector2{640.0f, kOffscreenY});
+                    movePad_->SetPosition(Vector2{640.0f, kOffscreenY});
+                    liftKey_->SetPosition(Vector2{640.0f, kOffscreenY});
+                    liftPad_->SetPosition(Vector2{640.0f, kOffscreenY});
+
                     animTimer_ = 0.0f;
                     animState_ = AnimState::kAnimIn;
                 }
@@ -144,6 +208,11 @@ void TutorialScene::UpdateExtra()
         {
             explanationSprite->Update();
         }
+
+        if (moveKey_) moveKey_->Update();
+        if (movePad_) movePad_->Update();
+        if (liftKey_) liftKey_->Update();
+        if (liftPad_) liftPad_->Update();
 
         break;
 
@@ -173,6 +242,20 @@ void TutorialScene::DrawExtra()
             {
                 explanationSprite->Draw();
             }
+
+             if (Input::GetInstance()->GetConnectedStickNum() == 0) {
+                 if (currentPage_ == 0) {
+                     moveKey_->Draw();
+                 } else if (currentPage_ == 1) {
+                     liftKey_->Draw();
+                 }
+             } else {
+                 if (currentPage_ == 0) {
+                     movePad_->Draw();
+                 } else if (currentPage_ == 1) {
+                     liftPad_->Draw();
+                 }
+             }
         }
         
         break;
