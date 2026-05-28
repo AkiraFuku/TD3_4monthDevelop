@@ -70,5 +70,9 @@ private:
     // バウンド時のオーバーシュート量
     static constexpr float kOvershoot = 30.0f;
 
+    std::unique_ptr<Sprite> tutorialTextSprite_;
+    float elapsedTime_ = 0.0f;
+
+
 };
 

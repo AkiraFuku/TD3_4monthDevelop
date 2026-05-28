@@ -3,6 +3,8 @@
 #include "Input.h"
 #include "CollisionMask.h"
 #include "SceneManager.h"
+#include "ImGuiManager.h"
+#include "AlphaUtility.h"
 
 void TutorialScene::Initialize()
 {
@@ -18,7 +20,6 @@ void TutorialScene::Initialize()
 
     path = "resources/tutorial/tutorial1.png";
 
-    // 1つずつ生成する
     explanationSprite = std::make_unique<Sprite>();
     explanationSprite->Initialize(path);
     explanationSprite->SetPosition(Vector2{ 640.0f, kOffscreenY });
@@ -32,7 +33,6 @@ void TutorialScene::Initialize()
 
         path = "resources/tutorial/tutorial0.png";
 
-        // 1つずつ生成する
         auto explanationSprite = std::make_unique<Sprite>();
         explanationSprite->Initialize(path);
         explanationSprite->SetPosition(Vector2{ 640.0f, kOffscreenY });
@@ -55,6 +55,15 @@ void TutorialScene::Initialize()
 
     int currentStage = CollisionMask::GetInstance()->GetCurrentStageID();
     currentPage_ = explanationNum_[currentStage];
+
+    tutorialTextSprite_ = std::make_unique<Sprite>();
+    tutorialTextSprite_->Initialize("resources/tutorialText.png");
+    tutorialTextSprite_->SetPosition(Vector2{ 400.0f, 50.0f });
+    tutorialTextSprite_->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+
+    elapsedTime_ = 0.0f;
+
+    tutorialTextSprite_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, elapsedTime_ });
 
     BaseGameScene::Initialize();
 
@@ -157,6 +166,37 @@ void TutorialScene::UpdateExtra()
     case TutorialPhase::kFinished:
         break;
     }
+
+#ifdef USE_IMGUI
+
+    ImGui::Begin("TutorialScene Debug");
+    
+    Vector2 tutorialTextPos = tutorialTextSprite_->GetPosition();
+    if(ImGui::DragFloat2("Tutorial Text Position", &tutorialTextPos.x, 0.1f))
+    {
+        tutorialTextSprite_->SetPosition(tutorialTextPos);
+    }
+
+    ImGui::End();
+
+#endif
+
+    float tutorialTextAlpha = tutorialTextSprite_->GetColor().w;
+    if (phase_ != TutorialPhase::kExplanation)
+    {
+        elapsedTime_ += deltaTime;
+        if (elapsedTime_ >= 5.0f)
+        {
+            elapsedTime_ = 0.0f;
+        }
+
+        tutorialTextAlpha = BlinkAlpha(elapsedTime_, 0.2f);
+    }
+
+    tutorialTextSprite_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, tutorialTextAlpha });
+
+    tutorialTextSprite_->Update();
+
 }
 
 void TutorialScene::DrawExtra()
@@ -190,6 +230,8 @@ void TutorialScene::DrawExtra()
         // 何も描画しない
         break;
     }
+
+    tutorialTextSprite_->Draw();
 }
 
 void TutorialScene::LoadStage()
