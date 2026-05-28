@@ -53,11 +53,6 @@ void TutorialScene::Initialize()
     pressA_->SetPosition({900.0f, 600.0f});
     pressA_->SetAnchorPoint({0.5f, 0.5f});
 
-    next_ = std::make_unique<Sprite>();
-    next_->Initialize("resources/tutorial/next.png");
-    next_->SetPosition({640.0f, 500.0f});
-    next_->SetAnchorPoint({0.5f, 0.5f});
-
     animTimer_ = 0.0f;
     blinkTimer_ = 0.0f;
     animState_ = AnimState::kAnimIn;
@@ -76,6 +71,9 @@ void TutorialScene::Initialize()
     tutorialTextSprite_->Initialize("resources/tutorialText.png");
     tutorialTextSprite_->SetPosition(Vector2{ 400.0f, 50.0f });
     tutorialTextSprite_->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+
+    textDown_ = Audio::GetInstance()->LoadAudio("resources/tutorialPageDown.wav");
+    enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
 
     elapsedTime_ = 0.0f;
 
@@ -107,8 +105,16 @@ void TutorialScene::UpdateExtra()
         {
         case AnimState::kAnimIn:
         {
-            animTimer_ += deltaTime / kAnimInDuration;
-            animTimer_ = std::min(animTimer_, 1.0f);
+           
+
+            if(fade_->IsFinished())
+            {
+                if (animTimer_ == 0.0f) {
+                    Audio::GetInstance()->PlayAudio(textDown_, false, 1.0f);
+                }
+                animTimer_ += deltaTime / kAnimInDuration;
+                animTimer_ = std::min(animTimer_, 1.0f);
+            }
 
             // EaseOutBounce で Y座標を計算
             float eased = EaseOutBounce(animTimer_);
@@ -155,6 +161,7 @@ void TutorialScene::UpdateExtra()
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) ||
                 Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
+                Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
                 animTimer_ = 0.0f;
                 animState_ = AnimState::kAnimOut;
             }
@@ -235,7 +242,6 @@ void TutorialScene::UpdateExtra()
         if (liftPad_) liftPad_->Update();
         if (pressSpace_) pressSpace_->Update();
         if (pressA_) pressA_->Update();
-        if (next_) next_->Update();
 
         break;
 
