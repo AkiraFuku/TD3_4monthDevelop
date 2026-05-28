@@ -887,7 +887,7 @@ void BaseGameScene::Update()
     resetButtonSprite_->Update();
 
 
-    if (!isClear_)
+    if (!isClear_ && !isShowStuck_)
     {
         // 当たり判定の確認
         CheckAllCollisions();
