@@ -50,12 +50,13 @@ void TitleScene::Initialize() {
     mo_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     ri_->SetTranslate(Vector3{ 2.5f,4.0f,12.0f });
     pressSpace_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
+    pressSpace_->SetModelInstanceColor("pressSpace", { 0.9f, 1.0f, 0.3f, 1.0f }); // 最初は透明にしておく
     pressA_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     background_->SetTranslate(Vector3{ 0.0f,0.0f,66.0f });
     background_->SetScale(Vector3{4.0f, 5.3f, 1.0f});
     cursor_->SetPosition(Vector2{ 400.0f,0.0f });
 
-    pressSpace_->SetBlendMode(BlendMode::Add);
+    pressSpace_->SetBlendMode(BlendMode::Normal);
     pressA_->SetBlendMode(BlendMode::Add);
     
     // サウンド読み込み
@@ -148,6 +149,18 @@ void TitleScene::Update() {
     // サイズを 5.0f から 4.5f にして、ロゴを邪魔しない程よい大きさに調整しました
     webManager_->UpdateStandaloneXY(webCurrentPos_, 4.9f, webCurrentRotation_, currentWebProgress);
 
+#ifdef _DEBUG
+    ImGui::Begin("Title Debug");
+
+    Vector4 pressSpaceColor = pressSpace_->GetModelInstanceColor("pressSpace");
+    if (ImGui::ColorEdit4("Press Space Color", &pressSpaceColor.x)) 
+    {
+        pressSpace_->SetModelInstanceColor("pressSpace", pressSpaceColor);
+    }
+
+    ImGui::End();
+#endif
+
     cursor_->Update();
     ku_->Update();
     mo_->Update();
@@ -188,7 +201,7 @@ void TitleScene::Draw() {
         pressA_->Draw();
     }
 
-    cursor_->Draw();
+    //cursor_->Draw();
 
     fade_->Draw();
 }
