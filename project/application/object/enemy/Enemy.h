@@ -63,6 +63,8 @@ public:
 
     void Reset(const Vector3& pos);
 
+    void ClearPath() { path_.clear(); }
+
     // ゲームシーンのポインタをセット
     void SetGameScene(BaseGameScene* scene) { gameScene_ = scene; }
 

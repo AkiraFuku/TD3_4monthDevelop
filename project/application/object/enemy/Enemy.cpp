@@ -158,15 +158,24 @@ void Enemy::Update(const Vector3& eggPos, ThreadManager* tm,
             }
         }
 
-        // 3. 足元が本当に穴の場合のみ、糸へのスナップ（吸着）を有効にする
         if (isOverPit) {
-            ThreadManager::ThreadQueryResult query;
-            if (tm->FindNearestThread(currentPos, 0.5f, query)) {
-                // 糸の先端（t=0 や t=1）に無理やり引っ張られるのを防ぐため、
-                // 糸の中間部分にいる時だけX, Z座標を糸の上に補正する
-                if (query.t > 0.01f && query.t < 0.99f) {
-                    currentPos.x += (query.closestPoint.x - currentPos.x) * 0.15f;
-                    currentPos.z += (query.closestPoint.z - currentPos.z) * 0.15f;
+            // 🌟【追加】今いるマスの四方（上下左右）が地面（Wall:NO）なら、吸着をスキップする
+            Point myGrid = WorldToGrid(currentPos);
+            bool nearGround =
+                !CollisionMask::GetInstance()->IsWall(GridToWorld({ myGrid.x + 1, myGrid.y }).x, GridToWorld({ myGrid.x + 1, myGrid.y }).z) ||
+                !CollisionMask::GetInstance()->IsWall(GridToWorld({ myGrid.x - 1, myGrid.y }).x, GridToWorld({ myGrid.x - 1, myGrid.y }).z) ||
+                !CollisionMask::GetInstance()->IsWall(GridToWorld({ myGrid.x, myGrid.y + 1 }).x, GridToWorld({ myGrid.x, myGrid.y + 1 }).z) ||
+                !CollisionMask::GetInstance()->IsWall(GridToWorld({ myGrid.x, myGrid.y - 1 }).x, GridToWorld({ myGrid.x, myGrid.y - 1 }).z);
+
+            // 🌟すぐ隣に地面がある（＝降りた直後のフチにいる）なら、糸に引っ張られないようにする！
+            if (!nearGround) {
+                ThreadManager::ThreadQueryResult query;
+                if (tm->FindNearestThread(currentPos, 0.5f, query)) {
+                    // 糸の中間部分にいる時だけX, Z座標を糸の上に補正する
+                    if (query.t > 0.01f && query.t < 0.99f) {
+                        currentPos.x += (query.closestPoint.x - currentPos.x) * 0.15f;
+                        currentPos.z += (query.closestPoint.z - currentPos.z) * 0.15f;
+                    }
                 }
             }
         }

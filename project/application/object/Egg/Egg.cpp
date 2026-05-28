@@ -53,13 +53,13 @@ void Egg::Update() {
         // プレイヤーに持ち上げられていたら
         if (onPlayer_)
         {
-            if(!player_->OnThread())
+            if (!player_->OnThread())
             {
                 // スペースキーで卵を置く
                 if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A)) {
                     // プレイヤーのワールド行列を取得
                     Matrix4x4 worldMatrix = player_->GetWorldMatrix();
-                    Vector3 velocity_ = {0.0f, -2.0f, 1.0f};
+                    Vector3 velocity_ = { 0.0f, -2.0f, 1.0f };
                     velocity_ = TransformNormal(velocity_, worldMatrix);
                     translate += velocity_;
 
@@ -115,11 +115,15 @@ void Egg::Update() {
             a -= 0.01f; // 徐々に透明にする
             object_->SetModelInstanceColor("egg", { 1.0f, 1.0f, 1.0f, a });
         }
-
-        for (auto& effect : explosionEffect_)
+        else
         {
-            effect->Update();
+
+            for (auto& effect : explosionEffect_)
+            {
+                effect->Update();
+            }
         }
+
     }
     else
     {
@@ -159,7 +163,7 @@ void Egg::Update() {
         // 最終的な色を適用
         object_->SetModelInstanceColor("egg", finalColor);
     }
-    
+
 
     object_->SetTranslate(translate);
 
@@ -173,9 +177,12 @@ void Egg::Draw() {
 
     if (isDead_)
     {
-        for (auto& effect : explosionEffect_)
+        if (a >= 0.0f)
         {
-            effect->Draw();
+            for (auto& effect : explosionEffect_)
+            {
+                effect->Draw();
+            }
         }
     }
 }
