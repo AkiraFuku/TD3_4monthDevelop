@@ -341,5 +341,7 @@ private:
     bool        routeCheckFailed_ = false;
     std::string routeFailReason_;
 
-   Audio::SoundHandle WalkSE_=0;
+    float SEWalkTimer_ = 0.0f;
+    static inline const float kDeltaTime = 1.0f / 60.0f;
+    Audio::SoundHandle WalkSE_=0;
 };

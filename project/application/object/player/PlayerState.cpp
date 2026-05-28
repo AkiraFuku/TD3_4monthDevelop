@@ -84,6 +84,7 @@ void PlayerStateMove::Initialize(Player* player) {
 
 // 更新
 void PlayerStateMove::Update(Player* player) {
+    Vector3 posBefore = player->GetPosition();
     OneWayObject* oneWay = player->CheckOnOneWayObject();
     if (oneWay) {
         player->SetCurrentOneWay(oneWay);
@@ -91,13 +92,6 @@ void PlayerStateMove::Update(Player* player) {
         return;
     }
 
-    // 歩行音の再生
-    // 一秒ごとに歩行音を再生する
-    SEWalkTimer_ += DXCommon::kDeltaTime;
-    if (SEWalkTimer_ >= 0.5f) {
-        Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 2.0f);
-        SEWalkTimer_ = 0.0f;
-    }
     Vector3 moveDirection = { 0.0f, 0.0f, 0.0f };
 
     // 1. 【脳の処理】進みたい方向（意志）を決定する
@@ -183,6 +177,25 @@ void PlayerStateMove::Update(Player* player) {
             // ResolveThreadMove は Player::Update で呼ばれるので、ここでは不要
         } else {
             player->IsCollisionSDF();
+        }
+
+        // 実際の移動量を計算して歩行音を制御
+        Vector3 posAfter = player->GetPosition();
+        float diffX = posAfter.x - posBefore.x;
+        float diffY = posAfter.y - posBefore.y;
+        float diffZ = posAfter.z - posBefore.z;
+        float distSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
+
+        // わずかでも実際に動いている場合のみ歩行音タイマーを進める
+        if (distSq > 0.0001f) {
+            SEWalkTimer_ += DXCommon::kDeltaTime;
+            if (SEWalkTimer_ >= 0.5f) {
+                Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 2.0f);
+                SEWalkTimer_ = 0.0f;
+            }
+        } else {
+            // 壁に衝突して動いていない場合はタイマーをリセット
+            SEWalkTimer_ = 0.0f;
         }
 
         // ★重要: 状態が変わったかを比較

@@ -19,6 +19,7 @@ namespace {
 }
 
 void BaseGameScene::Initialize() {
+    isClearSEPlayed_ = false;
 
     camera = std::make_unique<Camera>();
     camera->SetRotate({ 0.90f, 0.0f, 0.0f });
@@ -362,7 +363,8 @@ void BaseGameScene::Initialize() {
 
     eggSprite_->SetPosition(Vector2{ 1000.0f,0.0f });
     hpSprite_->SetPosition(Vector2{ 1100.0f,30.0f });
-    clearSprite_->SetPosition(Vector2{ 0.0f,100.0f });
+    clearSprite_->SetPosition(Vector2{ 640.0f,150.0f });
+    clearSprite_->SetAnchorPoint({0.5f, 0.5f});
 
     // メニューUIの初期化
     for (int i = 0; i < 4; i++)
@@ -1475,10 +1477,10 @@ void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const 
 void BaseGameScene::Clear()
 {
 
-    if (!Audio::GetInstance()->IsPlaying(clear))
+    if (!isClearSEPlayed_)
     {
         Audio::GetInstance()->PlayAudio(clear, false, 1.0f);
-
+        isClearSEPlayed_ = true;
     }
 
     // コントローラー入力を取得
@@ -1524,9 +1526,9 @@ void BaseGameScene::Clear()
         player_->SetForward(newRotate);
         player_->ChangeAnimation(PlayerAnima::AnimationState::Clear);
         // メニューUIの初期化
-        for (int i = 1; i < 3; i++)
-        {
-            pauseSprite_[i]->SetPosition(Vector2{ (20.0f + (500.0f * (i - 1))), 500.0f });
+        for (int i = 1; i < 3; i++) {
+            // i=1 のとき 160.0f, i=2 のとき 720.0f
+            pauseSprite_[i]->SetPosition(Vector2{(160.0f + (560.0f * (i - 1))), 500.0f});
         }
 
         Vector2 pos;
@@ -1883,6 +1885,7 @@ void BaseGameScene::LoadStageData()
 
     std::vector<Vector3> oneWayObjectPos_;
     thread_->ClearThreads();
+    isClearSEPlayed_ = false;
 }
 
 

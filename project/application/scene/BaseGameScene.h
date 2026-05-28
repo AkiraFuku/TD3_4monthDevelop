@@ -245,6 +245,7 @@ protected:
     bool isReset_ = false;
     // クリアフラグ
     bool isClear_ = false;
+    bool isClearSEPlayed_ = false;
     bool isFadeStart_ = false;
     // ポーズメニューフラグ
     bool openPause_ = false;

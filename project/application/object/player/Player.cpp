@@ -81,6 +81,7 @@ void Player::Finalize() {
 /// 更新
 /// </summary>
 void Player::Update() {
+    Vector3 posBefore = translate_;
     moveVel_ = {0.0f, 0.0f, 0.0f};
 
     if (!gameScene_->IsClear()) {
@@ -128,6 +129,30 @@ void Player::Update() {
     IsCollisionOneWay();
 
     ResultMove();
+
+    // 歩行音の再生制御
+    if (dynamic_cast<PlayerStateMove*>(state_.get()) != nullptr) {
+        Vector3 posAfter = translate_;
+        float diffX = posAfter.x - posBefore.x;
+        float diffY = posAfter.y - posBefore.y;
+        float diffZ = posAfter.z - posBefore.z;
+        float distSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
+
+        // わずかでも実際に動いている場合のみ歩行音タイマーを進める
+        if (distSq > 0.0001f) {
+            SEWalkTimer_ += kDeltaTime;
+            if (SEWalkTimer_ >= 0.5f) {
+                Audio::GetInstance()->PlayAudio(WalkSE_, false, 2.0f);
+                SEWalkTimer_ = 0.0f;
+            }
+        } else {
+            // 壁に衝突して動いていない場合はタイマーをリセット
+            SEWalkTimer_ = 0.0f;
+        }
+    } else {
+        // 移動状態でなければタイマーをリセット
+        SEWalkTimer_ = 0.0f;
+    }
 
 #ifdef _DEBUG
 
