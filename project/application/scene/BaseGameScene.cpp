@@ -253,7 +253,7 @@ void BaseGameScene::Initialize() {
     for (const auto& pos : brokenBlockPos_)
     {
         auto brokenBlock = std::make_unique<BrokenBlock>();
-        brokenBlock->Initialize(pos, 6.0f, 6.0f);
+        brokenBlock->Initialize(pos, 6.0f, 8.0f);
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 
@@ -763,7 +763,7 @@ void BaseGameScene::Update()
 
     //// 2. 敵の更新（リストを渡す）
 
-    if (!isShowStuck_)
+    if (!isShowStuck_ && !isClear_)
     {
         for (auto& enemy : enemies_) {
 
@@ -1001,7 +1001,7 @@ void BaseGameScene::Update()
         for (const auto& pos : brokenBlockPos_)
         {
             auto brokenBlock = std::make_unique<BrokenBlock>();
-            brokenBlock->Initialize(pos, 6.0f, 6.0f);
+            brokenBlock->Initialize(pos, 6.0f, 8.0f);
             brokenBlocks_.push_back(std::move(brokenBlock));
         }
 

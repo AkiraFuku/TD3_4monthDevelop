@@ -18,12 +18,14 @@ void SelectScene::Initialize()
     // テクスチャの読み込み
     stagePos_ =
     {
-        {-4.0f,0.0f,12.0f},
-        {-2.5f,0.0f,12.0f},
-        {-1.0f,0.0f,12.0f},
-        {0.5f,0.0f,12.0f},
-        { 2.0f,0.0f,12.0f },
-        { 3.5f,0.0f,12.0f }
+        {-3.5f,1.0f,12.0f},
+        {-1.0f,1.0f,12.0f},
+        {1.5f,1.0f,12.0f},
+        {4.0f,1.0f,12.0f},
+        { -3.5f,-1.0f,12.0f },
+        { -1.0f,-1.0f,12.0f },
+        {1.5f,-1.0f,12.0f},
+        {4.0f,-1.0f,12.0f}
     };
 
     camera->Update();
@@ -37,12 +39,12 @@ void SelectScene::Initialize()
         ModelManager::GetInstance()->LoadModel("resources", path);
         object->AddModel(path, "egg");
         object->SetTranslate(stagePos_[i]);
-        object->SetScale(Vector3{ 0.8f,0.8f,0.8f });
+        object->SetScale(Vector3{ 0.5f,0.5f,0.5f });
         objects_.push_back(std::move(object));
 
         ScreenPosition screenPos;
         // ワールド座標をスクリーン座標に変換
-        screenPos = WorldToScreen(objects_[i]->GetTranslate(), camera->GetViewMatrix(), camera->GetProjectionMatrix(), 
+        screenPos = WorldToScreen(objects_[i]->GetTranslate(), camera->GetViewMatrix(), camera->GetProjectionMatrix(),
             WinApp::GetInstance()->kClientWidth, WinApp::GetInstance()->kClientHeight);
         screenPositions_.push_back(screenPos);
     }
@@ -54,19 +56,19 @@ void SelectScene::Initialize()
 
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/Menu/cursor.png");
-    arrowSprite_->SetAnchorPoint({0.5f, 0.8f});
+    arrowSprite_->SetAnchorPoint({ 0.5f, 0.8f });
     stageIndex = 0;
-   /* Vector2 pos;
-    pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
-    pos.x += 450.0f;
-    pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
-    arrowSprite_->SetPosition(pos);*/
+    /* Vector2 pos;
+     pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
+     pos.x += 450.0f;
+     pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
+     arrowSprite_->SetPosition(pos);*/
 
     Vector2 pos;
     pos.x = screenPositions_[stageIndex].position.x + 25.0f;
     pos.y = screenPositions_[stageIndex].position.y;
     arrowSprite_->SetPosition(pos);
-    
+
 
     background_ = std::make_unique<Object3d>();
     background_->Initialize();
@@ -100,10 +102,20 @@ void SelectScene::Update()
     MoveCursor();
 
     // 選択されているモデルを動かす
-    if (stageIndex >= 0 && stageIndex <= 5)
+    if (stageIndex >= 0 && stageIndex <= 7)
     {
         Vector3 pos = objects_[stageIndex]->GetTranslate();
         pos.y = sinf(theta) * amplitude;
+
+        if (stageIndex >= 4)
+        {
+            pos.y -= 1.0f;
+        }
+        else
+        {
+            pos.y += 1.0f;
+        }
+
         theta += float(M_PI) / 60.0f; // 1秒で1周期の速度
         objects_[stageIndex]->SetTranslate(pos);
     }
@@ -157,6 +169,8 @@ void SelectScene::MoveCursor()
     XINPUT_STATE joyState{};
     bool stickRightTrigger = false;
     bool stickLeftTrigger = false;
+    bool stickUpTrigger = false;
+    bool stickDownTrigger = false;
 
     if (Input::GetInstance()->GetJoyStick(0, joyState)) {
         float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
@@ -184,6 +198,32 @@ void SelectScene::MoveCursor()
         }
     }
 
+    if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
+
+        if (std::abs(stickX) > kDeadZone) {
+
+            // 右に倒した瞬間
+            if (stickX > 0.5f) {
+                if (!isStickPushed) {
+                    stickUpTrigger = true; // 倒した瞬間だけオン
+                    isStickPushed = true;
+                }
+            }
+            // 左に倒した瞬間
+            else if (stickX < -0.5f) {
+                if (!isStickPushed) {
+                    stickDownTrigger = true; // 倒した瞬間だけオン
+                    isStickPushed = true;
+                }
+            }
+            // スティックが中央に戻ったらリセット
+            else {
+                isStickPushed = false;
+            }
+        }
+    }
+
 
 
     if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
@@ -192,7 +232,7 @@ void SelectScene::MoveCursor()
         stageIndex++;
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
-        if (stageIndex == 6)
+        if (stageIndex == 8)
         {
             stageIndex = -1;
         }
@@ -204,9 +244,51 @@ void SelectScene::MoveCursor()
 
         if (stageIndex == -2)
         {
-            stageIndex = 5;
+            stageIndex = 7;
         }
-        
+
+
+        Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+
+    }
+    else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
+        Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
+    {
+        if (stageIndex <= -1)
+        {
+            stageIndex += 8;
+        }
+        else
+        {
+            stageIndex -= 4;
+
+            if (stageIndex <= -1)
+            {
+                stageIndex = -1;
+            }
+        }
+
+       
+
+        Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+
+    }
+    else if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
+        Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
+    {
+        if (stageIndex == -1)
+        {
+            stageIndex = 0;
+        }
+        else
+        {
+            stageIndex += 4;
+
+            if (stageIndex >= 8)
+            {
+                stageIndex = -1;
+            }
+        }
 
         Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
 
@@ -233,7 +315,7 @@ void SelectScene::MoveCursor()
             CollisionMask::GetInstance()->SetCurrentStageID(stageIndex + 4);
             SceneManager::GetInstance()->ChangeScene("GameScene");
         }
-       
+
     }
 
     if (preIndex != stageIndex)
