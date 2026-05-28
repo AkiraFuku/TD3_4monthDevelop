@@ -56,7 +56,9 @@ private:
     std::unique_ptr<Sprite> liftPad_;
     std::unique_ptr<Sprite> pressSpace_;
     std::unique_ptr<Sprite> pressA_;
-    std::unique_ptr<Sprite> next_;
+
+    Audio::SoundHandle textDown_ = 0;
+    Audio::SoundHandle enter_ = 0;
 
     static constexpr int kTutorialStageID = 0;
     static constexpr int kTutorialMaxStage = 3; // チュートリアルのステージ数（0〜2の3ステージなら2）

@@ -21,8 +21,8 @@ namespace {
 void BaseGameScene::Initialize() {
 
     camera = std::make_unique<Camera>();
-    camera->SetRotate({ 0.80f, 0.0f, 0.0f });
-    camera->SetTranslate({ 0.0f, 30.0f, -30.0f });
+    camera->SetRotate({ 0.90f, 0.0f, 0.0f });
+    camera->SetTranslate({ 0.0f, 40.0f, -33.0f });
     Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
     ParticleManager::GetInstance()->SetCamera(camera.get());
     // メインライト
