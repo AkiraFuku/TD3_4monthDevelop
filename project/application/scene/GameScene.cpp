@@ -27,3 +27,8 @@ void GameScene::OnClear()
 {
     BaseGameScene::Clear();
 }
+
+bool GameScene::IfPause()
+{
+    return true;
+}

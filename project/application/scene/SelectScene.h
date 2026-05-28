@@ -6,6 +6,7 @@
 #include "DebugCamera.h"
 #include "Fade.h"
 
+#include "WorldToScreen.h"
 
 class SelectScene : public Scene
 {
@@ -23,10 +24,12 @@ private:
 
     // ステージモデル
     std::vector<std::unique_ptr <Object3d>> objects_;
+    std::vector<ScreenPosition> screenPositions_;
+
     std::unique_ptr<Object3d> background_;
     std::unique_ptr<Sprite> arrowSprite_;
     std::unique_ptr<Sprite> titleSprite_;
-    const uint32_t kStageNum_ = 4;
+    const uint32_t kStageNum_ = 5;
     int stageIndex = -1;
     uint32_t preIndex = 0;
     std::vector<Vector3> stagePos_;

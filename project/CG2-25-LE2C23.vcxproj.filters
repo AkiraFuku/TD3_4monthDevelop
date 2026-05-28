@@ -87,6 +87,8 @@
     <ClCompile Include="EggExplosion.cpp" />
     <ClCompile Include="application\scene\TutorialScene.cpp" />
     <ClCompile Include="application\scene\GameScene.cpp" />
+    <ClCompile Include="application\scene\AlphaUtility.cpp" />
+    <ClCompile Include="application\scene\WorldToScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -167,6 +169,10 @@
     <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
     <ClInclude Include="application\scene\TutorialScene.h" />
     <ClInclude Include="application\scene\GameScene.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="engine\Tool\resource.h" />
+    <ClInclude Include="application\scene\AlphaUtility.h" />
+    <ClInclude Include="application\scene\WorldToScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
@@ -177,5 +183,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="IconResource.rc" />
   </ItemGroup>
 </Project>
