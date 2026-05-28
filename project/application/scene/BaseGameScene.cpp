@@ -440,6 +440,7 @@ void BaseGameScene::Initialize() {
     backgroundModel_->SetModel("backGround.obj");
     backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
     backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
+    backgroundModel_->SetColor(backgroundColor_);
 
     // ステージナンバーを設定
     num = CollisionMask::GetInstance()->GetCurrentStageID();
@@ -547,6 +548,33 @@ void BaseGameScene::Update()
     } else {
         // 地面なら 赤色 で表示
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
+    }
+    ImGui::End();
+
+    ImGui::Begin("Background Setting");
+    float bgCol[4] = { backgroundColor_.x, backgroundColor_.y, backgroundColor_.z, backgroundColor_.w };
+    if (ImGui::ColorEdit4("Color", bgCol)) {
+        backgroundColor_.x = bgCol[0];
+        backgroundColor_.y = bgCol[1];
+        backgroundColor_.z = bgCol[2];
+        backgroundColor_.w = bgCol[3];
+        if (backgroundModel_) {
+            backgroundModel_->SetColor(backgroundColor_);
+        }
+    }
+    if (backgroundModel_) {
+        Vector3 bgPos = backgroundModel_->GetTranslate();
+        if (ImGui::DragFloat3("Position", &bgPos.x, 0.1f)) {
+            backgroundModel_->SetTranslate(bgPos);
+        }
+        Vector3 bgRot = backgroundModel_->GetRotate();
+        if (ImGui::DragFloat3("Rotation", &bgRot.x, 0.01f)) {
+            backgroundModel_->SetRotate(bgRot);
+        }
+        Vector3 bgScale = backgroundModel_->GetScale();
+        if (ImGui::DragFloat3("Scale", &bgScale.x, 0.1f)) {
+            backgroundModel_->SetScale(bgScale);
+        }
     }
     ImGui::End();
 
@@ -1008,6 +1036,8 @@ void BaseGameScene::Draw() {
     {
         if (!isFadeStart_)
         {
+            menuSprite_->Draw();
+
             for (auto& pauseSprite : pauseSprite_)
             {
                 pauseSprite->Draw();

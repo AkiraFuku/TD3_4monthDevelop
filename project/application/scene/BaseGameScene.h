@@ -61,6 +61,8 @@ public:
         pauseIndex_ = index;
     }
 
+    bool OpenPause()const { return openPause_; }
+
 public:
 
     void UpdatePauseGray();
@@ -201,6 +203,7 @@ protected:
 
     // 背景
     std::unique_ptr<Object3d> backgroundModel_;
+    Vector4 backgroundColor_ = {0.129f, 0.098f, 0.031f, 1.0f};
 
 
     // リセットフラグ

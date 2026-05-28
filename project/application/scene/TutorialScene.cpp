@@ -246,7 +246,10 @@ void TutorialScene::UpdateExtra()
 
     tutorialTextSprite_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, tutorialTextAlpha });
 
-    tutorialTextSprite_->Update();
+    if(!BaseGameScene::OpenPause())
+    {
+        tutorialTextSprite_->Update();
+    }
 
 }
 
@@ -296,7 +299,10 @@ void TutorialScene::DrawExtra()
         break;
     }
 
-    tutorialTextSprite_->Draw();
+    if(!BaseGameScene::OpenPause())
+    {
+        tutorialTextSprite_->Draw();
+    }
 }
 
 void TutorialScene::LoadStage()
