@@ -693,12 +693,6 @@ void BaseGameScene::Update()
              Audio::GetInstance()->StopAudio(handle_);
         }
 
-        if (!Audio::GetInstance()->IsPlaying(clear))
-        {
-            Audio::GetInstance()->PlayAudio(clear, false, 1.0f);
-
-        }
-
         OnClear();
     }
 
@@ -1370,6 +1364,11 @@ void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const 
 void BaseGameScene::Clear()
 {
 
+    if (!Audio::GetInstance()->IsPlaying(clear))
+    {
+        Audio::GetInstance()->PlayAudio(clear, false, 1.0f);
+
+    }
 
     // コントローラー入力を取得
     XINPUT_STATE joyState{};
