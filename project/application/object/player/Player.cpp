@@ -68,6 +68,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     // サウンド読み込み
     threadSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/thread.wav");
+    WalkSE_ = Audio::GetInstance()->LoadAudio("resources/sounds/walk.wav");
 
 }
 /// <summary>

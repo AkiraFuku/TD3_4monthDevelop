@@ -37,6 +37,8 @@ public:
     void Initialize(Player* player) override;
     // 更新
     void Update(Player* player) override;
+private:
+    float SEWalkTimer_ = 0.0f; // 歩行音の再生タイマー
 };
 
 // ======================================

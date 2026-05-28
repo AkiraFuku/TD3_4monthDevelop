@@ -179,6 +179,9 @@ public:
 
     // 独自のスタック判定用経路探索 (BFS)
     bool CheckRoute();
+    Audio::SoundHandle GetWalkSoundHandle() const {
+        return WalkSE_;
+    }
 
 private:
     // 現在乗っているOneWayObjectのポインタ
@@ -335,4 +338,6 @@ private:
     // 「到達不可」フラグと、到達できなかった理由の文字列（ImGui表示用）
     bool        routeCheckFailed_ = false;
     std::string routeFailReason_;
+
+   Audio::SoundHandle WalkSE_=0;
 };

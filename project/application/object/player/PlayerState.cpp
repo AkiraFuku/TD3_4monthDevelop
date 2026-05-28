@@ -4,9 +4,9 @@
 #include "Input.h"
 #include "Player.h"
 #include "OneWayObject.h"
-
+#include "DXCommon.h"
 #include <memory>
-
+#include "Audio.h"
 static const float kStickMax = 32767.0f;
 static const float kDeadZone = 0.3f;
 
@@ -39,11 +39,11 @@ void PlayerStateIdle::Update(Player* player) {
     }
 
     // 2. コントローラーで移動判定
-    XINPUT_STATE joyState {};
+    XINPUT_STATE joyState{};
     if (Input::GetInstance()->GetJoyStick(0, joyState)) {
         // スティックの入力を -1.0f ～ 1.0f に正規化
-        float stickX = (float) joyState.Gamepad.sThumbLX / kStickMax;
-        float stickY = (float) joyState.Gamepad.sThumbLY / kStickMax;
+        float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+        float stickY = (float)joyState.Gamepad.sThumbLY / kStickMax;
 
         // デッドゾーンを超えていたら移動とみなす
         if (std::abs(stickX) > kDeadZone || std::abs(stickY) > kDeadZone) {
@@ -91,17 +91,24 @@ void PlayerStateMove::Update(Player* player) {
         return;
     }
 
-    Vector3 moveDirection = {0.0f, 0.0f, 0.0f};
+    // 歩行音の再生
+    // 一秒ごとに歩行音を再生する
+    SEWalkTimer_ += DXCommon::kDeltaTime;
+    if (SEWalkTimer_ >= 0.5f) {
+        Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 2.0f);
+        SEWalkTimer_ = 0.0f;
+    }
+    Vector3 moveDirection = { 0.0f, 0.0f, 0.0f };
 
     // 1. 【脳の処理】進みたい方向（意志）を決定する
 
     // コントローラー入力を取得
-    XINPUT_STATE joyState {};
+    XINPUT_STATE joyState{};
     bool isPadInput = false;
 
     if (Input::GetInstance()->GetJoyStick(0, joyState)) {
-        float stickX = (float) joyState.Gamepad.sThumbLX / kStickMax;
-        float stickY = (float) joyState.Gamepad.sThumbLY / kStickMax;
+        float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+        float stickY = (float)joyState.Gamepad.sThumbLY / kStickMax;
 
         if (std::abs(stickX) > kDeadZone || std::abs(stickY) > kDeadZone) {
             // スティックのXを移動のX、Y(上下)を移動のZ(奥手前)に割り当てる
@@ -244,6 +251,12 @@ void PlayerStateOneWayMove::Initialize(Player* player) {
 void PlayerStateOneWayMove::Update(Player* player) {
     OneWayObject* oneWay = player->GetCurrentOneWay();
 
+
+    if (!Audio::GetInstance()->IsPlaying(player->GetWalkSoundHandle()))
+    {
+        Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 2.0f);
+    }
+
     // OneWayObjectから外れた（終点を超えた）場合は、Idle状態に戻る
     if (!oneWay || !oneWay->IsInside(player->GetPosition())) {
         player->SetCurrentOneWay(nullptr);
@@ -252,12 +265,12 @@ void PlayerStateOneWayMove::Update(Player* player) {
     }
 
     // OneWayObjectの許可されている方向を取得して自動移動ベクトルを決定
-    Vector3 autoMoveDir = {0.0f, 0.0f, 0.0f};
+    Vector3 autoMoveDir = { 0.0f, 0.0f, 0.0f };
     switch (oneWay->GetDirection()) {
-    case OneWayObject::Direction::PositiveX: autoMoveDir = {1.0f, 0.0f, 0.0f}; break;
-    case OneWayObject::Direction::NegativeX: autoMoveDir = {-1.0f, 0.0f, 0.0f}; break;
-    case OneWayObject::Direction::PositiveZ: autoMoveDir = {0.0f, 0.0f, 1.0f}; break;
-    case OneWayObject::Direction::NegativeZ: autoMoveDir = {0.0f, 0.0f, -1.0f}; break;
+    case OneWayObject::Direction::PositiveX: autoMoveDir = { 1.0f, 0.0f, 0.0f }; break;
+    case OneWayObject::Direction::NegativeX: autoMoveDir = { -1.0f, 0.0f, 0.0f }; break;
+    case OneWayObject::Direction::PositiveZ: autoMoveDir = { 0.0f, 0.0f, 1.0f }; break;
+    case OneWayObject::Direction::NegativeZ: autoMoveDir = { 0.0f, 0.0f, -1.0f }; break;
     }
 
     // WASD入力関係なく、強制的に進行方向へ移動させる
