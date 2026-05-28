@@ -292,6 +292,7 @@ private:
 
     // サウンド
     Audio::SoundHandle threadSound_ = 0;
+   
 
 public:
     // jsonにセーブ

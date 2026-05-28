@@ -158,7 +158,7 @@ protected:
     Audio::SoundHandle handle_ = 0;
     Audio::SoundHandle enter_ = 0;
     Audio::SoundHandle select_ = 0;
-
+    Audio::SoundHandle missSound_ = 0;
     // UI
     std::vector<std::unique_ptr <Sprite>> threadLimitSprites_;
     std::vector<std::unique_ptr <Sprite>> threadCountSprites_;

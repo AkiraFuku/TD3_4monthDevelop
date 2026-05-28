@@ -294,6 +294,7 @@ void BaseGameScene::Initialize() {
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
     enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
     select_ = Audio::GetInstance()->LoadAudio("resources/sounds/select.wav");
+    missSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/miss.wav");
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
@@ -781,6 +782,12 @@ void BaseGameScene::Update()
 
     // Player stuck check: trigger ShowStuck if stuck and out of threads
     if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
+        if (!Audio::GetInstance()->IsPlaying(missSound_))
+        {
+            Audio::GetInstance()->PlayAudio(missSound_);
+
+        }
+
         ShowStuck();
     }
 
