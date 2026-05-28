@@ -235,6 +235,8 @@ private:
     // ゲームシーンのポインタ
     BaseGameScene* gameScene_ = nullptr;
 
+    Audio::SoundHandle canNotFireThread_ = 0;
+
 public:
     // 状態クラス（PlayerState）から回転だけを呼び出せるように public へ移動
     void TurnToDirection(const Vector3& direction);

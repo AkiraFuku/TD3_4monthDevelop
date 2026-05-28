@@ -52,7 +52,7 @@ void TitleScene::Initialize() {
     pressSpace_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     pressA_->SetTranslate(Vector3{ 0.0f,4.0f,12.0f });
     background_->SetTranslate(Vector3{ 0.0f,0.0f,66.0f });
-    background_->SetScale(Vector3{4.0f, 5.0f, 1.0f});
+    background_->SetScale(Vector3{4.0f, 5.3f, 1.0f});
     cursor_->SetPosition(Vector2{ 400.0f,0.0f });
 
     pressSpace_->SetBlendMode(BlendMode::Add);

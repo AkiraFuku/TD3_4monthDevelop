@@ -86,7 +86,5 @@ private:
 
     std::unique_ptr<Sprite> tutorialTextSprite_;
     float elapsedTime_ = 0.0f;
-
-
 };
 
