@@ -423,6 +423,13 @@ void Player::FireThread() {
         return; // 近すぎる場合はここで処理を抜け、予測線を描画しない
     }
 
+    // =========================================================
+    // OneWayObject を跨いでいるか（交差しているか）チェック
+    // =========================================================
+    if (IntersectsAnyOneWayObject(start, end)) {
+        return; // 交差している場合は生成しない
+    }
+
     Vector3 dir = end - start;
     float len = std::sqrtf(dir.x * dir.x + dir.z * dir.z);
     if (len > 0.0001f) {
@@ -693,6 +700,7 @@ void Player::UpdatePredictionLine() {
         else if (onThread_) canCreate = false;
         else if (!CanFireThread()) canCreate = false;
         else if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) canCreate = false;
+        else if (IntersectsAnyOneWayObject(start, end)) canCreate = false;
 
         // ★修正4: FireThread() と完全に挙動を合わせるため、ヒット時は start 位置を手前に 0.2f 伸ばす
         // これにより、壁の中で赤色になった場合でも壁に埋もれずに表示されます
@@ -747,6 +755,63 @@ void Player::IsCollisionOneWay() {
             oneWay->ResolveCollision(translate_, moveVel_);
         }
     }
+}
+
+AABB Player::GetThreadBlockAABBForPlayer(const OneWayObject* oneWay) const {
+    AABB aabb = oneWay->GetAABB();
+    float margin = kMinDistanceToOneWay;
+    aabb.min.x -= margin;
+    aabb.max.x += margin;
+    aabb.min.z -= margin;
+    aabb.max.z += margin;
+    return aabb;
+}
+
+bool Player::IntersectsAnyOneWayObject(const Vector3& start, const Vector3& end) const {
+    for (auto* oneWay : oneWayObjects_) {
+        if (!oneWay) continue;
+
+        AABB aabb = GetThreadBlockAABBForPlayer(oneWay);
+
+        float tMin = 0.0f;
+        float tMax = 1.0f;
+
+        // X軸スラブとの交差判定
+        float dx = end.x - start.x;
+        if (std::abs(dx) < 1e-6f) {
+            // 平行な場合、始点が範囲外なら交差しない
+            if (start.x < aabb.min.x || start.x > aabb.max.x) {
+                continue;
+            }
+        } else {
+            float t1 = (aabb.min.x - start.x) / dx;
+            float t2 = (aabb.max.x - start.x) / dx;
+            if (t1 > t2) std::swap(t1, t2);
+            tMin = (std::max)(tMin, t1);
+            tMax = (std::min)(tMax, t2);
+            if (tMin > tMax) continue;
+        }
+
+        // Z軸スラブとの交差判定
+        float dz = end.z - start.z;
+        if (std::abs(dz) < 1e-6f) {
+            // 平行な場合、始点が範囲外なら交差しない
+            if (start.z < aabb.min.z || start.z > aabb.max.z) {
+                continue;
+            }
+        } else {
+            float t1 = (aabb.min.z - start.z) / dz;
+            float t2 = (aabb.max.z - start.z) / dz;
+            if (t1 > t2) std::swap(t1, t2);
+            tMin = (std::max)(tMin, t1);
+            tMax = (std::min)(tMax, t2);
+            if (tMin > tMax) continue;
+        }
+
+        // ここまで到達した場合は交差している
+        return true;
+    }
+    return false;
 }
 
 void Player::UpdateHeight() {
@@ -1038,18 +1103,18 @@ bool Player::CheckRoute() {
 
     auto WorldToGrid = [](const Vector3& pos) -> GridPoint {
         const float offset = 256.0f;
-        int gx = (int)std::floor(pos.x + offset);
-        int gz = (int)std::floor(pos.z + offset);
+        int gx = (int) std::floor(pos.x + offset);
+        int gz = (int) std::floor(pos.z + offset);
         if (gx < 0) gx = 0; if (gx >= 512) gx = 511;
         if (gz < 0) gz = 0; if (gz >= 512) gz = 511;
-        return { gx, gz };
-    };
+        return {gx, gz};
+        };
 
     Vector3 playerPos = GetPosition();
     GridPoint startGrid = WorldToGrid(playerPos);
 
     bool startIsWall = CollisionMask::GetInstance()->IsWall(playerPos.x, playerPos.z);
-    
+
     if (startIsWall) {
         if (routeOneWays_) {
             for (const auto& ow : *routeOneWays_) {
@@ -1071,7 +1136,8 @@ bool Player::CheckRoute() {
 
     bool startConnectedToThread = false;
     if (thread_) {
-        float checkRadiusSq = 2.54f; // 地上からでも糸の端点を検知できるように少し広めの判定にする
+        // ★修正: 判定半径を2.56f (距離1.6f相当)に統一
+        float checkRadiusSq = 2.56f;
         for (auto& physics : thread_->GetPhysicsList()) {
             std::vector<PhysicsNode> tempNodes;
             const auto* pNodes = &physics->GetNodes();
@@ -1101,7 +1167,7 @@ bool Player::CheckRoute() {
     }
 
     std::deque<BFSNode> queue;
-    queue.push_back({ startGrid, startConnectedToThread });
+    queue.push_back({startGrid, startConnectedToThread});
 
     std::vector<uint8_t> visited(512 * 512, 0);
     visited[startGrid.x + startGrid.z * 512] = startConnectedToThread ? 2 : 1;
@@ -1118,8 +1184,8 @@ bool Player::CheckRoute() {
         BFSNode current = queue.front();
         queue.pop_front();
 
-        float curWorldX = (float)current.pos.x - 256.0f + 0.5f;
-        float curWorldZ = (float)current.pos.z - 256.0f + 0.5f;
+        float curWorldX = (float) current.pos.x - 256.0f + 0.5f;
+        float curWorldZ = (float) current.pos.z - 256.0f + 0.5f;
 
         if (std::abs(curWorldX - goalPos_.x) < 1.5f && std::abs(curWorldZ - goalPos_.z) < 1.5f) {
             reachedGoal = true;
@@ -1133,15 +1199,15 @@ bool Player::CheckRoute() {
         }
 
         for (const auto& dir : directions) {
-            GridPoint nextGrid = { current.pos.x + dir.x, current.pos.z + dir.z };
+            GridPoint nextGrid = {current.pos.x + dir.x, current.pos.z + dir.z};
 
             if (nextGrid.x < 0 || nextGrid.x >= 512 || nextGrid.z < 0 || nextGrid.z >= 512) {
                 continue;
             }
 
-            float worldX = (float)nextGrid.x - 256.0f + 0.5f;
-            float worldZ = (float)nextGrid.z - 256.0f + 0.5f;
-            Vector3 worldPos = { worldX, playerPos.y, worldZ };
+            float worldX = (float) nextGrid.x - 256.0f + 0.5f;
+            float worldZ = (float) nextGrid.z - 256.0f + 0.5f;
+            Vector3 worldPos = {worldX, playerPos.y, worldZ};
 
             bool isWall = CollisionMask::GetInstance()->IsWall(worldX, worldZ);
             bool onOneWay = false;
@@ -1150,8 +1216,8 @@ bool Player::CheckRoute() {
             if (routeOneWays_) {
                 for (const auto& ow : *routeOneWays_) {
                     if (ow->IsInside(worldPos)) {
-                        Vector3 moveDir = { (float)dir.x, 0.0f, (float)dir.z };
-                        Vector3 curWorldPos = { curWorldX, 0.0f, curWorldZ };
+                        Vector3 moveDir = {(float) dir.x, 0.0f, (float) dir.z};
+                        Vector3 curWorldPos = {curWorldX, 0.0f, curWorldZ};
                         if (!ow->CanPass(moveDir, curWorldPos)) {
                             canPassOneWay = false;
                             break;
@@ -1171,7 +1237,7 @@ bool Player::CheckRoute() {
             if (routeBrokenBlocks_) {
                 for (const auto& br : *routeBrokenBlocks_) {
                     if (br->IsInside(worldPos) && !br->IsBroken()) {
-                        Vector3 curWorldPos = { curWorldX, 0.0f, curWorldZ };
+                        Vector3 curWorldPos = {curWorldX, 0.0f, curWorldZ};
                         if (br->IsImpassable() && !br->IsInside(curWorldPos)) {
                             continue;
                         }
@@ -1184,7 +1250,9 @@ bool Player::CheckRoute() {
 
             bool hasThread = false;
             if (thread_) {
-                float radiusSq = 2.54f;
+                // ★修正: 共通の広めの判定半径を使用する
+                float checkRadiusSq = 2.56f;
+
                 for (auto& physics : thread_->GetPhysicsList()) {
                     std::vector<PhysicsNode> tempNodes;
                     const auto* pNodes = &physics->GetNodes();
@@ -1203,28 +1271,24 @@ bool Player::CheckRoute() {
 
                     if (nodes.empty()) continue;
 
-                    const auto& edgeStartNode = nodes.front();
-                    const auto& edgeEndNode = nodes.back();
-
                     if (!isWall) {
-                        float dxStart = edgeStartNode.currentPos.x - worldX;
-                        float dzStart = edgeStartNode.currentPos.z - worldZ;
-                        float dxEnd = edgeEndNode.currentPos.x - worldX;
-                        float dzEnd = edgeEndNode.currentPos.z - worldZ;
-
-                        if ((dxStart * dxStart + dzStart * dzStart) < radiusSq ||
-                            (dxEnd * dxEnd + dzEnd * dzEnd) < radiusSq) {
-                            hasThread = true;
-                            break;
+                        // ★修正: 地上の場合でも、端点だけでなくすべてのノードをチェックする
+                        for (const auto& node : nodes) {
+                            float dx = node.currentPos.x - worldX;
+                            float dz = node.currentPos.z - worldZ;
+                            if ((dx * dx + dz * dz) < checkRadiusSq) {
+                                hasThread = true;
+                                break;
+                            }
                         }
                     } else {
-                        float airRadiusSq = 0.64f;
+                        // ★修正: 壁・空中の場合も checkRadiusSq を使用し斜め移動にも対応
                         bool isSameThread = false;
 
                         for (const auto& node : nodes) {
                             float cdx = node.currentPos.x - curWorldX;
                             float cdz = node.currentPos.z - curWorldZ;
-                            if ((cdx * cdx + cdz * cdz) < airRadiusSq) {
+                            if ((cdx * cdx + cdz * cdz) < checkRadiusSq) {
                                 isSameThread = true;
                                 break;
                             }
@@ -1234,7 +1298,7 @@ bool Player::CheckRoute() {
                             for (const auto& node : nodes) {
                                 float dx = node.currentPos.x - worldX;
                                 float dz = node.currentPos.z - worldZ;
-                                if ((dx * dx + dz * dz) < airRadiusSq) {
+                                if ((dx * dx + dz * dz) < checkRadiusSq) {
                                     hasThread = true;
                                     break;
                                 }
@@ -1260,7 +1324,7 @@ bool Player::CheckRoute() {
 
             if (!(visited[index] & bitMask)) {
                 visited[index] |= bitMask;
-                queue.push_back({ nextGrid, nextConnectedToThread });
+                queue.push_back({nextGrid, nextConnectedToThread});
             }
         }
     }

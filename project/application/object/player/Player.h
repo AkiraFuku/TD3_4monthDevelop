@@ -244,6 +244,15 @@ private:
 
     void IsCollisionOneWay();
 
+    // 線分(start - end)がOneWayObjectを跨いでいるか判定する
+    bool IntersectsAnyOneWayObject(const Vector3& start, const Vector3& end) const;
+
+    // 糸の生成を防ぐための、OneWayObjectに対する接近制限マージン値
+    static inline const float kMinDistanceToOneWay = 0.8f;
+
+    // Player専用の糸生成防止用の仮想AABBを取得する
+    AABB GetThreadBlockAABBForPlayer(const OneWayObject* oneWay) const;
+
 private:
     // Thread上を歩いているか
     bool onThread_ = false;
