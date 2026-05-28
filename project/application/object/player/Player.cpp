@@ -733,14 +733,20 @@ void Player::UpdatePredictionLine() {
         }
 
         // 5. 条件に応じて色を変える
-        if (canCreate) {
-            // 発射可能：黄色
-            predictionLineObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
-            predictionPointObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
+        if (remainingThreadCount_ <= 0) {
+            // 発射不可：灰色
+            predictionLineObj_->SetColor({0.5f, 0.5f, 0.5f, 1.0f});
+            predictionPointObj_->SetColor({0.5f, 0.5f, 0.5f, 1.0f});
         } else {
-            // 発射不可：赤色
-            predictionLineObj_->SetColor({1.0f, 0.0f, 0.0f, 1.0f});
-            predictionPointObj_->SetColor({1.0f, 0.0f, 0.0f, 1.0f});
+            if (canCreate) {
+                // 発射可能：黄色
+                predictionLineObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
+                predictionPointObj_->SetColor({1.0f, 1.0f, 0.0f, 1.0f});
+            } else {
+                // 発射不可：赤色
+                predictionLineObj_->SetColor({1.0f, 0.0f, 0.0f, 1.0f});
+                predictionPointObj_->SetColor({1.0f, 0.0f, 0.0f, 1.0f});
+            }
         }
 
         // 6. オブジェクトの座標・回転・スケールを更新
