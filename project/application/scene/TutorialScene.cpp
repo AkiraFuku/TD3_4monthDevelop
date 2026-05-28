@@ -43,7 +43,23 @@ void TutorialScene::Initialize()
     liftPad_->SetPosition({640.0f, kOffscreenY});
     liftPad_->SetAnchorPoint({0.5f, 0.5f});
 
+    pressSpace_ = std::make_unique<Sprite>();
+    pressSpace_->Initialize("resources/tutorial/space.png");
+    pressSpace_->SetPosition({900.0f, 600.0f});
+    pressSpace_->SetAnchorPoint({0.5f, 0.5f});
+
+    pressA_ = std::make_unique<Sprite>();
+    pressA_->Initialize("resources/tutorial/aButton.png");
+    pressA_->SetPosition({900.0f, 600.0f});
+    pressA_->SetAnchorPoint({0.5f, 0.5f});
+
+    next_ = std::make_unique<Sprite>();
+    next_->Initialize("resources/tutorial/next.png");
+    next_->SetPosition({640.0f, 500.0f});
+    next_->SetAnchorPoint({0.5f, 0.5f});
+
     animTimer_ = 0.0f;
+    blinkTimer_ = 0.0f;
     animState_ = AnimState::kAnimIn;
 
     objectiveSprite_ = std::make_unique<Sprite>();
@@ -190,10 +206,23 @@ void TutorialScene::UpdateExtra()
                     animState_ = AnimState::kAnimIn;
                 }
             }
-            break;
-        }
+            }
         }
 
+        if (animState_ == AnimState::kWaiting)
+        {
+            blinkTimer_ += deltaTime;
+            float blinkAlpha = BlinkAlpha(blinkTimer_, 0.5f); // 点滅の周期スピードを設定
+
+            if (pressSpace_) pressSpace_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, blinkAlpha });
+            if (pressA_) pressA_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, blinkAlpha });
+        }
+        else
+        {
+            blinkTimer_ = 0.0f;
+            if (pressSpace_) pressSpace_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 0.0f });
+            if (pressA_) pressA_->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 0.0f });
+        }
 
         for (const auto& explanationSprite : explanationSpritesKeyboard_)
         {
@@ -204,6 +233,9 @@ void TutorialScene::UpdateExtra()
         if (movePad_) movePad_->Update();
         if (liftKey_) liftKey_->Update();
         if (liftPad_) liftPad_->Update();
+        if (pressSpace_) pressSpace_->Update();
+        if (pressA_) pressA_->Update();
+        if (next_) next_->Update();
 
         break;
 
@@ -274,11 +306,20 @@ void TutorialScene::DrawExtra()
                  } else if (currentPage_ == 1) {
                      liftKey_->Draw();
                  }
+
+                 if (animState_ == AnimState::kWaiting) {
+                     pressSpace_->Draw();
+                 }
+
              } else {
                  if (currentPage_ == 0) {
                      movePad_->Draw();
                  } else if (currentPage_ == 1) {
                      liftPad_->Draw();
+                 }
+
+                 if (animState_ == AnimState::kWaiting) {
+                     pressA_->Draw();
                  }
              }
         }

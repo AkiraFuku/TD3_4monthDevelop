@@ -54,6 +54,9 @@ private:
     std::unique_ptr<Sprite> movePad_;
     std::unique_ptr<Sprite> liftKey_;
     std::unique_ptr<Sprite> liftPad_;
+    std::unique_ptr<Sprite> pressSpace_;
+    std::unique_ptr<Sprite> pressA_;
+    std::unique_ptr<Sprite> next_;
 
     static constexpr int kTutorialStageID = 0;
     static constexpr int kTutorialMaxStage = 3; // チュートリアルのステージ数（0〜2の3ステージなら2）
@@ -63,6 +66,8 @@ private:
 
     // アニメーション進行タイマー（0.0f〜1.0f）
     float animTimer_ = 0.0f;
+    // ボタン点滅用タイマー
+    float blinkTimer_ = 0.0f;
 
     // アニメーション時間（秒）
     static constexpr float kAnimInDuration = 0.7f; // 降ってくる時間
