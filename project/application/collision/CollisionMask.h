@@ -59,6 +59,8 @@ public:
         Map7,
         Map8,
         Map9,
+        Map10,
+        Map11,
 
         Unknown,
     };
