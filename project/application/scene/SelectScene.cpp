@@ -5,6 +5,8 @@
 #include "SceneManager.h"
 #include "CollisionMask.h"
 #include "Object3dCommon.h"
+#include "WinApp.h"
+#include "ImGuiManager.h"
 
 void SelectScene::Initialize()
 {
@@ -23,6 +25,9 @@ void SelectScene::Initialize()
         { 4.0f,0.0f,12.0f }
     };
 
+    camera->Update();
+    camera->UpdateViewProjection();
+
     for (uint32_t i = 0; i < kStageNum_; i++)
     {
         std::unique_ptr<Object3d> object = std::make_unique<Object3d>();
@@ -33,6 +38,12 @@ void SelectScene::Initialize()
         object->SetTranslate(stagePos_[i]);
         object->SetScale(Vector3{ 0.8f,0.8f,0.8f });
         objects_.push_back(std::move(object));
+
+        ScreenPosition screenPos;
+        // ワールド座標をスクリーン座標に変換
+        screenPos = WorldToScreen(objects_[i]->GetTranslate(), camera->GetViewMatrix(), camera->GetProjectionMatrix(), 
+            WinApp::GetInstance()->kClientWidth, WinApp::GetInstance()->kClientHeight);
+        screenPositions_.push_back(screenPos);
     }
 
     TextureManager::GetInstance()->LoadTexture("resources/backTitle.png");
@@ -42,11 +53,17 @@ void SelectScene::Initialize()
 
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/Menu/cursor.png");
+    arrowSprite_->SetAnchorPoint({0.5f, 0.8f});
     stageIndex = 0;
-    Vector2 pos;
+   /* Vector2 pos;
     pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
     pos.x += 450.0f;
     pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
+    arrowSprite_->SetPosition(pos);*/
+
+    Vector2 pos;
+    pos.x = screenPositions_[stageIndex].position.x + 25.0f;
+    pos.y = screenPositions_[stageIndex].position.y;
     arrowSprite_->SetPosition(pos);
     
 
@@ -89,6 +106,20 @@ void SelectScene::Update()
         theta += float(M_PI) / 60.0f; // 1秒で1周期の速度
         objects_[stageIndex]->SetTranslate(pos);
     }
+
+#ifdef _DEBUG
+
+    ImGui::Begin("SelectScene Debug");
+
+    ImGui::InputFloat2("Arrow Position", &arrowPos_.x);
+    for (uint32_t i = 0; i < kStageNum_; i++)
+    {
+        ImGui::InputFloat2("Screen Position", &screenPositions_[i].position.x);
+    }
+    ImGui::End();
+
+#endif
+
     // モデルの更新処理
     for (const std::unique_ptr <Object3d>& object : objects_)
     {
@@ -209,15 +240,13 @@ void SelectScene::MoveCursor()
         if (stageIndex == -1)
         {
             Vector2 pos = titleSprite_->GetPosition();
-            pos.y -= 600.0f;
             arrowSprite_->SetPosition(pos);
         }
         else
         {
             Vector2 pos;
-            pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
-            pos.x += 450.0f;
-            pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
+            pos.x = screenPositions_[stageIndex].position.x - 25.0f;
+            pos.y = screenPositions_[stageIndex].position.y;
             arrowSprite_->SetPosition(pos);
         }
 
