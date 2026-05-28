@@ -52,7 +52,7 @@ void SelectScene::Initialize()
     TextureManager::GetInstance()->LoadTexture("resources/backTitle.png");
     titleSprite_ = std::make_unique<Sprite>();
     titleSprite_->Initialize("resources/backTitle.png");
-    titleSprite_->SetPosition(Vector2{ 0.0f,0.0f });
+    titleSprite_->SetPosition(Vector2{ 580.0f,10.0f });
 
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/Menu/cursor.png");
@@ -323,6 +323,8 @@ void SelectScene::MoveCursor()
         if (stageIndex == -1)
         {
             Vector2 pos = titleSprite_->GetPosition();
+            pos.y -= 80.0f;
+            pos.x += 100.0f;
             arrowSprite_->SetPosition(pos);
         }
         else
