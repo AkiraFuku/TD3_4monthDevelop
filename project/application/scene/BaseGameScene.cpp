@@ -1412,6 +1412,7 @@ void BaseGameScene::Clear()
 
             if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
             {
+                Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
                 fade_->StartFadeOut(0.02f);
                 isFadeStart_ = true;
                 return;
@@ -1423,6 +1424,7 @@ void BaseGameScene::Clear()
                 if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
                     Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
                 {
+                    Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
                     if (pauseIndex_ < 2)
                     {
                         pauseIndex_++;
@@ -1433,6 +1435,7 @@ void BaseGameScene::Clear()
                 } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
                     Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
                 {
+                    Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
                     if (pauseIndex_ > 1)
                     {
                         pauseIndex_--;
@@ -1620,6 +1623,7 @@ void BaseGameScene::GameOver()
         if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
         {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
             if (pauseIndex_ < 3)
             {
                 pauseIndex_ = 3;
@@ -1630,6 +1634,7 @@ void BaseGameScene::GameOver()
         } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
             Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
         {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
             if (pauseIndex_ > 1)
             {
                 pauseIndex_ = 1;
@@ -1639,6 +1644,7 @@ void BaseGameScene::GameOver()
             }
         } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
+            Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
             fade_->StartFadeOut(0.02f);
             isFadeStart_ = true;
 
