@@ -164,8 +164,6 @@ void BaseGameScene::Initialize() {
     // ----- Thread -----
     thread_ = std::make_unique<ThreadManager>();
     thread_->Initialize(50, 20, camera.get());
-    //thread_->AddThread({0.0f, 0.0f, 0.0f}, {8.0f, 0.0f, 0.0f});
-    //thread_->AddThread({-5.0f, 0.0f, -5.0f}, {-5.0f, 0.0f, 5.0f});
     spiderWeb_ = std::make_unique<SpiderWebManager>();
     spiderWeb_->Initialize(camera.get());
 
@@ -295,6 +293,8 @@ void BaseGameScene::Initialize() {
     enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
     select_ = Audio::GetInstance()->LoadAudio("resources/sounds/select.wav");
     missSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/miss.wav");
+    clear = Audio::GetInstance()->LoadAudio("resources/sounds/Clear.wav");
+    reset = Audio::GetInstance()->LoadAudio("resources/sounds/Reset.wav");
     // サウンド再生
     Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
 
@@ -688,6 +688,17 @@ void BaseGameScene::Update()
     // クリアフラグが立っている場合
     if (isClear_)
     {
+        if (Audio::GetInstance()->IsPlaying(handle_))
+        {
+             Audio::GetInstance()->StopAudio(handle_);
+        }
+
+        if (!Audio::GetInstance()->IsPlaying(clear))
+        {
+            Audio::GetInstance()->PlayAudio(clear, false, 1.0f);
+
+        }
+
         OnClear();
     }
 
