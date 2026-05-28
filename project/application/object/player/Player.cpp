@@ -429,9 +429,12 @@ void Player::FireThread() {
         dir.x /= len;
         dir.z /= len;
 
-        const float extend = 0.2f;
-        start.x -= dir.x * extend;
-        start.z -= dir.z * extend;
+        const float extendEnd = 0.1f;
+        const float extendStart = 0.3f;
+        start.x -= dir.x * extendStart;
+        start.z -= dir.z * extendStart;
+        end.x += dir.x * extendEnd;
+        end.z += dir.z * extendEnd;
     }
 
     thread_->AddThread(start, end);
