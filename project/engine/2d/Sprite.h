@@ -135,7 +135,7 @@ public:
 
 private:
     void AdjustTextureSize();
-    BlendMode blendMode_ = BlendMode::Normal;
+    BlendMode blendMode_ = BlendMode::None;
 private:
 
 

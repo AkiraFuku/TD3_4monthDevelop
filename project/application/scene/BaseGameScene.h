@@ -83,6 +83,11 @@ public:
         }
     }
 
+    void InputColorSet();
+
+    void GetUpEggToSetColor();
+    void PutOnEggToSetColor();
+
 public:
 
     void LoadStageData();
@@ -193,6 +198,34 @@ protected:
 
 
     std::vector <std::unique_ptr<Sprite>> buttonSprite_;
+    std::vector <std::unique_ptr<Sprite>> keyboardSprite_;
+    std::vector <std::unique_ptr<Sprite>> padSprite_;
+
+    Vector2 keyboardPositions_[9]
+    {  
+        {  32.7f, 621.0f },
+        {   0.0f, 653.7f },
+        {  32.6f, 686.7f },
+        {  66.0f, 652.7f },
+        {   0.0f, 620.0f },
+        { 214.0f, 644.9f },
+        { 495.8f, 645.4f },
+        { 763.9f, 646.0f },
+        { 903.0f, 645.0f }
+    };
+
+    Vector2 padPositions_[7]
+    {
+        {  57.1f, 670.0f },
+        {  57.1f, 670.0f },
+        { 500.0f, 669.0f },
+        { 260.0f, 670.0f },
+        { 473.0f, 670.4f },
+        { 766.0f, 668.0f },
+        { 900.0f, 668.0f }
+    };
+    bool uiEggTexture_ = false;
+
     std::unique_ptr<Sprite> keyboard_;
     std::unique_ptr<Sprite> pad_;
 
