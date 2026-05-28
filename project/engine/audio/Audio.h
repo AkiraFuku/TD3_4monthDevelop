@@ -61,6 +61,8 @@ public:
     void ResumeAudio(SoundHandle voiceHandle);
     // 再生中かどうか判定 
     bool IsPlaying(SoundHandle voiceHandle);
+    //　停止中
+ //   bool IsPaused(SoundHandle voiceHandle);
 private:
     Audio() = default;
     ~Audio() = default;

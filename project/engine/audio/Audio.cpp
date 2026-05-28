@@ -184,12 +184,13 @@ void Audio::PlayAudio(SoundHandle soundHandle, bool loop, float volume)
     voice.handle = nextVoiceHandle_++;
     voice.sourceHandle = soundHandle; // ★ここで親ハンドルを覚える！
     voice.sourceVoice = pSourceVoice;
-    voice.state=VoiceState::Playing;
+    voice.state = VoiceState::Playing;
 
     activeVoices_.push_back(voice);
 }
 void Audio::StopAudio(SoundHandle voiceHandle)
 {
+
     //有効なハンドルではなければ早期リターン
     auto it = std::find_if(
         activeVoices_.begin(), activeVoices_.end(),
@@ -201,7 +202,7 @@ void Audio::StopAudio(SoundHandle voiceHandle)
         it->sourceVoice->Stop();
         it->sourceVoice->FlushSourceBuffers();
         it->sourceVoice->DestroyVoice();
-        it->state=VoiceState::Stopped;
+        it->state = VoiceState::Stopped;
         activeVoices_.erase(it);
     }
 }
@@ -215,7 +216,7 @@ void Audio::PauseAudio(SoundHandle voiceHandle)
     {
         // 単に停止させる。
         // FlushSourceBuffers() を呼ばなければ、再生位置(カーソル)は維持される。
-        it->state=VoiceState::Paused;
+        it->state = VoiceState::Paused;
         it->sourceVoice->Stop(0);
     }
 }
@@ -227,7 +228,7 @@ void Audio::ResumeAudio(SoundHandle voiceHandle)
 
     if (it != activeVoices_.end())
     {
-        it->state=VoiceState::Playing;
+        it->state = VoiceState::Playing;
         // 停止した位置から再開される
         it->sourceVoice->Start(0, XAUDIO2_COMMIT_NOW);
     }
@@ -245,5 +246,5 @@ bool Audio::IsPlaying(SoundHandle voiceHandle)
         return false;
     }
 
-   return it->state == VoiceState::Playing;
+    return it->state == VoiceState::Playing;
 }

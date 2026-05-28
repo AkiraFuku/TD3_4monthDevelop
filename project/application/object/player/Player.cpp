@@ -68,6 +68,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
 
     // サウンド読み込み
     threadSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/thread.wav");
+    walk_= Audio::GetInstance()->LoadAudio("resources/sounds/PlayerWalk.wav");
 
 }
 /// <summary>
@@ -637,6 +638,14 @@ void Player::TurnToDirection(const Vector3& direction) {
 
     rotate_ = {0.0f, rotationY_, 0.0f};
     object_->SetRotate(rotate_);
+}
+
+void Player::StopWalkSound()
+{
+    if (activeWalkVoice_ != 0) {
+        Audio::GetInstance()->StopAudio(activeWalkVoice_);
+        activeWalkVoice_ = 0;
+    }
 }
 
 void Player::UpdatePredictionLine() {

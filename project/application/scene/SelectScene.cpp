@@ -55,12 +55,7 @@ void SelectScene::Initialize()
     arrowSprite_->Initialize("resources/Menu/cursor.png");
     arrowSprite_->SetAnchorPoint({0.5f, 0.8f});
     stageIndex = 0;
-   /* Vector2 pos;
-    pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
-    pos.x += 450.0f;
-    pos.y = objects_[stageIndex]->GetTranslate().y - 400.0f;
-    arrowSprite_->SetPosition(pos);*/
-
+  
     Vector2 pos;
     pos.x = screenPositions_[stageIndex].position.x + 25.0f;
     pos.y = screenPositions_[stageIndex].position.y;

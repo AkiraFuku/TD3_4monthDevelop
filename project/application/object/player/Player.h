@@ -236,6 +236,8 @@ public:
     // 状態クラス（PlayerState）から回転だけを呼び出せるように public へ移動
     void TurnToDirection(const Vector3& direction);
 
+    void StopWalkSound();
+
 private:
     bool TryMoveOnThread(const Vector3& moveDirection);
     void ResolveThreadMove();
@@ -316,4 +318,6 @@ private:
     // 「到達不可」フラグと、到達できなかった理由の文字列（ImGui表示用）
     bool        routeCheckFailed_ = false;
     std::string routeFailReason_;
+     Audio::SoundHandle walk_ = 0;
+     Audio::SoundHandle activeWalkVoice_ = 0;
 };
