@@ -9,6 +9,7 @@
 #include <numbers>
 #include "Transform.h"
 #include "ParticleManager.h"
+#include "Vector4Function.h"
 
 namespace {
     float easeOutElastic(float x) {
@@ -486,6 +487,8 @@ void BaseGameScene::Initialize() {
         padSprite_[i]->SetPosition(padPositions_[i]);
     }
 
+    padStickPosition_ = padSprite_[0]->GetPosition();
+
     fade_ = std::make_unique<Fade>();
     fade_->Initialize();
     fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
@@ -504,7 +507,7 @@ void BaseGameScene::Initialize() {
 
     maxNum = static_cast<int>(CollisionMask::GetInstance()->GetMaxStageID());
 
-
+    isPlayClearSE_ = false;
 
 }
 void BaseGameScene::Finalize() {
@@ -1475,10 +1478,10 @@ void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const 
 void BaseGameScene::Clear()
 {
 
-    if (!Audio::GetInstance()->IsPlaying(clear))
+    if (!Audio::GetInstance()->IsPlaying(clear) && !isPlayClearSE_)
     {
         Audio::GetInstance()->PlayAudio(clear, false, 1.0f);
-
+        isPlayClearSE_ = true;
     }
 
     // コントローラー入力を取得
@@ -1937,7 +1940,7 @@ void BaseGameScene::InputColorSet()
             keyboardSprite_[3]->SetColor(defaultColor);
         }
 
-        if (egg_->IsOnPlayer())
+        /*if (egg_->IsOnPlayer())
         {
             keyboardSprite_[5]->SetColor(getUpEggColor);
             keyboardSprite_[6]->SetColor(getUpEggColor);
@@ -1959,7 +1962,7 @@ void BaseGameScene::InputColorSet()
             {
                 keyboardSprite_[6]->SetColor(defaultColor);
             }
-        }
+        }*/
 
         
 
@@ -1973,7 +1976,71 @@ void BaseGameScene::InputColorSet()
     }
     else
     {
+        Vector2 padStickPosition =  padSprite_[0]->GetPosition();
+        XINPUT_STATE joyState{};
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            // スティックの入力を -1.0f ～ 1.0f に正規化
+            Vector2 stick;
+            stick.x = (float)joyState.Gamepad.sThumbLX / kStickMax;
+            stick.y = (float)joyState.Gamepad.sThumbLY / kStickMax;
 
+            
+            
+            // デッドゾーンを超えていたら移動とみなす
+            if (std::abs(stick.x) > kDeadZone || std::abs(stick.y) > kDeadZone) 
+            {
+                
+                stick.y *= -1.0f;
+
+                padStickPosition_ = padStickPosition + (Normalize(stick) * kMaxPadStick);
+                padSprite_[1]->SetPosition(padStickPosition_);
+
+
+                padSprite_[1]->SetColor(pushColor);
+            }
+            else
+            {
+
+                padStickPosition_ = padStickPosition ;
+                padSprite_[1]->SetPosition(padStickPosition_);
+
+                padSprite_[1]->SetColor(defaultColor);
+            }
+        }
+
+       /* if (egg_->IsOnPlayer())
+        {
+            padSprite_[3]->SetColor(getUpEggColor);
+            padSprite_[4]->SetColor(getUpEggColor);
+        } 
+        else
+        {
+            if (input->TriggerPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))
+            {
+                padSprite_[3]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_LEFT_SHOULDER))
+            {
+                padSprite_[3]->SetColor(defaultColor);
+            }
+
+            if (input->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))
+            {
+                padSprite_[4]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))
+            {
+                padSprite_[4]->SetColor(defaultColor);
+            }
+        }*/
+
+
+
+        if (input->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        {
+            padSprite_[5]->SetColor(pushColor);
+        } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_A))
+        {
+            padSprite_[5]->SetColor(defaultColor);
+        }
     }
 
     
@@ -1994,7 +2061,10 @@ void BaseGameScene::GetUpEggToSetColor()
     }
     else
     {
+        padSprite_[3]->SetColor(getUpEggColor);
+        padSprite_[4]->SetColor(getUpEggColor);
 
+        padSprite_[6]->SetTextureByFilePath("Resources/Pad/Pad_EGG_1.png");
     }
 }
 
@@ -2002,16 +2072,52 @@ void BaseGameScene::PutOnEggToSetColor()
 {
     auto input = Input::GetInstance();
     Vector4 defaultColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 pushColor = { 1.0f, 0.0f, 0.0f, 1.0f };
 
     if (Input::GetInstance()->GetConnectedStickNum() == 0)
     {
-        keyboardSprite_[5]->SetColor(defaultColor);
-        keyboardSprite_[6]->SetColor(defaultColor);
+
+        if (input->PushedKeyDown(DIK_LSHIFT))
+        {
+            keyboardSprite_[5]->SetColor(pushColor);
+        }
+        else
+        {
+            keyboardSprite_[5]->SetColor(defaultColor);
+        }
+
+        if (input->PushedKeyDown(DIK_B))
+        {
+            keyboardSprite_[6]->SetColor(pushColor);
+        } 
+        else
+        {
+            keyboardSprite_[6]->SetColor(defaultColor);
+        }
 
         keyboardSprite_[8]->SetTextureByFilePath("Resources/Keyboard/Keyboard_EGG_0.png");
     }
     else
     {
+        if (input->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))
+        {
+            padSprite_[3]->SetColor(pushColor);
+        } 
+        else
+        {
+            padSprite_[3]->SetColor(defaultColor);
+        }
 
+        if (input->PushPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))
+        {
+            padSprite_[4]->SetColor(pushColor);
+        } 
+        else
+        {
+            padSprite_[4]->SetColor(defaultColor);
+        }
+
+
+        padSprite_[6]->SetTextureByFilePath("Resources/Pad/Pad_EGG_0.png");
     }
 }

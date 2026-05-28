@@ -72,7 +72,7 @@ void Egg::Update() {
                     onPlayer_ = false;
 
                     // サウンド再生
-                    Audio::GetInstance()->PlayAudio(down_, false, 1.0f);
+                    Audio::GetInstance()->PlayAudio(down_, false, 2.0f);
 
                     // キャリーアニメーション終了 → リセット処理を含めてIdleに戻す
                     player_->ResetOneShotAnimationAndChangeState(PlayerAnima::AnimationState::Idle);
@@ -96,7 +96,7 @@ void Egg::Update() {
                 {
                     onPlayer_ = true;
                     // サウンド再生
-                    Audio::GetInstance()->PlayAudio(up_, false, 1.0f);
+                    Audio::GetInstance()->PlayAudio(up_, false, 2.0f);
                     // キャリーアニメーションを再生
                     player_->ChangeAnimation(PlayerAnima::AnimationState::Carry);
                     translate = player_->GetPosition();

@@ -201,6 +201,9 @@ protected:
     std::vector <std::unique_ptr<Sprite>> keyboardSprite_;
     std::vector <std::unique_ptr<Sprite>> padSprite_;
 
+    Vector2 padStickPosition_ = { 0.0f, 0.0f };
+    const Vector2 kMaxPadStick = { 10.0f, 10.0f };
+
     Vector2 keyboardPositions_[9]
     {  
         {  32.7f, 621.0f },
@@ -265,6 +268,8 @@ protected:
     int num = 0;
 
     int maxNum = 0;
+
+    bool isPlayClearSE_ = false;
 
 private:
 };
