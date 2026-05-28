@@ -75,6 +75,7 @@ void SelectScene::Initialize()
     ModelManager::GetInstance()->LoadModel("resources", "background/select.obj");
     background_->AddModel("background/select.obj", "background");
     background_->SetTranslate(Vector3{ 0.0f,0.0f,13.0f });
+    background_->SetModelInstanceColor("background", Vector4{ 0.7f,0.7f,0.7f,1.0f });
 
 
     // サウンド読み込み
@@ -128,6 +129,12 @@ void SelectScene::Update()
     for (uint32_t i = 0; i < kStageNum_; i++)
     {
         ImGui::InputFloat2("Screen Position", &screenPositions_[i].position.x);
+    }
+
+    Vector4 color = background_->GetModelInstanceColor("background");
+    if (ImGui::ColorEdit4("Background Color", &color.x))
+    {
+        background_->SetModelInstanceColor("background", color);
     }
     ImGui::End();
 

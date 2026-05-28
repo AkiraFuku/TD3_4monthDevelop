@@ -95,7 +95,7 @@ void PlayerStateMove::Update(Player* player) {
     // 一秒ごとに歩行音を再生する
     SEWalkTimer_ += DXCommon::kDeltaTime;
     if (SEWalkTimer_ >= 0.5f) {
-        Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 2.0f);
+        Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 1.0f);
         SEWalkTimer_ = 0.0f;
     }
     Vector3 moveDirection = { 0.0f, 0.0f, 0.0f };

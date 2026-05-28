@@ -118,6 +118,7 @@ public:
         }
         return {1.0f, 1.0f, 1.0f, 1.0f}; // デフォルトの白色
      }
+
      void SetModelInstanceColor(const std::string& instanceName, const Vector4& color) {
          for (const auto& instance : models_) {
              if (instance->name == instanceName) {
