@@ -346,7 +346,7 @@ void BaseGameScene::Initialize() {
     hpSprite_->Initialize("resources/icon/hp.png");
     clearSprite_ = std::make_unique<Sprite>();
     clearSprite_->Initialize("resources/icon/clear.png");
-    clearSprite_->SetSize(Vector2{ 100.0f,100.0f });
+    
 
     threadIconSprite_->SetPosition(Vector2{ 580.0f,0.0f });
     threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 630.0f,0.0f });
@@ -418,16 +418,72 @@ void BaseGameScene::Initialize() {
     buttonSprite_[3]->SetPosition(Vector2{ 100.0f,0.0f });
 
     keyboard_ = std::make_unique<Sprite>();
-    keyboard_->Initialize("resources/keyboard.png");
+    keyboard_->Initialize("resources/Keyboard/Keyboard_ALL.png");
     keyboard_->SetPosition(Vector2{ 0.0f,620.0f });
     keyboard_->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.85f });
-    keyboard_->SetBlendMode(BlendMode::Add);
+    keyboard_->SetBlendMode(BlendMode::Normal);
     pad_ = std::make_unique<Sprite>();
-    pad_->Initialize("resources/pad.png");
-    pad_->SetPosition(Vector2{ 0.0f,600.0f });
-    pad_->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.95f });
-    pad_->SetBlendMode(BlendMode::Add);
+    pad_->Initialize("resources/Pad/Pad_ALL.png");
+    pad_->SetPosition(Vector2{ 0.0f,620.0f });
+    pad_->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+    pad_->SetBlendMode(BlendMode::Normal);
 
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Keyboard/Keyboard_WASD_" + std::to_string(i) + ".png";
+        auto keyboardWASD = std::make_unique<Sprite>();
+        keyboardWASD->Initialize(path);
+        keyboardSprite_.push_back(std::move(keyboardWASD));
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Keyboard/Keyboard_" + std::to_string(i) + ".png";
+        auto keyboard = std::make_unique<Sprite>();
+        keyboard->Initialize(path);
+        keyboardSprite_.push_back(std::move(keyboard));
+    }
+
+    {
+        std::string path = "resources/Keyboard/Keyboard_EGG_0.png";
+        auto keyboardEGG = std::make_unique<Sprite>();
+        keyboardEGG->Initialize(path);
+        keyboardSprite_.push_back(std::move(keyboardEGG));
+    }
+
+    for (int i = 0; i < 9; i++)
+    {
+        keyboardSprite_[i]->SetPosition(keyboardPositions_[i]);
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        std::string path = "resources/Pad/Pad_Stick_" + std::to_string(i) + ".png";
+        auto padStick = std::make_unique<Sprite>();
+        padStick->Initialize(path);
+        padSprite_.push_back(std::move(padStick));
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Pad/Pad_" + std::to_string(i) + ".png";
+        auto pad = std::make_unique<Sprite>();
+        pad->Initialize(path);
+        padSprite_.push_back(std::move(pad));
+    }
+
+    {
+        std::string path = "resources/Pad/Pad_EGG_0.png";
+        auto padEGG = std::make_unique<Sprite>();
+        padEGG->Initialize(path);
+        padSprite_.push_back(std::move(padEGG));
+    }
+
+    for (int i = 0; i < 7; i++)
+    {
+        padSprite_[i]->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+        padSprite_[i]->SetPosition(padPositions_[i]);
+    }
 
     fade_ = std::make_unique<Fade>();
     fade_->Initialize();
@@ -616,9 +672,42 @@ void BaseGameScene::Update()
     }
 
     ImGui::End();
+
+    ImGui::Begin("UI Settings");
+
+    Vector4 UIColor = keyboard_->GetColor();
+    if (ImGui::ColorEdit4("Keyboard UI Color", &UIColor.x)) 
+    {
+        keyboard_->SetColor(UIColor);
+        pad_->SetColor(UIColor);
+    }
+
+    for (int i = 0; i < padSprite_.size(); ++i)
+    {
+        Vector2 padPosition = padSprite_[i]->GetPosition();
+        std::string label = "Pad Sprite " + std::to_string(i) + " Position";
+        if (ImGui::DragFloat2(label.c_str(), &padPosition.x, 0.1f))
+        {
+            padSprite_[i]->SetPosition(padPosition);
+        }
+    }
+
+    ImGui::End();
+
     // =========================================================
 
 #endif // USE_IMGUI
+
+    InputColorSet();
+
+    if (egg_->IsOnPlayer())
+    {
+         GetUpEggToSetColor();
+    } 
+    else
+    {
+        PutOnEggToSetColor();
+    }
 
     if (egg_->IsDead())
     {
@@ -850,7 +939,19 @@ void BaseGameScene::Update()
     }
 
     keyboard_->Update();
+
+    for (auto& keyboardSprite : keyboardSprite_)
+    {
+        keyboardSprite->Update();
+    }
+
     pad_->Update();
+
+    for (auto& padSprite : padSprite_)
+    {
+        padSprite->Update();
+    }
+
     rKeySprite_->Update();
     resetButtonSprite_->Update();
 
@@ -1065,7 +1166,12 @@ void BaseGameScene::Draw() {
 
         if (Input::GetInstance()->GetConnectedStickNum() == 0)
         {
-            keyboard_->Draw();
+            // keyboard_->Draw();
+
+            for (auto& keyboardSprite : keyboardSprite_)
+            {
+                keyboardSprite->Draw();
+            }
 
 
             for (int i = 2; i < 4; i++)
@@ -1074,7 +1180,12 @@ void BaseGameScene::Draw() {
             }
         } else
         {
-            pad_->Draw();
+           
+            for (auto& padSprite : padSprite_)
+            {
+                padSprite->Draw();
+            }
+
             for (int i = 0; i < 2; i++)
             {
                 buttonSprite_[i]->Draw();
@@ -1696,4 +1807,125 @@ void BaseGameScene::UpdatePauseGray()
 void BaseGameScene::DrawPauseGray()
 {
     menuSprite_->Draw();
+}
+
+
+void BaseGameScene::InputColorSet()
+{
+    auto input = Input::GetInstance();
+    Vector4 pushColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+    Vector4 defaultColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 getUpEggColor = { 0.3f, 0.3f, 0.3f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        if (input->TriggerKeyDown(DIK_W))
+        {
+            keyboardSprite_[0]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_W))
+        {
+            keyboardSprite_[0]->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_A))
+        {
+            keyboardSprite_[1]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_A))
+        {
+            keyboardSprite_[1]->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_S))
+        {
+            keyboardSprite_[2]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_S))
+        {
+            keyboardSprite_[2]->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_D))
+        {
+            keyboardSprite_[3]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_D))
+        {
+            keyboardSprite_[3]->SetColor(defaultColor);
+        }
+
+        if (egg_->IsOnPlayer())
+        {
+            keyboardSprite_[5]->SetColor(getUpEggColor);
+            keyboardSprite_[6]->SetColor(getUpEggColor);
+        }
+        else
+        {
+            if (input->TriggerKeyDown(DIK_LSHIFT))
+            {
+                keyboardSprite_[5]->SetColor(pushColor);
+            } else if (input->TriggerKeyUp(DIK_LSHIFT))
+            {
+                keyboardSprite_[5]->SetColor(defaultColor);
+            }
+
+            if (input->TriggerKeyDown(DIK_B))
+            {
+                keyboardSprite_[6]->SetColor(pushColor);
+            } else if (input->TriggerKeyUp(DIK_B))
+            {
+                keyboardSprite_[6]->SetColor(defaultColor);
+            }
+        }
+
+        
+
+        if (input->TriggerKeyDown(DIK_SPACE))
+        {
+            keyboardSprite_[7]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_SPACE))
+        {
+            keyboardSprite_[7]->SetColor(defaultColor);
+        }
+    }
+    else
+    {
+
+    }
+
+    
+}
+
+void BaseGameScene::GetUpEggToSetColor()
+{
+    auto input = Input::GetInstance();
+    Vector4 getUpEggColor = { 0.3f, 0.3f, 0.3f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        
+        keyboardSprite_[5]->SetColor(getUpEggColor);
+        keyboardSprite_[6]->SetColor(getUpEggColor);
+
+        keyboardSprite_[8]->SetTextureByFilePath("Resources/Keyboard/Keyboard_EGG_1.png");
+    }
+    else
+    {
+
+    }
+}
+
+void BaseGameScene::PutOnEggToSetColor()
+{
+    auto input = Input::GetInstance();
+    Vector4 defaultColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        keyboardSprite_[5]->SetColor(defaultColor);
+        keyboardSprite_[6]->SetColor(defaultColor);
+
+        keyboardSprite_[8]->SetTextureByFilePath("Resources/Keyboard/Keyboard_EGG_0.png");
+    }
+    else
+    {
+
+    }
 }
