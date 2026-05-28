@@ -891,6 +891,7 @@ void BaseGameScene::Update()
     }
 
     // 破壊フラグの立ったブロックを削除
+    size_t prevSize = brokenBlocks_.size();
     brokenBlocks_.erase(
         std::remove_if(brokenBlocks_.begin(), brokenBlocks_.end(),
             [](const std::unique_ptr<BrokenBlock>& block) {
@@ -898,6 +899,15 @@ void BaseGameScene::Update()
             }),
         brokenBlocks_.end()
     );
+
+    // 削除が発生した場合、プレイヤーの参照リストも同期して更新（ダングリングポインタを防止）
+    if (brokenBlocks_.size() != prevSize) {
+        std::vector<BrokenBlock*> blockPtrs;
+        for (auto& b : brokenBlocks_) {
+            blockPtrs.push_back(b.get());
+        }
+        player_->SetBrokenBlocks(blockPtrs);
+    }
 
     // ① Rキーを押したらフェードアウト開始
     if (!isClear_ && !isResetWaiting_)

@@ -199,6 +199,7 @@ void Player::Move(const Vector3& moveDirection) {
 
 void Player::ResultMove() {
     translate_ += moveVel_;
+
     object_->SetTranslate(translate_);
 }
 
@@ -427,6 +428,13 @@ void Player::FireThread() {
     // OneWayObject を跨いでいるか（交差しているか）チェック
     // =========================================================
     if (IntersectsAnyOneWayObject(start, end)) {
+        return; // 交差している場合は生成しない
+    }
+
+    // =========================================================
+    // BrokenBlock を跨いでいるか（交差しているか）チェック（Player専用）
+    // =========================================================
+    if (IntersectsAnyBrokenBlock(start, end)) {
         return; // 交差している場合は生成しない
     }
 
@@ -701,6 +709,7 @@ void Player::UpdatePredictionLine() {
         else if (!CanFireThread()) canCreate = false;
         else if (!thread_->CanCreateThread(start, end, kMinThreadCreateDistance)) canCreate = false;
         else if (IntersectsAnyOneWayObject(start, end)) canCreate = false;
+        else if (IntersectsAnyBrokenBlock(start, end)) canCreate = false;
 
         // ★修正4: FireThread() と完全に挙動を合わせるため、ヒット時は start 位置を手前に 0.2f 伸ばす
         // これにより、壁の中で赤色になった場合でも壁に埋もれずに表示されます
@@ -772,6 +781,63 @@ bool Player::IntersectsAnyOneWayObject(const Vector3& start, const Vector3& end)
         if (!oneWay) continue;
 
         AABB aabb = GetThreadBlockAABBForPlayer(oneWay);
+
+        float tMin = 0.0f;
+        float tMax = 1.0f;
+
+        // X軸スラブとの交差判定
+        float dx = end.x - start.x;
+        if (std::abs(dx) < 1e-6f) {
+            // 平行な場合、始点が範囲外なら交差しない
+            if (start.x < aabb.min.x || start.x > aabb.max.x) {
+                continue;
+            }
+        } else {
+            float t1 = (aabb.min.x - start.x) / dx;
+            float t2 = (aabb.max.x - start.x) / dx;
+            if (t1 > t2) std::swap(t1, t2);
+            tMin = (std::max)(tMin, t1);
+            tMax = (std::min)(tMax, t2);
+            if (tMin > tMax) continue;
+        }
+
+        // Z軸スラブとの交差判定
+        float dz = end.z - start.z;
+        if (std::abs(dz) < 1e-6f) {
+            // 平行な場合、始点が範囲外なら交差しない
+            if (start.z < aabb.min.z || start.z > aabb.max.z) {
+                continue;
+            }
+        } else {
+            float t1 = (aabb.min.z - start.z) / dz;
+            float t2 = (aabb.max.z - start.z) / dz;
+            if (t1 > t2) std::swap(t1, t2);
+            tMin = (std::max)(tMin, t1);
+            tMax = (std::min)(tMax, t2);
+            if (tMin > tMax) continue;
+        }
+
+        // ここまで到達した場合は交差している
+        return true;
+    }
+    return false;
+}
+
+AABB Player::GetThreadBlockAABBForBrokenBlock(const BrokenBlock* block) const {
+    AABB aabb = block->GetAABB();
+    float margin = kMinDistanceToBrokenBlock;
+    aabb.min.x -= margin;
+    aabb.max.x += margin;
+    aabb.min.z -= margin;
+    aabb.max.z += margin;
+    return aabb;
+}
+
+bool Player::IntersectsAnyBrokenBlock(const Vector3& start, const Vector3& end) const {
+    for (auto* block : brokenBlocks_) {
+        if (!block || block->IsBroken()) continue;
+
+        AABB aabb = GetThreadBlockAABBForBrokenBlock(block);
 
         float tMin = 0.0f;
         float tMax = 1.0f;

@@ -253,6 +253,15 @@ private:
     // Player専用の糸生成防止用の仮想AABBを取得する
     AABB GetThreadBlockAABBForPlayer(const OneWayObject* oneWay) const;
 
+    // 線分(start - end)がBrokenBlockを跨いでいるか判定する（Player専用）
+    bool IntersectsAnyBrokenBlock(const Vector3& start, const Vector3& end) const;
+
+    // 糸の生成を防ぐための、BrokenBlockに対する接近制限マージン値（Player専用）
+    static inline const float kMinDistanceToBrokenBlock = -0.5f;
+
+    // Player専用の糸生成防止用の仮想AABBを取得する（Player専用）
+    AABB GetThreadBlockAABBForBrokenBlock(const BrokenBlock* block) const;
+
 private:
     // Thread上を歩いているか
     bool onThread_ = false;
