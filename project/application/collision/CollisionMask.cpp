@@ -25,7 +25,7 @@ void CollisionMask::Finalize()
 
 void CollisionMask::Initialize()
 {
-    for (size_t i = 0; i < 9; i++)
+    for (size_t i = 0; i < 10; i++)
     {
 
         std::unique_ptr<StageData> stageData{};
@@ -107,7 +107,7 @@ void CollisionMask::Initialize()
 
 
 
-        rootParameters.resize(9);
+        rootParameters.resize(10);
 
 
 
@@ -198,7 +198,7 @@ void CollisionMask::Initialize()
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
 
-    for (size_t i = 0; i < 9; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         stageDatas_[i]->maskData_.get()->object->SetPsoName("MaskMap");
     }

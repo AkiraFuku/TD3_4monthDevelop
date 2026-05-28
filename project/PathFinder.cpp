@@ -268,7 +268,7 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             // --- ここで優先度をつける ---
             if (hasThread) {
                 // 糸の上は最優先（コストをそのまま、あるいは少し下げる）
-                moveCost *= 0.05f;
+                moveCost *= 0.5f;
             }
             else if (!isWall) {
                 // 地面の上は次点
@@ -285,7 +285,10 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
             }
 
             // --- 新しい Node を openList に追加する処理 ---
-            int newG = current->g + static_cast<int>(moveCost * 10.0f);
+            int costDelta = static_cast<int>(moveCost * 10.0f);
+            if (costDelta < 5) costDelta = 5; // 🌟安全対策：あまりに低すぎるコストを阻止
+
+            int newG = current->g + costDelta;
 
             // ★【フラグ確定ロジック】
             bool shouldBeConnected = (!isWall && hasThread) || current->isConnectedToThread;
@@ -306,7 +309,13 @@ std::vector<Point> PathFinder::FindPath(Point start, Point goal, int width, int 
                 // Hコスト（残り距離）の計算結果に、糸のルートなら大ボーナスを与える
                 int hCost = CalcH(nextPos, goal);
                 if (shouldBeConnected) {
-                    hCost -= 200; // 推定コストを大幅に下げてキューの最前に引き上げる
+                    if (hCost > 50) {
+                        hCost -= 200;
+                    }
+                }
+
+                if (hCost < 0) {
+                    hCost = 0;
                 }
 
                 Node* newNode = new Node(nextPos, newG, hCost, current);

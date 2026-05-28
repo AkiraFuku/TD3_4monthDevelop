@@ -6,6 +6,7 @@
 #include <set>
 #include "Audio.h"
 #include "DrawFunction.h"
+#include <vector>
 
 class BrokenBlock
 {
@@ -24,6 +25,9 @@ public:
     Vector3 GetPosition() const { return position_; }
     bool IsBroken() const { return isBroken_; }
     bool IsImpassable() const { return isImpassable_; }
+    // setter
+    void SetIsBroken(bool isBroken) { isBroken_ = isBroken; }
+    void SetIsImpassable(bool isIm) { isImpassable_ = isIm; }
 
     AABB GetAABB() const;
 
@@ -35,13 +39,13 @@ private:
     float height = 1.6f;
 
     // 3Dオブジェクト
-    std::unique_ptr<Object3d> object_;
+    std::vector<std::unique_ptr <Object3d>> objects_;
 
     // 破壊フラグ
     bool isBroken_ = false;
     bool isImpassable_ = false;
     // 壊れるまでの回数
-    int maxbreakCount_ = 1;
+    int maxbreakCount_ = 2;
     int currentCount_ = 0;
     // 乗っているキャラのリスト
     std::set<const void*> riders_;

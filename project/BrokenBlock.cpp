@@ -8,23 +8,33 @@ void BrokenBlock::Initialize(const Vector3& pos, float width, float depth)
     position_ = pos;
     this->width = width;
     height = depth;
-    object_ = std::make_unique<Object3d>();
-    object_->Initialize();
-    ModelManager::GetInstance()->LoadModel("resources", "brokenBlock/brokenBlock.obj");
-    object_->SetModel("brokenBlock/brokenBlock.obj");
-    object_->SetTranslate(pos);
-    float pi = std::numbers::pi_v<float>;
-    object_->SetRotate({ 0.0f, pi, 0.0f });
-    Vector3 scale = { this->width,1.0f,height };
-    object_->SetScale(scale);
+
+
+
+    ModelManager::GetInstance()->LoadModel("resources", "brokenBlock/1/brokenBlock.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "brokenBlock/2/brokenBlock.obj");
+
+    for (int i=0; i < maxbreakCount_; i++)
+    {
+        std::unique_ptr object = std::make_unique<Object3d>();
+        object->Initialize();
+        object->SetModel("brokenBlock/" + std::to_string(i + 1) + "/brokenBlock.obj");
+        object->SetTranslate(pos);
+        float pi = std::numbers::pi_v<float>;
+        object->SetRotate({ 0.0f, pi, 0.0f });
+        Vector3 scale = { this->width,1.0f,height };
+        object->SetScale(scale);
+        objects_.push_back(std::move(object));
+    }
 
     broken_ = Audio::GetInstance()->LoadAudio("resources/sounds/broken.wav");
 }
 
 void BrokenBlock::Update()
 {
-    if (object_) {
-        object_->Update();
+    for (const std::unique_ptr <Object3d>& object : objects_)
+    {
+        object->Update();
     }
 
 #ifdef USE_IMGUI
@@ -40,8 +50,14 @@ void BrokenBlock::Update()
 
 void BrokenBlock::Draw()
 {
-    if (object_) {
-        object_->Draw();
+    int num = maxbreakCount_ - currentCount_ - 1;
+    if (num >= 0)
+    {
+        objects_[num]->Draw();
+    }
+    else
+    {
+        objects_[0]->Draw();
     }
 }
 
@@ -64,15 +80,16 @@ void BrokenBlock::CheckRiding(const Vector3& pos, const void* entityPtr) {
         return;
     }
 
-    // まだ乗っていないキャラだったら判定
-    if (riders_.find(entityPtr) == riders_.end())
+    // 1. まず、このキャラが現在ブロックの「内側」にいるか「外側」にいるかをチェック
+    if (IsInside(pos))
     {
-        // ブロックにキャラが乗っていたら
-        if (IsInside(pos))
+        // まだ登録されていない新しいキャラなら、ここで初めて「乗った」とみなす
+        if (riders_.find(entityPtr) == riders_.end())
         {
-            currentCount_++;
             riders_.insert(entityPtr);
-            
+            currentCount_++; // 🌟ここで初めてカウントが増える（重複しない）
+
+            // 耐久度が限界に達したら、新規進入を禁止するフラグを立てる
             if (currentCount_ >= maxbreakCount_)
             {
                 isImpassable_ = true;
@@ -81,17 +98,23 @@ void BrokenBlock::CheckRiding(const Vector3& pos, const void* entityPtr) {
     }
     else
     {
-        // 既に乗っているキャラが降りたら
-        if (!IsInside(pos))
+        // 外側にいる（降りた）場合、もし登録されていたらリストから削除する
+        // 🌟その場ですぐに崩落させるのではなく、まずはリストからの抹消だけを行う
+        if (riders_.find(entityPtr) != riders_.end())
         {
-            if (isImpassable_)
-            {
-                isBroken_ = true;
-                // サウンド再生
-                Audio::GetInstance()->PlayAudio(broken_, false, 1.0f);
-                return;
-            }
+            riders_.erase(entityPtr);
         }
+    }
+
+    // 2. 【ここが超重要】
+    // 「耐久度が限界（isImpassable_）」であり、かつ「乗っているキャラが誰もいなくなった（riders_.empty()）」のなら、
+    // その瞬間に初めて完全に崩落（isBroken_）させる！
+    if (isImpassable_ && riders_.empty())
+    {
+        isBroken_ = true;
+        // サウンド再生
+        Audio::GetInstance()->PlayAudio(broken_, false, 1.0f);
+        return;
     }
 }
 

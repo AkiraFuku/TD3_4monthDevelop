@@ -255,7 +255,7 @@ void BaseGameScene::Initialize() {
     for (const auto& pos : brokenBlockPos_)
     {
         auto brokenBlock = std::make_unique<BrokenBlock>();
-        brokenBlock->Initialize(pos, 10.0f, 9.0f);
+        brokenBlock->Initialize(pos, 6.0f, 6.0f);
         brokenBlocks_.push_back(std::move(brokenBlock));
     }
 
@@ -658,9 +658,6 @@ void BaseGameScene::Update()
 
         GameOver();
 
-        // 卵の更新処理
-        egg_->Update();
-
         return;
     }
 
@@ -962,6 +959,25 @@ void BaseGameScene::Update()
             resetButtonSprite_->SetPosition({ 530.0f, -245.0f });
             resetButtonSprite_->Update();
         }
+
+        for (auto& enemy : enemies_) {
+            enemy->ClearPath();
+        }
+
+        brokenBlocks_.clear();
+
+        for (const auto& pos : brokenBlockPos_)
+        {
+            auto brokenBlock = std::make_unique<BrokenBlock>();
+            brokenBlock->Initialize(pos, 6.0f, 6.0f);
+            brokenBlocks_.push_back(std::move(brokenBlock));
+        }
+
+        std::vector<BrokenBlock*> blockPtrs;
+        for (auto& b : brokenBlocks_) {
+            blockPtrs.push_back(b.get());
+        }
+        player_->SetBrokenBlocks(blockPtrs);
 
         // 2. リセットが完了したら、フェードインを開始する
         fade_->StartFadeIn(0.02f);
@@ -1693,6 +1709,9 @@ void BaseGameScene::GameOver()
     }
     menuSprite_->Update();
     cursorSprite_->Update();
+
+    // 卵の更新処理
+    egg_->Update();
 }
 
 void BaseGameScene::LoadStageData()
