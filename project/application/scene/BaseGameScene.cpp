@@ -933,6 +933,9 @@ void BaseGameScene::Update()
         if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_BACK) ||
             Input::GetInstance()->PushedKeyDown(DIK_R))
         {
+                   
+    
+
             if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)
             {
                 fade_->StartFadeOut(0.02f);
@@ -944,6 +947,7 @@ void BaseGameScene::Update()
     // ② フェードアウトが完了（画面が真っ黒）になった瞬間の処理
     if (isResetWaiting_ && fade_->IsFinished())
     {
+         Audio::GetInstance()->PlayAudio(reset, false, 1.0f);
         // 1. オブジェクトの位置を初期状態に戻す（既存の関数を呼び出す）
         LoadStageData();
 
