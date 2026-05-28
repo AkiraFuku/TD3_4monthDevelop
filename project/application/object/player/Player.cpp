@@ -69,6 +69,7 @@ void Player::Initialize(const Vector3& pos, ThreadManager* thread) {
     // サウンド読み込み
     threadSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/thread.wav");
     WalkSE_ = Audio::GetInstance()->LoadAudio("resources/sounds/walk.wav");
+    canNotFireThread_ = Audio::GetInstance()->LoadAudio("resources/canNotFireThread.wav");
 
 }
 /// <summary>
@@ -157,6 +158,10 @@ void Player::Update() {
     }
     ImGui::End();
 #endif
+
+    if (!canDrawPrediction_ && Input::GetInstance()->TriggerKeyDown(DIK_B) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER)) {
+        Audio::GetInstance()->PlayAudio(canNotFireThread_, false, 1.0f);
+    }
 
     anima_->Update();
     object_->Update();
@@ -797,8 +802,8 @@ bool Player::IntersectsAnyOneWayObject(const Vector3& start, const Vector3& end)
             float t1 = (aabb.min.x - start.x) / dx;
             float t2 = (aabb.max.x - start.x) / dx;
             if (t1 > t2) std::swap(t1, t2);
-            tMin = (std::max)(tMin, t1);
-            tMax = (std::min)(tMax, t2);
+            tMin = (std::max) (tMin, t1);
+            tMax = (std::min) (tMax, t2);
             if (tMin > tMax) continue;
         }
 
@@ -813,8 +818,8 @@ bool Player::IntersectsAnyOneWayObject(const Vector3& start, const Vector3& end)
             float t1 = (aabb.min.z - start.z) / dz;
             float t2 = (aabb.max.z - start.z) / dz;
             if (t1 > t2) std::swap(t1, t2);
-            tMin = (std::max)(tMin, t1);
-            tMax = (std::min)(tMax, t2);
+            tMin = (std::max) (tMin, t1);
+            tMax = (std::min) (tMax, t2);
             if (tMin > tMax) continue;
         }
 
@@ -854,8 +859,8 @@ bool Player::IntersectsAnyBrokenBlock(const Vector3& start, const Vector3& end) 
             float t1 = (aabb.min.x - start.x) / dx;
             float t2 = (aabb.max.x - start.x) / dx;
             if (t1 > t2) std::swap(t1, t2);
-            tMin = (std::max)(tMin, t1);
-            tMax = (std::min)(tMax, t2);
+            tMin = (std::max) (tMin, t1);
+            tMax = (std::min) (tMax, t2);
             if (tMin > tMax) continue;
         }
 
@@ -870,8 +875,8 @@ bool Player::IntersectsAnyBrokenBlock(const Vector3& start, const Vector3& end) 
             float t1 = (aabb.min.z - start.z) / dz;
             float t2 = (aabb.max.z - start.z) / dz;
             if (t1 > t2) std::swap(t1, t2);
-            tMin = (std::max)(tMin, t1);
-            tMax = (std::min)(tMax, t2);
+            tMin = (std::max) (tMin, t1);
+            tMax = (std::min) (tMax, t2);
             if (tMin > tMax) continue;
         }
 
