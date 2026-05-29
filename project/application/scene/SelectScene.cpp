@@ -181,55 +181,58 @@ void SelectScene::MoveCursor()
 
     if (Input::GetInstance()->GetJoyStick(0, joyState)) {
         float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+        float stickY = (float)joyState.Gamepad.sThumbLY / kStickMax;
 
-        if (std::abs(stickX) > kDeadZone) {
+        // 完全に中央に戻ったらロック解除
+        if (std::abs(stickX) <= kDeadZone && std::abs(stickY) <= kDeadZone)
+        {
+            isStickPushed_ = false;
+        }
+        // まだ押されていない（手を離した後の最初の入力のみ受け付ける）
+        else if (!isStickPushed_)
+        {
+            isStickPushed_ = true;
 
-            // 右に倒した瞬間
-            if (stickX > 0.5f) {
-                if (!isStickPushed) {
-                    stickRightTrigger = true; // 倒した瞬間だけオン
-                    isStickPushed = true;
-                }
-            }
-            // 左に倒した瞬間
-            else if (stickX < -0.5f) {
-                if (!isStickPushed) {
-                    stickLeftTrigger = true; // 倒した瞬間だけオン
-                    isStickPushed = true;
-                }
-            }
-            // スティックが中央に戻ったらリセット
-            else {
-                isStickPushed = false;
+            // 大きい方の軸のみ採用
+            if (std::abs(stickX) >= std::abs(stickY))
+            {
+                if (stickX > kDeadZone)       stickRightTrigger = true;
+                else if (stickX < -kDeadZone) stickLeftTrigger = true;
+            } else
+            {
+                if (stickY > kDeadZone)       stickUpTrigger = true;
+                else if (stickY < -kDeadZone) stickDownTrigger = true;
             }
         }
     }
 
-    if (Input::GetInstance()->GetJoyStick(0, joyState)) {
-        float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
 
-        if (std::abs(stickX) > kDeadZone) {
 
-            // 右に倒した瞬間
-            if (stickX > 0.5f) {
-                if (!isStickPushed) {
-                    stickUpTrigger = true; // 倒した瞬間だけオン
-                    isStickPushed = true;
-                }
-            }
-            // 左に倒した瞬間
-            else if (stickX < -0.5f) {
-                if (!isStickPushed) {
-                    stickDownTrigger = true; // 倒した瞬間だけオン
-                    isStickPushed = true;
-                }
-            }
-            // スティックが中央に戻ったらリセット
-            else {
-                isStickPushed = false;
-            }
-        }
-    }
+    //if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+    //    float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
+
+    //    if (std::abs(stickX) > kDeadZone) {
+
+    //        // 右に倒した瞬間
+    //        if (stickX > 0.5f) {
+    //            if (!isStickPushedX_) {
+    //                stickUpTrigger = true; // 倒した瞬間だけオン
+    //                isStickPushedX_ = true;
+    //            }
+    //        }
+    //        // 左に倒した瞬間
+    //        else if (stickX < -0.5f) {
+    //            if (!isStickPushedX_) {
+    //                stickDownTrigger = true; // 倒した瞬間だけオン
+    //                isStickPushedX_ = true;
+    //            }
+    //        }
+    //        // スティックが中央に戻ったらリセット
+    //        else {
+    //            isStickPushedX_ = false;
+    //        }
+    //    }
+    //}
 
 
 
