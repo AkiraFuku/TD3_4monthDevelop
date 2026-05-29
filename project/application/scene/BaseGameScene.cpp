@@ -372,7 +372,8 @@ void BaseGameScene::Initialize() {
         std::string path = "resources/Menu/" + std::to_string(i) + ".png";
         auto pauseSprite = std::make_unique<Sprite>();
         pauseSprite->Initialize(path);
-        pauseSprite->SetPosition(Vector2{ 450.0f,(30.0f + (430.0f * i)) });
+        pauseSprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // アンカーポイントを 0.5f に設定
+        pauseSprite->SetPosition(Vector2{ 430.0f,(30.0f + (430.0f * i)) });
         pauseSprite_.push_back(std::move(pauseSprite));
     }
 
@@ -489,6 +490,35 @@ void BaseGameScene::Initialize() {
     }
 
     padStickPosition_ = padSprite_[0]->GetPosition();
+
+    // メニュー用操作ガイドUIの初期化
+    keyboardMenuOperation_ = std::make_unique<Sprite>();
+    keyboardMenuOperation_->Initialize("resources/Keyboard/keyboardMenuOperation.png");
+    keyboardMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+
+    padMenuOperation_ = std::make_unique<Sprite>();
+    padMenuOperation_->Initialize("resources/Pad/padMenuOperation.png");
+    padMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+
+    struct PadArrowConfig {
+        Vector2 offset;
+        float rotation;
+    };
+    PadArrowConfig configs[4] = {
+        { { 0.0f, -32.0f }, 0.0f },               // Up
+        { { 32.0f, 0.0f }, float(M_PI) / 2.0f },   // Right
+        { { 0.0f, 32.0f }, -float(M_PI) },        // Down
+        { { -32.0f, 0.0f }, -float(M_PI) / 2.0f }  // Left
+    };
+
+    Vector2 centerPos = { 77.1f, 670.0f };
+    for (int i = 0; i < 4; i++) {
+        padArrowKeys_[i] = std::make_unique<Sprite>();
+        padArrowKeys_[i]->Initialize("resources/Pad/padArrowKey.png");
+        padArrowKeys_[i]->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+        padArrowKeys_[i]->SetPosition(centerPos + configs[i].offset);
+        padArrowKeys_[i]->SetRotation(configs[i].rotation);
+    }
 
     fade_ = std::make_unique<Fade>();
     fade_->Initialize();
@@ -993,6 +1023,18 @@ void BaseGameScene::Update()
         padSprite->Update();
     }
 
+    if (keyboardMenuOperation_) {
+        keyboardMenuOperation_->Update();
+    }
+    if (padMenuOperation_) {
+        padMenuOperation_->Update();
+    }
+    for (auto& arrow : padArrowKeys_) {
+        if (arrow) {
+            arrow->Update();
+        }
+    }
+
     rKeySprite_->Update();
     resetButtonSprite_->Update();
 
@@ -1185,24 +1227,24 @@ void BaseGameScene::Draw() {
         {
             menuSprite_->Draw();
 
-            for (auto& pauseSprite : pauseSprite_)
-            {
-                pauseSprite->Draw();
-            }
+            // 必要なボタンのみ描画 (3:リトライ, 1:ステージ選択)
+            pauseSprite_[1]->Draw();
+            pauseSprite_[3]->Draw();
 
             cursorSprite_->Draw();
             clearSprite_->Draw();
+            DrawMenuOperationsUI();
         }
     } else if (openPause_)
     {
         menuSprite_->Draw();
 
-        for (auto& pauseSprite : pauseSprite_)
-        {
-            pauseSprite->Draw();
-        }
+        // 必要なボタンのみ描画 (0:ゲームに戻る, 1:ステージ選択)
+        pauseSprite_[0]->Draw();
+        pauseSprite_[1]->Draw();
 
         cursorSprite_->Draw();
+        DrawMenuOperationsUI();
     } else  if (isClear_)
     {
         if (t_ >= 1.0f)
@@ -1222,6 +1264,7 @@ void BaseGameScene::Draw() {
 
             cursorSprite_->Draw();
             clearSprite_->Draw();
+            DrawMenuOperationsUI();
         }
     } else
     {
@@ -1529,8 +1572,8 @@ void BaseGameScene::Clear()
         player_->ChangeAnimation(PlayerAnima::AnimationState::Clear);
         // メニューUIの初期化
         for (int i = 1; i < 3; i++) {
-            // i=1 のとき 160.0f, i=2 のとき 720.0f
-            pauseSprite_[i]->SetPosition(Vector2{(160.0f + (560.0f * (i - 1))), 500.0f});
+            // i=1 のとき 160.0f, i=2 のとき 720.0f (Y座標を 400.0f に変更)
+            pauseSprite_[i]->SetPosition(Vector2{(300.0f + (690.0f * (i - 1))), 400.0f});
         }
 
         Vector2 pos;
@@ -1546,7 +1589,7 @@ void BaseGameScene::Clear()
         }
 
 
-        pos.y += 200.0f;
+        pos.y += 100.0f; // Y座標変更に合わせて調整 (+200から+100へ)
         pos.x -= 400.0f;
         cursorSprite_->SetPosition(pos);
 
@@ -1642,8 +1685,8 @@ void BaseGameScene::Clear()
         }
 
         Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
-        pos.y -= 500.0f;
-        pos.x -= 0.0f;
+        pos.y -= 0.0f; // 不要なY軸引き算を撤廃
+        pos.x -= 280.0f; // UIのすぐ左側にくるように調整
         cursorSprite_->SetPosition(pos);
 
         for (auto& pauseSprite : pauseSprite_)
@@ -1676,25 +1719,24 @@ void BaseGameScene::Pause()
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
-        bool stickUpTrigger = false;
-        bool stickDownTrigger = false;
+        bool stickRightTrigger = false;
+        bool stickLeftTrigger = false;
 
         if (Input::GetInstance()->GetJoyStick(0, joyState)) {
-            float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
+            float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
 
             if (std::abs(stickX) > kDeadZone) {
-
                 // 右に倒した瞬間
                 if (stickX > 0.5f) {
                     if (!isStickPushed) {
-                        stickUpTrigger = true; // 倒した瞬間だけオン
+                        stickRightTrigger = true; // 倒した瞬間だけオン
                         isStickPushed = true;
                     }
                 }
                 // 左に倒した瞬間
                 else if (stickX < -0.5f) {
                     if (!isStickPushed) {
-                        stickDownTrigger = true; // 倒した瞬間だけオン
+                        stickLeftTrigger = true; // 倒した瞬間だけオン
                         isStickPushed = true;
                     }
                 }
@@ -1705,8 +1747,8 @@ void BaseGameScene::Pause()
             }
         }
 
-        if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
-            Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
+        if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
         {
             Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
             if (pauseIndex_ < 1)
@@ -1716,8 +1758,8 @@ void BaseGameScene::Pause()
             {
                 pauseIndex_ = 0;
             }
-        } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
-            Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
         {
             Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
             if (pauseIndex_ > 0)
@@ -1729,6 +1771,17 @@ void BaseGameScene::Pause()
             }
         } else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
         {
+            // ポーズ解除時にUIスプライトを通常プレイ時の位置に復元
+            for (int i = 0; i < 9; i++)
+            {
+                keyboardSprite_[i]->SetPosition(keyboardPositions_[i]);
+                keyboardSprite_[i]->Update();
+            }
+            for (int i = 0; i < 7; i++)
+            {
+                padSprite_[i]->SetPosition(padPositions_[i]);
+                padSprite_[i]->Update();
+            }
             openPause_ = false;
             return;
         } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
@@ -1736,6 +1789,17 @@ void BaseGameScene::Pause()
             Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
             if (pauseIndex_ == 0)
             {
+                // ポーズ解除時にUIスプライトを通常プレイ時の位置に復元
+                for (int i = 0; i < 9; i++)
+                {
+                    keyboardSprite_[i]->SetPosition(keyboardPositions_[i]);
+                    keyboardSprite_[i]->Update();
+                }
+                for (int i = 0; i < 7; i++)
+                {
+                    padSprite_[i]->SetPosition(padPositions_[i]);
+                    padSprite_[i]->Update();
+                }
                 openPause_ = false;
                 return;
             } else
@@ -1747,10 +1811,13 @@ void BaseGameScene::Pause()
         }
     }
 
+    // X軸をずらして横並びに配置 (Y = 360.0f)
+    pauseSprite_[0]->SetPosition(Vector2{ 300.0f, 360.0f });
+    pauseSprite_[1]->SetPosition(Vector2{ 990.0f, 360.0f });
 
     Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
-    pos.y -= 500.0f;
-    pos.x -= 200.0f;
+    pos.y -= 0.0f; // 不要なY軸引き算を撤廃
+    pos.x -= 280.0f; // UIのすぐ左側にくるように調整
     cursorSprite_->SetPosition(pos);
 
     for (auto& pauseSprite : pauseSprite_)
@@ -1759,7 +1826,6 @@ void BaseGameScene::Pause()
     }
     menuSprite_->Update();
     cursorSprite_->Update();
-
 }
 
 void BaseGameScene::GameOver()
@@ -1783,25 +1849,24 @@ void BaseGameScene::GameOver()
     {
         // コントローラー入力を取得
         XINPUT_STATE joyState{};
-        bool stickUpTrigger = false;
-        bool stickDownTrigger = false;
+        bool stickRightTrigger = false;
+        bool stickLeftTrigger = false;
 
         if (Input::GetInstance()->GetJoyStick(0, joyState)) {
-            float stickX = (float)joyState.Gamepad.sThumbLY / kStickMax;
+            float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
 
             if (std::abs(stickX) > kDeadZone) {
-
                 // 右に倒した瞬間
                 if (stickX > 0.5f) {
                     if (!isStickPushed) {
-                        stickUpTrigger = true; // 倒した瞬間だけオン
+                        stickRightTrigger = true; // 倒した瞬間だけオン
                         isStickPushed = true;
                     }
                 }
                 // 左に倒した瞬間
                 else if (stickX < -0.5f) {
                     if (!isStickPushed) {
-                        stickDownTrigger = true; // 倒した瞬間だけオン
+                        stickLeftTrigger = true; // 倒した瞬間だけオン
                         isStickPushed = true;
                     }
                 }
@@ -1812,27 +1877,27 @@ void BaseGameScene::GameOver()
             }
         }
 
-        if (Input::GetInstance()->TriggerKeyDown(DIK_DOWNARROW) || stickDownTrigger ||
-            Input::GetInstance()->TriggerKeyDown(DIK_S) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_DOWN))
+        if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
         {
             Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
-            if (pauseIndex_ < 3)
-            {
-                pauseIndex_ = 3;
-            } else
+            if (pauseIndex_ == 3)
             {
                 pauseIndex_ = 1;
+            } else
+            {
+                pauseIndex_ = 3;
             }
-        } else if (Input::GetInstance()->TriggerKeyDown(DIK_UPARROW) || stickUpTrigger ||
-            Input::GetInstance()->TriggerKeyDown(DIK_W) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_UP))
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
         {
             Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
-            if (pauseIndex_ > 1)
-            {
-                pauseIndex_ = 1;
-            } else
+            if (pauseIndex_ == 1)
             {
                 pauseIndex_ = 3;
+            } else
+            {
+                pauseIndex_ = 1;
             }
         } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
         {
@@ -1843,10 +1908,13 @@ void BaseGameScene::GameOver()
         }
     }
 
+    // X軸をずらして横並びに配置 (Y = 400.0f)
+    pauseSprite_[3]->SetPosition(Vector2{ 300.0f, 400.0f });
+    pauseSprite_[1]->SetPosition(Vector2{ 990.0f, 400.0f });
 
     Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
-    pos.y -= 500.0f;
-    pos.x -= 200.0f;
+    pos.y -= 0.0f; // 不要なY軸引き算を撤廃
+    pos.x -= 280.0f; // UIのすぐ左側にくるように調整
     cursorSprite_->SetPosition(pos);
 
     for (auto& pauseSprite : pauseSprite_)
@@ -2042,6 +2110,20 @@ void BaseGameScene::InputColorSet()
         {
             padSprite_[5]->SetColor(defaultColor);
         }
+
+        WORD dpadButtons[4] = {
+            XINPUT_GAMEPAD_DPAD_UP,
+            XINPUT_GAMEPAD_DPAD_RIGHT,
+            XINPUT_GAMEPAD_DPAD_DOWN,
+            XINPUT_GAMEPAD_DPAD_LEFT
+        };
+        for (int i = 0; i < 4; i++) {
+            if (input->TriggerPadDown(0, dpadButtons[i])) {
+                padArrowKeys_[i]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, dpadButtons[i])) {
+                padArrowKeys_[i]->SetColor(defaultColor);
+            }
+        }
     }
 
     
@@ -2120,5 +2202,55 @@ void BaseGameScene::PutOnEggToSetColor()
 
 
         padSprite_[6]->SetTextureByFilePath("Resources/Pad/Pad_EGG_0.png");
+    }
+}
+
+void BaseGameScene::DrawMenuOperationsUI()
+{
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        if (keyboardMenuOperation_)
+        {
+            keyboardMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+            keyboardMenuOperation_->Draw();
+        }
+
+        // SelectScene と同じ位置を設定
+        keyboardSprite_[0]->SetPosition(Vector2{ 52.7f, 621.0f });
+        keyboardSprite_[1]->SetPosition(Vector2{ 20.0f, 653.7f });
+        keyboardSprite_[2]->SetPosition(Vector2{ 52.6f, 686.7f });
+        keyboardSprite_[3]->SetPosition(Vector2{ 86.0f, 652.7f });
+        keyboardSprite_[7]->SetPosition(Vector2{ 250.9f, 646.0f });
+
+        // 行列更新
+        keyboardSprite_[0]->Update();
+        keyboardSprite_[1]->Update();
+        keyboardSprite_[2]->Update();
+        keyboardSprite_[3]->Update();
+        keyboardSprite_[7]->Update();
+
+        // A, D キーのみの描画 (W=0, S=2 は描画しない)
+        keyboardSprite_[1]->Draw();
+        keyboardSprite_[3]->Draw();
+
+        // SPACE キーの描画
+        keyboardSprite_[7]->Draw();
+    }
+    else
+    {
+        if (padMenuOperation_)
+        {
+            padMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+            padMenuOperation_->Draw();
+        }
+
+        // A ボタンの座標を SelectScene の位置で描画
+        padSprite_[5]->SetPosition(Vector2{ 290.0f, 668.0f });
+        padSprite_[5]->Update();
+        padSprite_[5]->Draw();
+
+        // D-pad 左右矢印のみの描画 (Up=0, Down=2 は描画しない)
+        if (padArrowKeys_[1]) padArrowKeys_[1]->Draw();
+        if (padArrowKeys_[3]) padArrowKeys_[3]->Draw();
     }
 }

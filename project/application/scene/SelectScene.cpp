@@ -7,6 +7,7 @@
 #include "Object3dCommon.h"
 #include "WinApp.h"
 #include "ImGuiManager.h"
+#include "Vector4Function.h"
 
 void SelectScene::Initialize()
 {
@@ -56,7 +57,7 @@ void SelectScene::Initialize()
 
     arrowSprite_ = std::make_unique<Sprite>();
     arrowSprite_->Initialize("resources/Menu/cursor.png");
-    arrowSprite_->SetAnchorPoint({ 0.5f, 0.8f });
+    arrowSprite_->SetAnchorPoint({ 0.5f, 0.5f });
     stageIndex = 0;
     /* Vector2 pos;
      pos.x = objects_[stageIndex]->GetTranslate().x * 100.0f;
@@ -65,8 +66,8 @@ void SelectScene::Initialize()
      arrowSprite_->SetPosition(pos);*/
 
     Vector2 pos;
-    pos.x = screenPositions_[stageIndex].position.x + 25.0f;
-    pos.y = screenPositions_[stageIndex].position.y;
+    pos.x = screenPositions_[stageIndex].position.x - 90.0f;
+    pos.y = screenPositions_[stageIndex].position.y + 80.0f;
     arrowSprite_->SetPosition(pos);
 
 
@@ -77,6 +78,61 @@ void SelectScene::Initialize()
     background_->SetTranslate(Vector3{ 0.0f,0.0f,13.0f });
     background_->SetModelInstanceColor("background", Vector4{ 0.7f,0.7f,0.7f,1.0f });
 
+    keyboardMenuOperation_= std::make_unique<Sprite>();
+    keyboardMenuOperation_->Initialize("resources/Keyboard/keyboardMenuOperation.png");
+    keyboardMenuOperation_->SetPosition(Vector2{30.0f, 620.0f});
+
+    padMenuOperation_=std::make_unique<Sprite>();
+    padMenuOperation_->Initialize("resources/Pad/padMenuOperation.png");
+    padMenuOperation_->SetPosition(Vector2{30.0f, 620.0f});
+
+    // キーボード用キースプライトの初期化
+    keyboardW_ = std::make_unique<Sprite>();
+    keyboardW_->Initialize("resources/Keyboard/Keyboard_WASD_0.png");
+    keyboardW_->SetPosition(Vector2{ 52.7f, 621.0f });
+
+    keyboardA_ = std::make_unique<Sprite>();
+    keyboardA_->Initialize("resources/Keyboard/Keyboard_WASD_1.png");
+    keyboardA_->SetPosition(Vector2{ 20.0f, 653.7f });
+
+    keyboardS_ = std::make_unique<Sprite>();
+    keyboardS_->Initialize("resources/Keyboard/Keyboard_WASD_2.png");
+    keyboardS_->SetPosition(Vector2{ 52.6f, 686.7f });
+
+    keyboardD_ = std::make_unique<Sprite>();
+    keyboardD_->Initialize("resources/Keyboard/Keyboard_WASD_3.png");
+    keyboardD_->SetPosition(Vector2{ 86.0f, 652.7f });
+
+    keyboardSpace_ = std::make_unique<Sprite>();
+    keyboardSpace_->Initialize("resources/Keyboard/Keyboard_3.png");
+    keyboardSpace_->SetPosition(Vector2{ 250.9f, 646.0f });
+
+    // パッド用Aボタンスプライトの初期化
+    padA_ = std::make_unique<Sprite>();
+    padA_->Initialize("resources/Pad/Pad_3.png");
+    padA_->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+    padA_->SetPosition(Vector2{ 290.0f, 668.0f });
+
+    // パッド用D-pad矢印スプライトの一括初期化
+    struct PadArrowConfig {
+        Vector2 offset;
+        float rotation;
+    };
+    PadArrowConfig configs[4] = {
+        { { 0.0f, -32.0f }, 0.0f },               // Up
+        { { 32.0f, 0.0f }, float(M_PI) / 2.0f },   // Right
+        { { 0.0f, 32.0f }, -float(M_PI) },        // Down
+        { { -32.0f, 0.0f }, -float(M_PI) / 2.0f }  // Left
+    };
+
+    Vector2 centerPos = { 77.1f, 670.0f };
+    for (int i = 0; i < 4; i++) {
+        padArrowKeys_[i] = std::make_unique<Sprite>();
+        padArrowKeys_[i]->Initialize("resources/Pad/padArrowKey.png");
+        padArrowKeys_[i]->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+        padArrowKeys_[i]->SetPosition(centerPos + configs[i].offset);
+        padArrowKeys_[i]->SetRotation(configs[i].rotation);
+    }
 
     // サウンド読み込み
     handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/stageSelect.wav");
@@ -146,9 +202,24 @@ void SelectScene::Update()
         object->Update();
     }
 
+    InputColorSet();
+
     titleSprite_->Update();
     arrowSprite_->Update();
+    keyboardMenuOperation_->Update();
+    padMenuOperation_->Update();
     background_->Update();
+
+    keyboardW_->Update();
+    keyboardA_->Update();
+    keyboardS_->Update();
+    keyboardD_->Update();
+    keyboardSpace_->Update();
+
+    padA_->Update();
+    for (auto& arrow : padArrowKeys_) {
+        arrow->Update();
+    }
 
     fade_->Update();
 }
@@ -164,6 +235,21 @@ void SelectScene::Draw()
     }
 
     arrowSprite_->Draw();
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0) {
+        keyboardMenuOperation_->Draw();
+        keyboardW_->Draw();
+        keyboardA_->Draw();
+        keyboardS_->Draw();
+        keyboardD_->Draw();
+        keyboardSpace_->Draw();
+    } else {
+        padMenuOperation_->Draw();
+        padA_->Draw();
+        for (auto& arrow : padArrowKeys_) {
+            arrow->Draw();
+        }
+    }
 
     fade_->Draw();
 }
@@ -330,15 +416,15 @@ void SelectScene::MoveCursor()
         if (stageIndex == -1)
         {
             Vector2 pos = titleSprite_->GetPosition();
-            pos.y -= 80.0f;
-            pos.x += 100.0f;
+            pos.y += 50.0f;
+            pos.x -= 25.0f;
             arrowSprite_->SetPosition(pos);
         }
         else
         {
             Vector2 pos;
-            pos.x = screenPositions_[stageIndex].position.x - 25.0f;
-            pos.y = screenPositions_[stageIndex].position.y;
+            pos.x = screenPositions_[stageIndex].position.x - 90.0f;
+            pos.y = screenPositions_[stageIndex].position.y + 80.0f;
             arrowSprite_->SetPosition(pos);
         }
 
@@ -346,6 +432,80 @@ void SelectScene::MoveCursor()
         {
             Vector3 objectPos = stagePos_[preIndex];
             objects_[preIndex]->SetTranslate(objectPos);
+        }
+    }
+}
+
+void SelectScene::InputColorSet()
+{
+    auto input = Input::GetInstance();
+    Vector4 pushColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+    Vector4 defaultColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        if (input->TriggerKeyDown(DIK_W))
+        {
+            keyboardW_->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_W))
+        {
+            keyboardW_->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_A))
+        {
+            keyboardA_->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_A))
+        {
+            keyboardA_->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_S))
+        {
+            keyboardS_->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_S))
+        {
+            keyboardS_->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_D))
+        {
+            keyboardD_->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_D))
+        {
+            keyboardD_->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_SPACE))
+        {
+            keyboardSpace_->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_SPACE))
+        {
+            keyboardSpace_->SetColor(defaultColor);
+        }
+    }
+    else
+    {
+        if (input->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        {
+            padA_->SetColor(pushColor);
+        } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_A))
+        {
+            padA_->SetColor(defaultColor);
+        }
+
+        WORD buttons[4] = {
+            XINPUT_GAMEPAD_DPAD_UP,
+            XINPUT_GAMEPAD_DPAD_RIGHT,
+            XINPUT_GAMEPAD_DPAD_DOWN,
+            XINPUT_GAMEPAD_DPAD_LEFT
+        };
+        for (int i = 0; i < 4; i++) {
+            if (input->TriggerPadDown(0, buttons[i])) {
+                padArrowKeys_[i]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, buttons[i])) {
+                padArrowKeys_[i]->SetColor(defaultColor);
+            }
         }
     }
 }
