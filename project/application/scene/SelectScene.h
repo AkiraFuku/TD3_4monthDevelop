@@ -17,6 +17,8 @@ public:
     void Draw()override;
 
     void MoveCursor();
+    void InputColorSet();
+    void InputSetColor() { InputColorSet(); }
 private:
     std::unique_ptr<Camera> camera;
     DebugCamera debugCamera_;
@@ -29,6 +31,13 @@ private:
     std::unique_ptr<Object3d> background_;
     std::unique_ptr<Sprite> arrowSprite_;
     std::unique_ptr<Sprite> titleSprite_;
+
+    std::unique_ptr<Sprite> keyboardMenuOperation_;
+
+    std::unique_ptr<Sprite> padMenuOperation_;
+    std::unique_ptr<Sprite> padArrowKey_;
+    std::unique_ptr<Sprite> pressA_;
+
     const uint32_t kStageNum_ = 8;
     int stageIndex = -1;
     uint32_t preIndex = 0;
@@ -53,5 +62,15 @@ private:
 
     float theta = 0.0f;
     float amplitude = 1.0f;
+
+    // キーボード/パッドUI用メンバー変数
+    std::unique_ptr<Sprite> keyboardW_;
+    std::unique_ptr<Sprite> keyboardA_;
+    std::unique_ptr<Sprite> keyboardS_;
+    std::unique_ptr<Sprite> keyboardD_;
+    std::unique_ptr<Sprite> keyboardSpace_;
+
+    std::unique_ptr<Sprite> padA_;
+    std::unique_ptr<Sprite> padArrowKeys_[4];
 };
 

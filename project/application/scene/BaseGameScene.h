@@ -87,12 +87,17 @@ public:
 
     void GetUpEggToSetColor();
     void PutOnEggToSetColor();
+    void DrawMenuOperationsUI();
 
 public:
 
     void LoadStageData();
 
 protected:
+    // メニュー操作UI用スプライト
+    std::unique_ptr<Sprite> keyboardMenuOperation_;
+    std::unique_ptr<Sprite> padMenuOperation_;
+    std::unique_ptr<Sprite> padArrowKeys_[4];
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Sprite> sprite;
     std::unique_ptr<Object3d> object3d2;
