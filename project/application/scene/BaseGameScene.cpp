@@ -1493,28 +1493,17 @@ void BaseGameScene::Clear()
     if (Input::GetInstance()->GetJoyStick(0, joyState)) {
         float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
 
-        if (std::abs(stickX) > kDeadZone) {
-
-            // 右に倒した瞬間
-            if (stickX > 0.5f) {
-                if (!isStickPushed) {
-                    stickRightTrigger = true; // 倒した瞬間だけオン
-                    isStickPushed = true;
-                }
-            }
-            // 左に倒した瞬間
-            else if (stickX < -0.5f) {
-                if (!isStickPushed) {
-                    stickLeftTrigger = true; // 倒した瞬間だけオン
-                    isStickPushed = true;
-                }
-            }
-            // スティックが中央に戻ったらリセット
-            else {
-                isStickPushed = false;
-            }
+        if (std::abs(stickX) <= kDeadZone)
+        {
+            isStickPushed = false;
+        } else if (!isStickPushed)
+        {
+            isStickPushed = true;
+            if (stickX > kDeadZone)       stickRightTrigger = true;
+            else if (stickX < -kDeadZone) stickLeftTrigger = true;
         }
     }
+
 
     if (t_ < 1.0f)
     {
@@ -1552,36 +1541,36 @@ void BaseGameScene::Clear()
 
     } else
     {
-        // コントローラー入力を取得
-        XINPUT_STATE joyState{};
-        bool stickRightTrigger = false;
-        bool stickLeftTrigger = false;
+        //// コントローラー入力を取得
+        //XINPUT_STATE joyState{};
+        //bool stickRightTrigger = false;
+        //bool stickLeftTrigger = false;
 
-        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
-            float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+        //if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        //    float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
 
-            if (std::abs(stickX) > kDeadZone) {
+        //    if (std::abs(stickX) > kDeadZone) {
 
-                // 右に倒した瞬間
-                if (stickX > 0.5f) {
-                    if (!isStickPushed) {
-                        stickRightTrigger = true; // 倒した瞬間だけオン
-                        isStickPushed = true;
-                    }
-                }
-                // 左に倒した瞬間
-                else if (stickX < -0.5f) {
-                    if (!isStickPushed) {
-                        stickLeftTrigger = true; // 倒した瞬間だけオン
-                        isStickPushed = true;
-                    }
-                }
-                // スティックが中央に戻ったらリセット
-                else {
-                    isStickPushed = false;
-                }
-            }
-        }
+        //        // 右に倒した瞬間
+        //        if (stickX > 0.5f) {
+        //            if (!isStickPushed) {
+        //                stickRightTrigger = true; // 倒した瞬間だけオン
+        //                isStickPushed = true;
+        //            }
+        //        }
+        //        // 左に倒した瞬間
+        //        else if (stickX < -0.5f) {
+        //            if (!isStickPushed) {
+        //                stickLeftTrigger = true; // 倒した瞬間だけオン
+        //                isStickPushed = true;
+        //            }
+        //        }
+        //        // スティックが中央に戻ったらリセット
+        //        else {
+        //            isStickPushed = false;
+        //        }
+        //    }
+        //}
 
         if (isFadeStart_)
         {

@@ -41,7 +41,7 @@ private:
     Audio::SoundHandle select_ = 0;
 
     // スティック
-    bool isStickPushed = false;
+    bool isStickPushed_ = false;
 
     // フェード機能
     std::unique_ptr<Fade> fade_;
