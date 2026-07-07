@@ -38,7 +38,7 @@ public:
     struct Node
     {
      QuaternionTransform transform   ;
-        Matrix4x4 localMatrix=Makeidetity4x4();
+        Matrix4x4 localMatrix=Makeidentity4x4();
         std::string name;
         std::vector <Node>children;
     };
@@ -84,14 +84,24 @@ public:
 
     static Model* CreatePlaneFromTex(const std::string& textureFilePath);
 
+    static Model* CreateDynamicModel(const std::vector<VertexData>& vertices, const std::string& textureFilePath);
+
     static Node ReadNode(aiNode*node );
+
+    
 
 public: // 外部入出力
 
     void SetName(const std::string& name) { name_ = name; }
+    void SetColor(const Vector4& color) {
+        materialData_->color = color;
+    }
+    Vector4 GetColor() const {
+        return materialData_->color;
+    }
+
 
 private:
-
 
     ModelData modelData_;
 

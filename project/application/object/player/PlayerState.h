@@ -37,6 +37,8 @@ public:
     void Initialize(Player* player) override;
     // 更新
     void Update(Player* player) override;
+private:
+    float SEWalkTimer_ = 0.0f; // 歩行音の再生タイマー
 };
 
 // ======================================
@@ -54,4 +56,16 @@ private:
     float frameCount_ = 0;
 
     static inline const float kDeltaTime = 1.0f / 60.0f;
+
+};
+
+// ======================================
+// 一方通行オブジェクト自動移動状態
+// ======================================
+class PlayerStateOneWayMove : public IPlayerState {
+public:
+    // 初期化
+    void Initialize(Player* player) override;
+    // 更新
+    void Update(Player* player) override;
 };

@@ -58,7 +58,7 @@ private:
 
     // 特定のパーツ（インスタンス）への参照をキャッシュしておくと便利です
     //インスタンスを登録する関数
-    void RegisterModelInstance(const std::string& name, Object3d::ModelInstance* instance);
+    //void RegisterModelInstance(const std::string& name, Object3d::ModelInstance* instance);
 
     std::vector<std::unique_ptr<Object3d::ModelInstance>> modelInstances_; // モデルインスタンスのリスト
     bool isAnimationFinished_ = false;  // アニメーション終了フラグ

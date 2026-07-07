@@ -1,0 +1,2245 @@
+#include "BaseGameScene.h"
+#include "Input.h"
+#include "LightManager.h"
+#include "ModelManager.h"
+#include "PSOManager.h"
+#include "SceneManager.h"
+#include "TitleScene.h"
+#include "imgui.h"
+#include <numbers>
+#include "Transform.h"
+#include "ParticleManager.h"
+#include "Vector4Function.h"
+
+namespace {
+    float easeOutElastic(float x) {
+        const float c4 = (2.0f * PI) / 3.0f;
+        return x == 0.0f ? 0.0f : x == 1.0f ? 1.0f :
+            std::pow(2.0f, -10.0f * x) * std::sin((x * 10.0f - 0.75f) * c4) + 1.0f;
+    }
+}
+
+void BaseGameScene::Initialize() {
+
+    camera = std::make_unique<Camera>();
+    camera->SetRotate({ 0.90f, 0.0f, 0.0f });
+    camera->SetTranslate({ 0.0f, 40.0f, -33.0f });
+    Object3dCommon::GetInstance()->SetDefaultCamera(camera.get());
+    ParticleManager::GetInstance()->SetCamera(camera.get());
+    // メインライト
+    LightManager::GetInstance()->AddSpotLight(
+        { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.0f, 1.25f, 0.0f }, 4.0f,
+        Normalize(Vector3{ -1.0f, -1.0f, 0.0f }), 7.0f, 2.0f,
+        std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
+    LightManager::GetInstance()->AddSpotLight(
+        { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.0f, 1.25f, 0.0f }, 4.0f,
+        Normalize(Vector3{ -1.0f, -1.0f, 0.0f }), 7.0f, 2.0f,
+        std::cos(std::numbers::pi_v<float> / 3.0f), 1.0f); // メインライト
+
+    Vector3 point1 = { 0, 0, 0 };
+    LightManager::GetInstance()->AddPointLight({ 1.0f, 1.0f, 1.0f, 1.0f }, point1,
+        4.0f, 2.0f, 0.1f);
+    LightManager::GetInstance()->AddPointLight({ 1.0f, 1.0f, 1.0f, 1.0f },
+        { 0, 0, 0 }, 4.0f, 2.0f, 0.1f);
+    TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
+    ParticleManager::ParticleEmitterFunc initializeFunc = [](const Vector3& emitterPosition, std::mt19937& randomEngine)-> ParticleManager::Particle {
+
+        std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+        std::uniform_real_distribution<float> distTime(1.0f, 10.0f);
+        ParticleManager::Particle particle;
+        particle.transform.scale = { 1.0f,1.0f,1.0f };
+        particle.transform.rotate = { 0.0f,0.0f,0.0f };
+        Vector3 randamTranslate = { distribution(randomEngine),distribution(randomEngine) ,distribution(randomEngine) };
+        particle.transform.translate = emitterPosition + randamTranslate;
+        particle.velocity = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+
+        particle.color = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine),1.0f };
+
+        particle.lifeTime = distTime(randomEngine);
+        particle.currentTime = 0.0f;
+        return particle;
+        };
+    ParticleManager::ParticleUpdateFunc updateFunc = [](ParticleManager::Particle& particle, float deltaTime) {
+        // パーティクルの更新処理
+        // 例: 速度に基づいて位置を更新し、寿命を減少させる
+        particle.uvTransform.offset.x += deltaTime;
+        particle.transform.translate += particle.velocity * deltaTime;
+        };
+    ParticleManager::ParticleEmitterFunc initialize = [](const Vector3& emitterPosition, std::mt19937& randomEngine)-> ParticleManager::Particle {
+
+        std::uniform_real_distribution<float> rotation(-std::numbers::pi_v<float>, std::numbers::pi_v<float>);
+        ParticleManager::Particle particle;
+        particle.transform.scale = { 2.0f,2.0f,2.0f };
+        particle.transform.rotate = { 0.0f,0.0f,0.0f };
+        particle.transform.translate = emitterPosition;
+        particle.velocity = { 0.0f, 0.0f, 0.0f };
+
+        particle.color = { 1.0f,1.0f,1.0f,1.0f };
+
+        particle.lifeTime = 1.0f;
+        particle.currentTime = 0.0f;
+        return particle;
+        };
+    ParticleManager::ParticleUpdateFunc update = [](ParticleManager::Particle& particle, float deltaTime) {
+        // パーティクルの更新処理
+        // 例: 速度に基づいて位置を更新し、寿命を減少させる
+        particle.uvTransform.offset.x += deltaTime / 2;
+        };
+    TextureManager::GetInstance()->LoadTexture("resources/Cylinder.png");
+    ParticleManager::GetInstance()->CreateParticleGroup(
+        "Test", "resources/Cylinder.png", ParticleManager::EffectType::Cylinder, initialize, update);
+    /*   std::vector<Sprite*> sprites;
+       for (uint32_t i = 0; i < 5; i++)
+       {*/
+    sprite = std::make_unique<Sprite>();
+    // sprite->Initialize("resources/monsterBall.png");
+    sprite->Initialize("resources/uvChecker.png");
+
+    sprite->SetPosition(Vector2{ 25.0f + 100.0f, 100.0f });
+
+
+    sprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+
+    //}
+
+    // object3d の初期化
+    object3d2 = std::make_unique<Object3d>();
+    object3d2->Initialize();
+
+    object3d = std::make_unique<Object3d>();
+    object3d->Initialize();
+
+    ModelManager::GetInstance()->LoadModel("resources", "plane.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "axis.obj");
+    ModelManager::GetInstance()->LoadModel("resources", "terrain.obj");
+    ModelManager::GetInstance()->CreateSphereModel("MySphere", 16);
+    // object3d2->SetTranslate(Vector3{ 0.0f,10.0f,0.0f });
+    object3d2->SetModel("terrain.obj");
+    object3d->SetModel("MySphere");
+
+    /*camera->SetTranslate({ 0.0f,0.0f,-10.0f });*/
+    camera->SetFarCrip(1000.0f);
+    EulerTransform M = { {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+    emitter = std::make_unique<ParicleEmitter>("Test", M, 1, 5.0f, 0.0f);
+
+    /*player_ = new Player();
+    player_->Initialize();
+
+    terrain_ = new Terrain();
+    terrain_->Initialize();*/
+
+    CollisionMask::GetInstance()->Initialize();
+    stageModel_ = std::make_unique<StageModel>();
+    stageModel_->Initialize();
+    stageModel_->Create(10.0f);
+
+    playerPos_ = CollisionMask::GetInstance()->GetStartPos();
+    eggPos = CollisionMask::GetInstance()->GetEggStartPos();
+    goalPos = CollisionMask::GetInstance()->GetGoalPos();
+    // JSONから座標リストのサイズを取得する
+    size_t enemyCount = CollisionMask::GetInstance()->GetEnemyCount(); // サイズを返す関数を定義しておく
+    size_t nestMaterialCount = CollisionMask::GetInstance()->GetNestMaterialCount(); // サイズを返す関数を定義しておく
+    size_t brokenBlockCount = CollisionMask::GetInstance()->GetBrokenBlockCount(); // サイズを返す関数を定義しておく
+
+    // vectorをJSONの数に合わせてリサイズ
+    enemyPositions_.resize(enemyCount);
+    nestMaterialPositions_.resize(nestMaterialCount);
+    brokenBlockPos_.resize(brokenBlockCount);
+
+    // 3. 一致したサイズ分だけループして代入
+    for (int i = 0; i < enemyPositions_.size(); ++i)
+    {
+        enemyPositions_[i] = CollisionMask::GetInstance()->GetEnemyStartPos(i);
+    }
+
+    for (int i = 0; i < nestMaterialPositions_.size(); ++i)
+    {
+        nestMaterialPositions_[i] = CollisionMask::GetInstance()->GetNestMaterialPos(i);
+    }
+
+    for (int i = 0; i < brokenBlockPos_.size(); ++i)
+    {
+        brokenBlockPos_[i] = CollisionMask::GetInstance()->GetBrokenBlockPos(i);
+    }
+
+    // ----- Thread -----
+    thread_ = std::make_unique<ThreadManager>();
+    thread_->Initialize(50, 20, camera.get());
+    spiderWeb_ = std::make_unique<SpiderWebManager>();
+    spiderWeb_->Initialize(camera.get());
+
+    // プレイヤーの初期化
+    player_ = std::make_unique<Player>();
+    player_->Initialize(playerPos_, thread_.get());
+    player_->SetMaxThreadCount(5);
+    player_->SetGameScene(this);
+
+    // 卵の初期化
+    egg_ = std::make_unique<Egg>();
+    egg_->Initialize(eggPos);
+    player_->SetEgg(egg_.get());
+    egg_->SetPlayer(player_.get());
+    egg_->SetGameScene(this);
+
+    // ゴールの初期化
+    goal_ = std::make_unique<Goal>();
+    goal_->Initialize(goalPos);
+    goal_->SetGameScene(this);
+
+    goal_->SetEgg(egg_.get());
+    goal_->SetPlayer(player_.get());
+    goal_->SetNeedNestCount(static_cast<int>(CollisionMask::GetInstance()->GetNestMaterialCount()));
+
+    Vector3 ePos = goalPos;
+    ePos.y = -1.0f;
+
+    emitter->SetTranslate(ePos);
+    emitter->Emit();
+
+
+    // 敵の初期化
+    for (const auto& pos : enemyPositions_) {
+        auto enemy = std::make_unique<Enemy>();
+        enemy->Initialize(pos);
+        enemy->SetGameScene(this);
+        enemies_.push_back(std::move(enemy)); // リストに追加
+    }
+
+
+    // 巣の素材の初期化
+    for (const auto& pos : nestMaterialPositions_)
+    {
+        auto nestMaterial = std::make_unique<NestMaterial>();
+        nestMaterial->Initialize(pos);
+        nestMaterial_.push_back(std::move(nestMaterial));
+    }
+
+
+
+    stageOneWays_.clear();
+    std::vector<OneWayObject*> playerOneWayPtrs;
+
+    // CollisionMaskからJSONの登録数を取得
+    size_t oneWayCount = CollisionMask::GetInstance()->GetOneWayObjectCount();
+
+    // GameScene.cpp の LoadStageData() のループ内
+
+    for (size_t j = 0; j < oneWayCount; ++j) {
+        // JSONから座標とサイズを取得
+        Vector3 pos = CollisionMask::GetInstance()->GetOneWayObjectPos(j);
+        Vector3 scale = CollisionMask::GetInstance()->GetOneWayObjectScale(j);
+
+        // ▼① JSONから向き（整数）を取得する ▼
+        int32_t dirInt = CollisionMask::GetInstance()->GetOneWayObjectDir(j);
+
+        // ▼② 整数(int32_t)を OneWayObject::Direction 型に変換(キャスト)する ▼
+        OneWayObject::Direction dir = static_cast<OneWayObject::Direction>(dirInt);
+
+        // OneWayObjectの実体を作る
+        auto oneWay = std::make_unique<OneWayObject>();
+
+        // ▼③ 固定値だった引数を、変換した dir に変更！ ▼
+        oneWay->Initialize(pos, dir, scale.x, scale.z);
+
+        // ポインタをリストにまとめる
+        playerOneWayPtrs.push_back(oneWay.get());
+        // 実体はシーンに保存する
+        stageOneWays_.push_back(std::move(oneWay));
+    }
+
+    // まとめてプレイヤーにポインタを渡す！
+    player_->SetOneWayObjects(playerOneWayPtrs);
+
+    // 数回渡ったら壊れるオブジェクトの生成
+    for (const auto& pos : brokenBlockPos_)
+    {
+        auto brokenBlock = std::make_unique<BrokenBlock>();
+        brokenBlock->Initialize(pos, 6.0f, 8.0f);
+        brokenBlocks_.push_back(std::move(brokenBlock));
+    }
+
+    // =========================================================
+    // プレイヤーに現在の BrokenBlock リストを渡す
+    // =========================================================
+    std::vector<BrokenBlock*> blockPtrs;
+    for (auto& b : brokenBlocks_) {
+        blockPtrs.push_back(b.get());
+    }
+    player_->SetBrokenBlocks(blockPtrs);
+
+    // =========================================================
+    // ゴール座標、未回収素材、およびルート計算用の障害物を渡す
+    // =========================================================
+    // 1. ゴール座標をセット
+    player_->SetGoalPosition(goalPos);
+    player_->SetNeedNestMaterialCount(goal_->GetNeedNestCount());
+
+    // 2. 未回収の素材座標リストを作成してセット
+    std::vector<Vector3> uncollectedMaterialPositions;
+    for (auto& nestMaterial : nestMaterial_) {
+        if (!nestMaterial->IsDead()) {
+            uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+        }
+    }
+    player_->SetMaterialPositions(uncollectedMaterialPositions);
+
+    // 3. ポインタリストの作成は不要なので削除！
+
+    // 4. GameScene が持っている unique_ptr の配列を、そのままアドレス(&)で渡す！
+    player_->SetRouteCheckObjects(&stageOneWays_, &brokenBlocks_);
+    // =========================================================
+
+    // サウンド読み込み
+    handle_ = Audio::GetInstance()->LoadAudio("resources/sounds/gameplay.wav");
+    enter_ = Audio::GetInstance()->LoadAudio("resources/sounds/enter.wav");
+    select_ = Audio::GetInstance()->LoadAudio("resources/sounds/select.wav");
+    missSound_ = Audio::GetInstance()->LoadAudio("resources/sounds/miss.wav");
+    clear = Audio::GetInstance()->LoadAudio("resources/sounds/Clear.wav");
+    reset = Audio::GetInstance()->LoadAudio("resources/sounds/Reset.wav");
+    // サウンド再生
+    Audio::GetInstance()->PlayAudio(handle_, true, 1.0f);
+
+    // UIの初期化
+    for (int i = 0; i < 10; ++i) {
+        std::string path = "resources/numbers/" + std::to_string(i) + ".png";
+
+        // 1つずつ生成する
+        auto threadLimit = std::make_unique<Sprite>();
+        threadLimit->Initialize(path);
+        threadLimit->SetPosition(Vector2{ 730.0f,0.0f });
+        threadLimit->SetSize(Vector2{ 100.0f,100.0f });
+        threadLimitSprites_.push_back(std::move(threadLimit));
+
+        auto threadCount = std::make_unique<Sprite>();
+        threadCount->Initialize(path);
+        threadCount->SetPosition(Vector2{ 630.0f,0.0f });
+        threadCount->SetSize(Vector2{ 100.0f,100.0f });
+        threadCountSprites_.push_back(std::move(threadCount));
+
+        auto nestLimit = std::make_unique<Sprite>();
+        nestLimit->Initialize(path);
+        nestLimit->SetPosition(Vector2{ 940.0f,0.0f });
+        nestLimit->SetSize(Vector2{ 100.0f,100.0f });
+        nestMaterialSprites_.push_back(std::move(nestLimit));
+
+        auto nestCount = std::make_unique<Sprite>();
+        nestCount->Initialize(path);
+        nestCount->SetPosition(Vector2{ 840.0f,0.0f });
+        nestCount->SetSize(Vector2{ 100.0f,100.0f });
+        nestCountSprites_.push_back(std::move(nestCount));
+    }
+
+    slashSprite_ = std::make_unique<Sprite>();
+    slashSprite_->Initialize("resources/numbers/slash.png");
+    slashSprite_->SetSize(Vector2{ 100.0f,100.0f });
+    slashNestSprite_ = std::make_unique<Sprite>();
+    slashNestSprite_->Initialize("resources/numbers/slash.png");
+    slashNestSprite_->SetSize(Vector2{ 100.0f,100.0f });
+    threadIconSprite_ = std::make_unique<Sprite>();
+    threadIconSprite_->Initialize("resources/icon/thread.png");
+    threadIconSprite_->SetSize(Vector2{ 100.0f,100.0f });
+    nestIconSprite_ = std::make_unique<Sprite>();
+    nestIconSprite_->Initialize("resources/icon/nestMaterial.png");
+    nestIconSprite_->SetSize(Vector2{ 100.0f,100.0f });
+    eggSprite_ = std::make_unique<Sprite>();
+    eggSprite_->Initialize("resources/icon/egg.png");
+    eggSprite_->SetSize(Vector2{ 100.0f,100.0f });
+    hpSprite_ = std::make_unique<Sprite>();
+    hpSprite_->Initialize("resources/icon/hp.png");
+    clearSprite_ = std::make_unique<Sprite>();
+    clearSprite_->Initialize("resources/icon/clear.png");
+    
+
+    threadIconSprite_->SetPosition(Vector2{ 580.0f,0.0f });
+    threadCountSprites_[player_->GetThreadCount()]->SetPosition(Vector2{ 630.0f,0.0f });
+    slashSprite_->SetPosition(Vector2{ 680.0f,0.0f });
+    threadLimit_ = player_->GetThreadCount();
+    threadLimitSprites_[threadLimit_]->SetPosition(Vector2{ 730.0f,0.0f });
+
+    nestIconSprite_->SetPosition(Vector2{ 790.0f,0.0f });
+    nestCountSprites_[player_->GetNestMaterial()]->SetPosition(Vector2{ 840.0f,0.0f });
+    slashNestSprite_->SetPosition(Vector2{ 890.0f,0.0f });
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->SetPosition(Vector2{ 940.0f,0.0f });
+
+    eggSprite_->SetPosition(Vector2{ 1000.0f,0.0f });
+    hpSprite_->SetPosition(Vector2{ 1100.0f,30.0f });
+    clearSprite_->SetPosition(Vector2{ 640.0f,100.0f });
+    clearSprite_->SetAnchorPoint({0.5f, 0.5f});
+
+    // メニューUIの初期化
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Menu/" + std::to_string(i) + ".png";
+        auto pauseSprite = std::make_unique<Sprite>();
+        pauseSprite->Initialize(path);
+        pauseSprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // アンカーポイントを 0.5f に設定
+        pauseSprite->SetPosition(Vector2{ 430.0f,(30.0f + (430.0f * i)) });
+        pauseSprite_.push_back(std::move(pauseSprite));
+    }
+
+
+    menuSprite_ = std::make_unique<Sprite>();
+    menuSprite_->Initialize("resources/Menu/backGround.png");
+    menuSprite_->SetPosition(Vector2{ 0.0f,0.0f });
+    cursorSprite_ = std::make_unique<Sprite>();
+    cursorSprite_->Initialize("resources/Menu/cursor.png");
+    cursorSprite_->SetPosition(pauseSprite_[0]->GetPosition());
+
+    // フレーム
+    frameSprite_ = std::make_unique<Sprite>();
+    frameSprite_->Initialize("resources/frame.png");
+    frameSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    frameSprite_->SetPosition({ 640.0f, -300.0f });
+
+    // 失敗時の文章
+    stuckSprite_ = std::make_unique<Sprite>();
+    stuckSprite_->Initialize("resources/stuck.png");
+    stuckSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    stuckSprite_->SetPosition({ 640.0f, -300.0f });
+    stuckSpriteOriginalSize_ = stuckSprite_->GetSize();
+
+    resetButtonSprite_ = std::make_unique<Sprite>();
+    resetButtonSprite_->Initialize("resources/resetButton.png");
+    resetButtonSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    resetButtonSprite_->SetPosition({ 530.0f, -245.0f });
+
+    rKeySprite_ = std::make_unique<Sprite>();
+    rKeySprite_->Initialize("resources/rKey.png");
+    rKeySprite_->SetAnchorPoint({ 0.5f, 0.5f });
+    rKeySprite_->SetPosition({ 530.0f, -245.0f });
+
+    // コントローラーUIの初期化
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/button/" + std::to_string(i) + ".png";
+        auto button = std::make_unique<Sprite>();
+        button->Initialize(path);
+        button->SetPosition(Vector2{ 0.0f ,0.0f });
+        button->SetSize(Vector2{ 100.0f,100.0f });
+        buttonSprite_.push_back(std::move(button));
+    }
+    buttonSprite_[1]->SetPosition(Vector2{ 100.0f,0.0f });
+    buttonSprite_[3]->SetPosition(Vector2{ 100.0f,0.0f });
+
+    keyboard_ = std::make_unique<Sprite>();
+    keyboard_->Initialize("resources/Keyboard/Keyboard_ALL.png");
+    keyboard_->SetPosition(Vector2{ 0.0f,620.0f });
+    keyboard_->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.85f });
+    keyboard_->SetBlendMode(BlendMode::Normal);
+    pad_ = std::make_unique<Sprite>();
+    pad_->Initialize("resources/Pad/Pad_ALL.png");
+    pad_->SetPosition(Vector2{ 0.0f,620.0f });
+    pad_->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+    pad_->SetBlendMode(BlendMode::Normal);
+
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Keyboard/Keyboard_WASD_" + std::to_string(i) + ".png";
+        auto keyboardWASD = std::make_unique<Sprite>();
+        keyboardWASD->Initialize(path);
+        keyboardSprite_.push_back(std::move(keyboardWASD));
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Keyboard/Keyboard_" + std::to_string(i) + ".png";
+        auto keyboard = std::make_unique<Sprite>();
+        keyboard->Initialize(path);
+        keyboardSprite_.push_back(std::move(keyboard));
+    }
+
+    {
+        std::string path = "resources/Keyboard/Keyboard_EGG_0.png";
+        auto keyboardEGG = std::make_unique<Sprite>();
+        keyboardEGG->Initialize(path);
+        keyboardSprite_.push_back(std::move(keyboardEGG));
+    }
+
+    for (int i = 0; i < 9; i++)
+    {
+        keyboardSprite_[i]->SetPosition(keyboardPositions_[i]);
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        std::string path = "resources/Pad/Pad_Stick_" + std::to_string(i) + ".png";
+        auto padStick = std::make_unique<Sprite>();
+        padStick->Initialize(path);
+        padSprite_.push_back(std::move(padStick));
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        std::string path = "resources/Pad/Pad_" + std::to_string(i) + ".png";
+        auto pad = std::make_unique<Sprite>();
+        pad->Initialize(path);
+        padSprite_.push_back(std::move(pad));
+    }
+
+    {
+        std::string path = "resources/Pad/Pad_EGG_0.png";
+        auto padEGG = std::make_unique<Sprite>();
+        padEGG->Initialize(path);
+        padSprite_.push_back(std::move(padEGG));
+    }
+
+    for (int i = 0; i < 7; i++)
+    {
+        padSprite_[i]->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+        padSprite_[i]->SetPosition(padPositions_[i]);
+    }
+
+    padStickPosition_ = padSprite_[0]->GetPosition();
+
+    // メニュー用操作ガイドUIの初期化
+    keyboardMenuOperation_ = std::make_unique<Sprite>();
+    keyboardMenuOperation_->Initialize("resources/Keyboard/keyboardMenuOperation.png");
+    keyboardMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+
+    padMenuOperation_ = std::make_unique<Sprite>();
+    padMenuOperation_->Initialize("resources/Pad/padMenuOperation.png");
+    padMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+
+    struct PadArrowConfig {
+        Vector2 offset;
+        float rotation;
+    };
+    PadArrowConfig configs[4] = {
+        { { 0.0f, -32.0f }, 0.0f },               // Up
+        { { 32.0f, 0.0f }, float(M_PI) / 2.0f },   // Right
+        { { 0.0f, 32.0f }, -float(M_PI) },        // Down
+        { { -32.0f, 0.0f }, -float(M_PI) / 2.0f }  // Left
+    };
+
+    Vector2 centerPos = { 77.1f, 670.0f };
+    for (int i = 0; i < 4; i++) {
+        padArrowKeys_[i] = std::make_unique<Sprite>();
+        padArrowKeys_[i]->Initialize("resources/Pad/padArrowKey.png");
+        padArrowKeys_[i]->SetAnchorPoint(Vector2{ 0.5f, 0.5f });
+        padArrowKeys_[i]->SetPosition(centerPos + configs[i].offset);
+        padArrowKeys_[i]->SetRotation(configs[i].rotation);
+    }
+
+    fade_ = std::make_unique<Fade>();
+    fade_->Initialize();
+    fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
+
+    // 背景の初期化
+    ModelManager::GetInstance()->LoadModel("resources", "backGround.obj");
+    backgroundModel_ = std::make_unique<Object3d>();
+    backgroundModel_->Initialize();
+    backgroundModel_->SetModel("backGround.obj");
+    backgroundModel_->SetTranslate(Vector3{ 0.0f,-4.0f,0.0f });
+    backgroundModel_->SetScale(Vector3{ 30.0f,30.0f,30.0f });
+    backgroundModel_->SetColor(backgroundColor_);
+
+    // ステージナンバーを設定
+    num = CollisionMask::GetInstance()->GetCurrentStageID();
+
+    maxNum = static_cast<int>(CollisionMask::GetInstance()->GetMaxStageID());
+
+    isPlayClearSE_ = false;
+
+}
+void BaseGameScene::Finalize() {
+
+    stageModel_->Finalize();
+
+    LightManager::GetInstance()->ClearLights();
+
+    ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
+
+    //CollisionMask::GetInstance()->Finalize();
+
+    Audio::GetInstance()->StopAudio(handle_);
+
+#ifdef _DEBUG
+
+
+
+#endif
+
+}
+
+void BaseGameScene::Update()
+{
+
+
+    XINPUT_STATE state;
+
+    // 現在のジョイスティックを取得
+
+    Input::GetInstance()->GetJoyStick(0, state);
+
+    if (isDebugCamera_)
+    {
+        debugCamera_.Update(camera->GetTransform());
+        camera->SetTranslate(debugCamera_.GetTranslate());
+        camera->SetWorldMatrix(debugCamera_.GetWorldMatrix());
+    } else
+    {
+        camera->Update();
+    }
+    camera->UpdateView();
+    camera->UpdateViewProjection();
+    object3d->Update();
+    object3d2->Update();
+
+    stageModel_->Update();
+
+#ifdef USE_IMGUI
+
+    ImGui::Begin("Camera Setting");
+
+    // カメラの現在位置を取得
+    Vector3 camPos = camera->GetTranslate();
+    // カメラの現在の回転を取得（※CameraクラスにGetRotate関数が実装されている前提です）
+    Vector3 camRot = camera->GetRotate();
+
+    // 位置の調整 (0.1f単位でドラッグして変更)
+    if (ImGui::DragFloat3("Camera Position", &camPos.x, 0.1f)) {
+        camera->SetTranslate(camPos);
+    }
+
+    // 回転の調整
+    // (0.01f単位でドラッグして変更、ラジアンか度数法に合わせて調整してください)
+    if (ImGui::DragFloat3("Camera Rotation", &camRot.x, 0.01f)) {
+        camera->SetRotate(camRot);
+    }
+
+    ImGui::End();
+
+
+
+    ImGui::Begin("DebugCamera Setting");
+
+    Vector3 newSaveRotation, newSaveTranslate;
+
+    if (ImGui::Checkbox("DebugCamera", &isDebugCamera_))
+    {
+        newSaveRotation = debugSaveCameraRotation_;
+        newSaveTranslate = debugSaveCameraTranslate_;
+
+        debugSaveCameraRotation_ = camera->GetRotate();
+        debugSaveCameraTranslate_ = camera->GetTranslate();
+
+        camera->SetRotate(newSaveRotation);
+        camera->SetTranslate(newSaveTranslate);
+    }
+
+    ImGui::InputFloat3("SaveRotation", &debugSaveCameraRotation_.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat3("SaveTranslate", &debugSaveCameraTranslate_.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::End();
+
+    ImGui::Begin("CollisionMask");
+    ImGui::Checkbox("isVisibleCollisionMask", &isVisibleCollisionMask_);
+    if (player_->OnThread()) {
+        // 糸の上なら 緑色 で表示
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON THREAD: YES");
+    } else {
+        // 地面なら 赤色 で表示
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ON THREAD: NO (GROUND)");
+    }
+    ImGui::End();
+
+    ImGui::Begin("Background Setting");
+    float bgCol[4] = { backgroundColor_.x, backgroundColor_.y, backgroundColor_.z, backgroundColor_.w };
+    if (ImGui::ColorEdit4("Color", bgCol)) {
+        backgroundColor_.x = bgCol[0];
+        backgroundColor_.y = bgCol[1];
+        backgroundColor_.z = bgCol[2];
+        backgroundColor_.w = bgCol[3];
+        if (backgroundModel_) {
+            backgroundModel_->SetColor(backgroundColor_);
+        }
+    }
+    if (backgroundModel_) {
+        Vector3 bgPos = backgroundModel_->GetTranslate();
+        if (ImGui::DragFloat3("Position", &bgPos.x, 0.1f)) {
+            backgroundModel_->SetTranslate(bgPos);
+        }
+        Vector3 bgRot = backgroundModel_->GetRotate();
+        if (ImGui::DragFloat3("Rotation", &bgRot.x, 0.01f)) {
+            backgroundModel_->SetRotate(bgRot);
+        }
+        Vector3 bgScale = backgroundModel_->GetScale();
+        if (ImGui::DragFloat3("Scale", &bgScale.x, 0.1f)) {
+            backgroundModel_->SetScale(bgScale);
+        }
+    }
+    ImGui::End();
+
+    // =========================================================
+    // Player と BrokenBlock の当たり判定デバッグウィンドウ
+    // =========================================================
+    ImGui::Begin("Collision Debug");
+
+    // 1. プレイヤーの情報
+    Vector3 pPos = player_->GetPosition();
+    AABB pAABB = player_->GetAABB();
+    float pWidth = pAABB.max.x - pAABB.min.x;
+    float pDepth = pAABB.max.z - pAABB.min.z;
+
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "--- Player Info ---");
+    ImGui::Text("Position: (%.2f, %.2f, %.2f)", pPos.x, pPos.y, pPos.z);
+    ImGui::Text("Size(W,D): %.2f, %.2f", pWidth, pDepth);
+    ImGui::Text("AABB Min: (%.2f, %.2f, %.2f)", pAABB.min.x, pAABB.min.y, pAABB.min.z);
+    ImGui::Text("AABB Max: (%.2f, %.2f, %.2f)", pAABB.max.x, pAABB.max.y, pAABB.max.z);
+    ImGui::Separator();
+
+    // 2. BrokenBlock の情報
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "--- BrokenBlocks Info ---");
+    if (brokenBlocks_.empty()) {
+        ImGui::Text("No BrokenBlocks.");
+    }
+    for (size_t i = 0; i < brokenBlocks_.size(); ++i) {
+        auto& block = brokenBlocks_[i];
+        if (block->IsBroken()) {
+            ImGui::Text("Block[%zu] : Broken!", i);
+            ImGui::Separator();
+            continue;
+        }
+
+        Vector3 bPos = block->GetPosition();
+        AABB bAABB = block->GetAABB();
+        float bWidth = bAABB.max.x - bAABB.min.x;
+        float bDepth = bAABB.max.z - bAABB.min.z;
+
+        // 判定結果の取得
+        bool isInside = block->IsInside(pPos);
+        bool isRider = block->IsRider(player_.get());
+        bool isImpassable = block->IsImpassable();
+
+        ImGui::Text("Block[%zu]", i);
+        ImGui::Text("  Position: (%.2f, %.2f, %.2f)", bPos.x, bPos.y, bPos.z);
+        ImGui::Text("  Size(W,D): %.2f, %.2f", bWidth, bDepth);
+
+        // IsInside (プレイヤーの中心座標がブロック内にあるか)
+        if (isInside) {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsInside: True (Player center is in block)");
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsInside: False");
+        }
+
+        // IsRider (ブロックがプレイヤーの乗降をどう認識しているか)
+        if (isRider) {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "  IsRider : True (Player is riding)");
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  IsRider : False");
+        }
+
+        // isImpassable (次に降りたら壊れる状態かどうか)
+        ImGui::Text("  IsImpassable: %s", isImpassable ? "True" : "False");
+
+        ImGui::Separator();
+    }
+
+    ImGui::End();
+
+    ImGui::Begin("UI Settings");
+
+    Vector4 UIColor = keyboard_->GetColor();
+    if (ImGui::ColorEdit4("Keyboard UI Color", &UIColor.x)) 
+    {
+        keyboard_->SetColor(UIColor);
+        pad_->SetColor(UIColor);
+    }
+
+    for (int i = 0; i < padSprite_.size(); ++i)
+    {
+        Vector2 padPosition = padSprite_[i]->GetPosition();
+        std::string label = "Pad Sprite " + std::to_string(i) + " Position";
+        if (ImGui::DragFloat2(label.c_str(), &padPosition.x, 0.1f))
+        {
+            padSprite_[i]->SetPosition(padPosition);
+        }
+    }
+
+    ImGui::End();
+
+    // =========================================================
+
+#endif // USE_IMGUI
+
+    InputColorSet();
+
+    if (egg_->IsOnPlayer())
+    {
+         GetUpEggToSetColor();
+    } 
+    else
+    {
+        PutOnEggToSetColor();
+    }
+
+    if (egg_->IsDead())
+    {
+        pauseSprite_[0]->SetPosition(Vector2{ -500.0f,-500.0f });
+        pauseSprite_[1]->SetPosition(Vector2{ 450.0f,200.0f });
+        pauseSprite_[2]->SetPosition(Vector2{ -500.0f,-500.0f });
+        pauseSprite_[3]->SetPosition(Vector2{ 450.0f,400.0f });
+        cursorSprite_->SetPosition(pauseSprite_[3]->GetPosition());
+
+        GameOver();
+
+        return;
+    }
+
+    if (openPause_)
+    {
+        Pause();
+        return;
+    } else
+    {
+        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START) || Input::GetInstance()->TriggerKeyDown(DIK_Q))
+        {
+            if (IfPause())
+            {
+                openPause_ = true;
+                return;
+            }
+        }
+    }
+
+    if (fade_->IsFinished() && IsGameFreeze())
+    {
+        UpdateExtra();
+        fade_->Update();
+        return;
+    }
+
+    // クリアフラグが立っている場合
+    if (isClear_)
+    {
+        if (Audio::GetInstance()->IsPlaying(handle_))
+        {
+             Audio::GetInstance()->StopAudio(handle_);
+        }
+
+        OnClear();
+    }
+
+    // GameScene並びにTutorialSceneでの更新
+    UpdateExtra();
+
+    CollisionMask::GetInstance()->Update();
+
+    sprite->Update();
+
+    // 卵の更新処理
+    egg_->Update();
+
+    // 一方通行オブジェクトの更新
+    for (auto& ow : stageOneWays_) {
+        ow->Update();
+    }
+
+    // 毎フレーム、最新の未回収素材の位置リストを取得してプレイヤーに設定する
+    std::vector<Vector3> uncollectedMaterialPositions;
+    for (auto& nestMaterial : nestMaterial_) {
+        if (!nestMaterial->IsDead()) {
+            uncollectedMaterialPositions.push_back(nestMaterial->GetWorldPosition());
+        }
+    }
+    player_->SetMaterialPositions(uncollectedMaterialPositions);
+    player_->SetNeedNestMaterialCount(goal_->GetNeedNestCount());
+
+    if (!isShowStuck_)
+    {
+        player_->Update();
+    }
+
+    // ゴールの更新処理
+    goal_->Update();
+
+    // 敵の目的地を決定する
+    Vector3 targetPos;
+    if (egg_->IsOnPlayer()) {
+        targetPos = player_->GetPosition();
+    } else {
+        targetPos = egg_->GetWorldPosition();
+    }
+
+    // プレイヤーが糸を撃った瞬間を検知
+    if (player_->GetAndResetDidFireThread()) {
+        OutputDebugStringA("Player fired thread! Enemy replanning path...\n");
+        // 【変更】すべての敵に経路再計算をリクエスト
+        for (auto& enemy : enemies_) {
+            enemy->RequestPathReplan();
+        }
+
+    }
+
+    // 1. すでに捕まっている敵のキーを収集
+    std::vector<uint64_t> occupiedKeys;
+    for (auto& enemy : enemies_) {
+        if (enemy->IsTrapped()) {
+            occupiedKeys.push_back(enemy->GetTrappedWebKey());
+        }
+    }
+
+    //// 2. 敵の更新（リストを渡す）
+
+    if (!isShowStuck_ && !isClear_)
+    {
+        for (auto& enemy : enemies_) {
+
+            enemy->Update(targetPos, thread_.get(), stageOneWays_, brokenBlocks_, occupiedKeys);
+        }
+    }
+
+    // 糸の更新処理
+    thread_->Update();
+    spiderWeb_->Update(*thread_);
+
+    player_->UpdateHeight();
+    for (auto& enemy : enemies_) {
+        enemy->UpdateHeight(thread_.get());
+    }
+
+    // 巣の素材の更新処理
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            nestMaterial->Update();
+        }
+    }
+
+    // 壊れるブロックの更新処理
+    for (auto& brokenBlock : brokenBlocks_)
+    {
+        brokenBlock->Update();
+    }
+
+    // UIの更新
+    threadCountSprites_[player_->GetThreadCount()]->Update();
+    slashSprite_->Update();
+    threadLimitSprites_[threadLimit_]->Update();
+    nestCountSprites_[player_->GetNestMaterial()]->Update();
+    slashNestSprite_->Update();
+    nestMaterialSprites_[goal_->GetNeedNestCount()]->Update();
+    backgroundModel_->Update();
+    threadIconSprite_->Update();
+    nestIconSprite_->Update();
+    eggSprite_->Update();
+    hpSprite_->SetSize(Vector2{ 15.0f * egg_->GetHP(), 50.0f });
+    hpSprite_->Update();
+
+    // 糸の物理更新完了後に最新のスタック状態を判定
+    if (player_->GetRemainingThreadCount() <= 0) {
+        player_->CheckRoute();
+    } else {
+        player_->SetRouteCheckFailed(false);
+    }
+
+    // Player stuck check: trigger ShowStuck if stuck and out of threads
+    if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
+        if (!Audio::GetInstance()->IsPlaying(missSound_))
+        {
+            Audio::GetInstance()->PlayAudio(missSound_);
+
+        }
+
+        ShowStuck();
+    }
+
+    // Check if we are no longer stuck (e.g. remaining thread count > 0 or route check succeeded)
+    if (isShowStuck_) {
+        if (!player_->GetRouteCheckFailed() || player_->GetRemainingThreadCount() > 0) {
+            isShowStuck_ = false;
+            stuckAnimTime_ = 0.0f;
+            if (frameSprite_) {
+                frameSprite_->SetPosition({ 640.0f, -300.0f });
+                frameSprite_->Update();
+            }
+            if (stuckSprite_) {
+                stuckSprite_->SetPosition({ 640.0f, -300.0f });
+                stuckSprite_->Update();
+            }
+            if (rKeySprite_) {
+                rKeySprite_->SetPosition({ 540.0f, -240.0f });
+                rKeySprite_->Update();
+            }
+            if (resetButtonSprite_) {
+                resetButtonSprite_->SetPosition({ 540.0f, -240.0f });
+                resetButtonSprite_->Update();
+            }
+        }
+    }
+
+    if (isShowStuck_ && stuckSprite_) {
+        // Easing animation for stuckSprite and frameSprite (dropping from above)
+        if (stuckAnimTime_ < 1.0f) {
+            stuckAnimTime_ += 1.0f / 60.0f; // Animate over 0.6 seconds
+            if (stuckAnimTime_ > 1.0f) {
+                stuckAnimTime_ = 1.0f;
+            }
+        }
+
+        // Apply easeOutElastic
+        float t_elastic = easeOutElastic(stuckAnimTime_);
+
+        // Calculate Y positions with overshoot
+        float frameY = -300.0f + (360.0f - (-300.0f)) * t_elastic;
+        float stuckY = -340.0f + (320.0f - (-340.0f)) * t_elastic;
+        float buttonY = -245.0f + (420.0f - (-245.0f)) * t_elastic;
+
+        if (frameSprite_) {
+            frameSprite_->SetPosition({ 640.0f, frameY });
+            frameSprite_->Update();
+        }
+        stuckSprite_->SetPosition({ 640.0f, stuckY });
+        stuckSprite_->Update();
+
+        if (rKeySprite_) {
+            rKeySprite_->SetPosition({ 530.0f, buttonY });
+        }
+        if (resetButtonSprite_) {
+            resetButtonSprite_->SetPosition({ 530.0f, buttonY });
+        }
+    } else {
+        if (frameSprite_) {
+            frameSprite_->Update();
+        }
+    }
+
+    for (auto& button : buttonSprite_)
+    {
+        button->Update();
+    }
+
+    keyboard_->Update();
+
+    for (auto& keyboardSprite : keyboardSprite_)
+    {
+        keyboardSprite->Update();
+    }
+
+    pad_->Update();
+
+    for (auto& padSprite : padSprite_)
+    {
+        padSprite->Update();
+    }
+
+    if (keyboardMenuOperation_) {
+        keyboardMenuOperation_->Update();
+    }
+    if (padMenuOperation_) {
+        padMenuOperation_->Update();
+    }
+    for (auto& arrow : padArrowKeys_) {
+        if (arrow) {
+            arrow->Update();
+        }
+    }
+
+    rKeySprite_->Update();
+    resetButtonSprite_->Update();
+
+
+    if (!isClear_ && !isShowStuck_)
+    {
+        // 当たり判定の確認
+        CheckAllCollisions();
+
+        // ゴールクリアの判定
+        goal_->Clear();
+        egg_->Death();
+    }
+
+    // 破壊フラグの立ったブロックを削除
+    size_t prevSize = brokenBlocks_.size();
+    brokenBlocks_.erase(
+        std::remove_if(brokenBlocks_.begin(), brokenBlocks_.end(),
+            [](const std::unique_ptr<BrokenBlock>& block) {
+                return block->IsBroken();
+            }),
+        brokenBlocks_.end()
+    );
+
+    // 削除が発生した場合、プレイヤーの参照リストも同期して更新（ダングリングポインタを防止）
+    if (brokenBlocks_.size() != prevSize) {
+        std::vector<BrokenBlock*> blockPtrs;
+        for (auto& b : brokenBlocks_) {
+            blockPtrs.push_back(b.get());
+        }
+        player_->SetBrokenBlocks(blockPtrs);
+    }
+
+    // ① Rキーを押したらフェードアウト開始
+    if (!isClear_ && !isResetWaiting_)
+    {
+        if (Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_BACK) ||
+            Input::GetInstance()->PushedKeyDown(DIK_R))
+        {
+                   
+    
+
+            if (fade_->GetStatus() == Fade::Status::None && !isResetWaiting_)
+            {
+                fade_->StartFadeOut(0.02f);
+                isResetWaiting_ = true; // リセット待機状態にする
+            }
+        }
+    }
+
+    // ② フェードアウトが完了（画面が真っ黒）になった瞬間の処理
+    if (isResetWaiting_ && fade_->IsFinished())
+    {
+         Audio::GetInstance()->PlayAudio(reset, false, 1.0f);
+        // 1. オブジェクトの位置を初期状態に戻す（既存の関数を呼び出す）
+        LoadStageData();
+
+        // プレイヤーデータをリセット
+        // ファイルを読み込む
+        JSONManager::GetInstance()->LoadFile("Player");
+
+        int32_t remaining;
+        if (JSONManager::GetInstance()->TryGetInt("Player", "remainingThreadCount", remaining)) {
+            player_->SetMaxThreadCount(remaining);
+        }
+        player_->SetRouteCheckFailed(false);
+
+        // 巣の素材データをリセット
+        for (auto& nestMaterial : nestMaterial_)
+        {
+            nestMaterial->SetDead(false); // デスフラグをリセット
+        }
+
+        player_->ResetNestMaterial();
+
+        // 卵のデータをリセット
+        egg_->ResetHP(10.0f);
+        egg_->SetOnPlayer(false);
+
+        isShowStuck_ = false;
+        stuckAnimTime_ = 0.0f;
+        if (frameSprite_) {
+            frameSprite_->SetPosition({ 640.0f, -300.0f });
+            frameSprite_->Update();
+        }
+        if (stuckSprite_) {
+            stuckSprite_->SetPosition({ 640.0f, -300.0f });
+            stuckSprite_->Update();
+        }
+        if (rKeySprite_) {
+            rKeySprite_->SetPosition({ 530.0f, -245.0f });
+            rKeySprite_->Update();
+        }
+        if (resetButtonSprite_) {
+            resetButtonSprite_->SetPosition({ 530.0f, -245.0f });
+            resetButtonSprite_->Update();
+        }
+
+        for (auto& enemy : enemies_) {
+            enemy->ClearPath();
+        }
+
+        brokenBlocks_.clear();
+
+        for (const auto& pos : brokenBlockPos_)
+        {
+            auto brokenBlock = std::make_unique<BrokenBlock>();
+            brokenBlock->Initialize(pos, 6.0f, 8.0f);
+            brokenBlocks_.push_back(std::move(brokenBlock));
+        }
+
+        std::vector<BrokenBlock*> blockPtrs;
+        for (auto& b : brokenBlocks_) {
+            blockPtrs.push_back(b.get());
+        }
+        player_->SetBrokenBlocks(blockPtrs);
+
+        // 2. リセットが完了したら、フェードインを開始する
+        fade_->StartFadeIn(0.02f);
+
+        // 3. リセット待機フラグを解除して、通常のゲーム状態に戻す
+        isResetWaiting_ = false;
+    }
+
+    // フェードの更新 (必ずUpdateの最後の方で呼ぶ)
+    fade_->Update();
+
+}
+
+void BaseGameScene::Draw() {
+
+    backgroundModel_->Draw();
+
+    if (isReset_)
+    {
+        return;
+    }
+
+
+    stageModel_->Draw();
+
+    // 卵の描画処理
+    egg_->Draw();
+
+    // ゴールの描画処理
+    goal_->Draw();
+
+    // 敵の描画処理
+    for (auto& enemy : enemies_) {
+        enemy->Draw();
+    }
+
+    // 巣の素材の描画処理
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            nestMaterial->Draw();
+        }
+    }
+
+    // 一方通行オブジェクトの描画
+    for (auto& ow : stageOneWays_) {
+        ow->Draw();
+    }
+
+    // 壊れるブロックの更新処理
+    for (auto& brokenBlock : brokenBlocks_)
+    {
+        brokenBlock->Draw();
+    }
+
+    ParticleManager::GetInstance()->Draw();
+    ///////スプライトの描画
+
+    player_->Draw();
+
+    thread_->Draw();
+
+    spiderWeb_->Draw();
+
+    if (isVisibleCollisionMask_)
+    {
+        CollisionMask::GetInstance()->Draw();
+    }
+
+    if (egg_->IsDead())
+    {
+        if (!isFadeStart_)
+        {
+            menuSprite_->Draw();
+
+            // 必要なボタンのみ描画 (3:リトライ, 1:ステージ選択)
+            pauseSprite_[1]->Draw();
+            pauseSprite_[3]->Draw();
+
+            cursorSprite_->Draw();
+            clearSprite_->Draw();
+            DrawMenuOperationsUI();
+        }
+    } else if (openPause_)
+    {
+        menuSprite_->Draw();
+
+        // 必要なボタンのみ描画 (0:ゲームに戻る, 1:ステージ選択)
+        pauseSprite_[0]->Draw();
+        pauseSprite_[1]->Draw();
+
+        cursorSprite_->Draw();
+        DrawMenuOperationsUI();
+    } else  if (isClear_)
+    {
+        if (t_ >= 1.0f)
+        {
+            if (num == maxNum)
+            {
+
+                pauseSprite_[1]->Draw();
+
+            } else
+            {
+                for (int i = 1; i < 3; i++)
+                {
+                    pauseSprite_[i]->Draw();
+                }
+            }
+
+            cursorSprite_->Draw();
+            clearSprite_->Draw();
+            DrawMenuOperationsUI();
+        }
+    } else
+    {
+        threadCountSprites_[player_->GetThreadCount()]->Draw();
+        slashSprite_->Draw();
+        threadLimitSprites_[threadLimit_]->Draw();
+        nestCountSprites_[player_->GetNestMaterial()]->Draw();
+        slashNestSprite_->Draw();
+        nestMaterialSprites_[goal_->GetNeedNestCount()]->Draw();
+        threadIconSprite_->Draw();
+        nestIconSprite_->Draw();
+        eggSprite_->Draw();
+
+        if (!egg_->IsDead())
+        {
+            hpSprite_->Draw();
+        }
+
+        if (Input::GetInstance()->GetConnectedStickNum() == 0)
+        {
+            // keyboard_->Draw();
+
+            for (auto& keyboardSprite : keyboardSprite_)
+            {
+                keyboardSprite->Draw();
+            }
+
+
+            for (int i = 2; i < 4; i++)
+            {
+                buttonSprite_[i]->Draw();
+            }
+        } else
+        {
+           
+            for (auto& padSprite : padSprite_)
+            {
+                padSprite->Draw();
+            }
+
+            for (int i = 0; i < 2; i++)
+            {
+                buttonSprite_[i]->Draw();
+            }
+        }
+    }
+
+    if (player_->GetRouteCheckFailed() && player_->GetRemainingThreadCount() <= 0) {
+        frameSprite_->Draw();
+
+        if (isShowStuck_ && stuckSprite_) {
+            stuckSprite_->Draw();
+        }
+
+        if (Input::GetInstance()->GetConnectedStickNum() == 0) {
+            rKeySprite_->Draw();
+        } else {
+            resetButtonSprite_->Draw();
+        }
+    }
+
+    // GameScene並びにTutorialSceneでの描画
+    DrawExtra();
+
+    fade_->Draw();
+}
+
+void BaseGameScene::CheckAllCollisions() {
+    // プレイヤーと卵の判定（ここはそのまま）
+    AABB playerAABB = player_->GetAABB();
+    AABB eggAABB = egg_->GetAABB();
+
+    if (isCollision(playerAABB, eggAABB)) {
+        if (!egg_->IsOnPlayer())
+        {
+            egg_->OnCollision(player_.get());
+            ResolveCollision(player_.get(), playerAABB, eggAABB);
+        }
+    } else {
+        egg_->SetHitFlag(false);
+    }
+
+    // 【変更】すべての敵と卵の判定
+    for (auto& enemy : enemies_) {
+
+        if (enemy->IsTrapped()) {
+            continue;
+        }
+
+        AABB enemyAABB = enemy->GetAABB();
+
+        if (isCollision(enemyAABB, eggAABB)) {
+            enemy->OnCollision(egg_.get());
+
+            if (!egg_->IsOnPlayer())
+            {
+                ResolveCollision(enemy.get(), enemyAABB, eggAABB);
+            }
+        } else {
+            enemy->SetHitFlag(false);
+        }
+
+    }
+
+    // 巣の素材の座標
+    for (auto& nestMaterial : nestMaterial_)
+    {
+        if (!nestMaterial->IsDead())
+        {
+            AABB nestAABB = nestMaterial->GetAABB();
+
+            if (isCollision(nestAABB, playerAABB))
+            {
+                // プレイヤーが素材に接触していたら
+                nestMaterial->OnCollision();
+                player_->SetNestMaterial(1);
+            }
+        }
+    }
+
+    // =========================================================
+    // BrokenBlock とプレイヤーの乗降判定
+    // =========================================================
+    for (auto& brokenBlock : brokenBlocks_) {
+        // プレイヤーがブロックに乗っているかを毎フレームチェック
+        brokenBlock->CheckRiding(player_->GetPosition(), player_.get());
+    }
+
+}
+
+bool BaseGameScene::isCollision(const AABB& aabb1, const AABB& aabb2)
+{
+    if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x && aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y && aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+        return true;
+    }
+    return false;
+}
+
+bool BaseGameScene::isCollisionXZ(const AABB& aabb1, const AABB& aabb2)
+{
+    // Y軸 (min.y / max.y) の条件を削除し、XとZのみで重なりを判定する
+    if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x &&
+        aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+        return true;
+    }
+    return false;
+}
+
+void BaseGameScene::ResolveCollision(Player* player, const AABB& playerAABB, const AABB& otherAABB)
+{
+
+    // 各軸ごとのめり込み量を計算
+    // min(右側のめり込み, 左側のめり込み) をとる
+    float overlapX = std::min(playerAABB.max.x - otherAABB.min.x, otherAABB.max.x - playerAABB.min.x);
+    float overlapZ = std::min(playerAABB.max.z - otherAABB.min.z, otherAABB.max.z - playerAABB.min.z);
+
+    Vector3 currentPos = player->GetPosition();
+
+    // 最もめり込みが小さい軸（最短分離軸）を特定して押し戻す
+    if (overlapX < overlapZ) {
+        // X軸方向の押し戻し
+        if (playerAABB.min.x < otherAABB.min.x)
+        {
+            currentPos.x -= overlapX;
+        }// 左へ
+        else
+        {
+            currentPos.x += overlapX; // 右へ
+        }
+    } else
+    {
+        // Z軸方向の押し戻し
+        if (playerAABB.min.z < otherAABB.min.z)
+        {
+            currentPos.z -= overlapZ; // 手前へ
+        } else
+        {
+            currentPos.z += overlapZ; // 奥へ
+        }
+    }
+
+    // 押し戻した先が壁だったら
+    if (CollisionMask::GetInstance()->IsWall(currentPos.x, currentPos.z))
+    {
+        if (overlapX < overlapZ) {
+            // X軸方向の押し戻し
+            if (playerAABB.min.x < otherAABB.min.x)
+            {
+                currentPos.x += (overlapX * 2.0f);
+            } else
+            {
+                currentPos.x -= (overlapX * 2.0f);
+            }
+        } else
+        {
+            // Z軸方向の押し戻し
+            if (playerAABB.min.z < otherAABB.min.z)
+            {
+                currentPos.z += (overlapZ * 2.0f);
+            } else
+            {
+                currentPos.z -= (overlapZ * 2.0f);
+            }
+        }
+    }
+
+    // 修正した座標を反映
+    player->SetPosition(currentPos);
+}
+
+void BaseGameScene::ResolveCollision(Enemy* enemy, const AABB& enemyAABB, const AABB& otherAABB)
+{
+    // 各軸ごとのめり込み量を計算
+    // min(右側のめり込み, 左側のめり込み) をとる
+    float overlapX = std::min(enemyAABB.max.x - otherAABB.min.x, otherAABB.max.x - enemyAABB.min.x);
+    float overlapY = std::min(enemyAABB.max.y - otherAABB.min.y, otherAABB.max.y - enemyAABB.min.y);
+    float overlapZ = std::min(enemyAABB.max.z - otherAABB.min.z, otherAABB.max.z - enemyAABB.min.z);
+
+    Vector3 currentPos = enemy->GetWorldPosition();
+
+    // 最もめり込みが小さい軸（最短分離軸）を特定して押し戻す
+    if (overlapX < overlapY && overlapX < overlapZ) {
+        // X軸方向の押し戻し
+        if (enemyAABB.min.x < otherAABB.min.x)
+        {
+            currentPos.x -= overlapX;
+        }// 左へ
+        else
+        {
+            currentPos.x += overlapX; // 右へ
+        }
+    } else if (overlapZ < overlapX && overlapZ < overlapY) {
+        // Z軸方向の押し戻し
+        if (enemyAABB.min.z < otherAABB.min.z)
+        {
+            currentPos.z -= overlapZ; // 手前へ
+        } else
+        {
+            currentPos.z += overlapZ; // 奥へ
+        }
+    } else {
+        // Y軸方向の押し戻し（床や天井）
+        if (enemyAABB.min.y < otherAABB.min.y)
+        {
+            currentPos.y -= overlapY; // 下へ
+        } else
+        {
+            currentPos.y += overlapY; // 上へ
+        }
+    }
+    // 修正した座標を反映
+    enemy->SetPosition(currentPos);
+}
+
+void BaseGameScene::Clear()
+{
+
+    if (!Audio::GetInstance()->IsPlaying(clear) && !isPlayClearSE_)
+    {
+        Audio::GetInstance()->PlayAudio(clear, false, 1.0f);
+        isPlayClearSE_ = true;
+    }
+
+    // コントローラー入力を取得
+    XINPUT_STATE joyState{};
+    bool stickRightTrigger = false;
+    bool stickLeftTrigger = false;
+
+    if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+
+        if (std::abs(stickX) <= kDeadZone)
+        {
+            isStickPushed = false;
+        } else if (!isStickPushed)
+        {
+            isStickPushed = true;
+            if (stickX > kDeadZone)       stickRightTrigger = true;
+            else if (stickX < -kDeadZone) stickLeftTrigger = true;
+        }
+    }
+
+
+    if (t_ < 1.0f)
+    {
+        t_ += 0.01f; // tを徐々に増加させる
+        // カメラをプレイヤーの前へ
+        Vector3 cameraPos = camera->GetTranslate();
+        Vector3 newPos = Vector3Lerp(cameraPos, player_->GetPosition() + cameraOffset_, t_);
+        Vector3 cameraRotate = camera->GetRotate();
+        Vector3 newRotate = Vector3Lerp(player_->GetForward(), Vector3{ 0.0f,3.0f,0.0f }, t_);
+        camera->SetTranslate(newPos);
+        player_->SetForward(newRotate);
+        player_->ChangeAnimation(PlayerAnima::AnimationState::Clear);
+        // メニューUIの初期化
+        for (int i = 1; i < 3; i++) {
+            // i=1 のとき 160.0f, i=2 のとき 720.0f (Y座標を 400.0f に変更)
+            pauseSprite_[i]->SetPosition(Vector2{(300.0f + (690.0f * (i - 1))), 400.0f});
+        }
+
+        Vector2 pos;
+
+        if (num == maxNum)
+        {
+            pos = pauseSprite_[1]->GetPosition();
+            pauseIndex_ = 1;
+        } else
+        {
+            pos = pauseSprite_[2]->GetPosition();
+            pauseIndex_ = 2;
+        }
+
+
+        pos.y += 100.0f; // Y座標変更に合わせて調整 (+200から+100へ)
+        pos.x -= 400.0f;
+        cursorSprite_->SetPosition(pos);
+
+    } else
+    {
+        //// コントローラー入力を取得
+        //XINPUT_STATE joyState{};
+        //bool stickRightTrigger = false;
+        //bool stickLeftTrigger = false;
+
+        //if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+        //    float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+
+        //    if (std::abs(stickX) > kDeadZone) {
+
+        //        // 右に倒した瞬間
+        //        if (stickX > 0.5f) {
+        //            if (!isStickPushed) {
+        //                stickRightTrigger = true; // 倒した瞬間だけオン
+        //                isStickPushed = true;
+        //            }
+        //        }
+        //        // 左に倒した瞬間
+        //        else if (stickX < -0.5f) {
+        //            if (!isStickPushed) {
+        //                stickLeftTrigger = true; // 倒した瞬間だけオン
+        //                isStickPushed = true;
+        //            }
+        //        }
+        //        // スティックが中央に戻ったらリセット
+        //        else {
+        //            isStickPushed = false;
+        //        }
+        //    }
+        //}
+
+        if (isFadeStart_)
+        {
+            // フェードの更新
+            fade_->Update();
+
+            if (fade_->IsFinished())
+            {
+                if (pauseIndex_ == 1)
+                {
+                    SceneManager::GetInstance()->ChangeScene("SelectScene");
+                } else if (pauseIndex_ == 2)
+                {
+                    CollisionMask::GetInstance()->SetCurrentStageID(num + 1);
+                    SceneManager::GetInstance()->ChangeScene("GameScene");
+                }
+            }
+        } else
+        {
+
+            if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+            {
+                Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
+                fade_->StartFadeOut(0.02f);
+                isFadeStart_ = true;
+                return;
+            }
+
+            if (num != maxNum)
+            {
+
+                if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+                    Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
+                {
+                    Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+                    if (pauseIndex_ < 2)
+                    {
+                        pauseIndex_++;
+                    } else
+                    {
+                        pauseIndex_ = 1;
+                    }
+                } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+                    Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
+                {
+                    Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+                    if (pauseIndex_ > 1)
+                    {
+                        pauseIndex_--;
+                    } else
+                    {
+                        pauseIndex_ = 2;
+                    }
+                }
+
+            }
+
+        }
+
+        Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
+        pos.y -= 0.0f; // 不要なY軸引き算を撤廃
+        pos.x -= 280.0f; // UIのすぐ左側にくるように調整
+        cursorSprite_->SetPosition(pos);
+
+        for (auto& pauseSprite : pauseSprite_)
+        {
+            pauseSprite->Update();
+        }
+        menuSprite_->Update();
+        cursorSprite_->Update();
+        clearSprite_->Update();
+
+    }
+
+}
+
+void BaseGameScene::Pause()
+{
+    if (isFadeStart_)
+    {
+        // フェードの更新
+        fade_->Update();
+
+        if (fade_->IsFinished())
+        {
+            if (pauseIndex_ == 1)
+            {
+                SceneManager::GetInstance()->ChangeScene("SelectScene");
+            }
+        }
+    } else
+    {
+        // コントローラー入力を取得
+        XINPUT_STATE joyState{};
+        bool stickRightTrigger = false;
+        bool stickLeftTrigger = false;
+
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+
+            if (std::abs(stickX) > kDeadZone) {
+                // 右に倒した瞬間
+                if (stickX > 0.5f) {
+                    if (!isStickPushed) {
+                        stickRightTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // 左に倒した瞬間
+                else if (stickX < -0.5f) {
+                    if (!isStickPushed) {
+                        stickLeftTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // スティックが中央に戻ったらリセット
+                else {
+                    isStickPushed = false;
+                }
+            }
+        }
+
+        if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
+        {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+            if (pauseIndex_ < 1)
+            {
+                pauseIndex_++;
+            } else
+            {
+                pauseIndex_ = 0;
+            }
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
+        {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+            if (pauseIndex_ > 0)
+            {
+                pauseIndex_--;
+            } else
+            {
+                pauseIndex_ = 1;
+            }
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_Q) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_START))
+        {
+            // ポーズ解除時にUIスプライトを通常プレイ時の位置に復元
+            for (int i = 0; i < 9; i++)
+            {
+                keyboardSprite_[i]->SetPosition(keyboardPositions_[i]);
+                keyboardSprite_[i]->Update();
+            }
+            for (int i = 0; i < 7; i++)
+            {
+                padSprite_[i]->SetPosition(padPositions_[i]);
+                padSprite_[i]->Update();
+            }
+            openPause_ = false;
+            return;
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        {
+            Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
+            if (pauseIndex_ == 0)
+            {
+                // ポーズ解除時にUIスプライトを通常プレイ時の位置に復元
+                for (int i = 0; i < 9; i++)
+                {
+                    keyboardSprite_[i]->SetPosition(keyboardPositions_[i]);
+                    keyboardSprite_[i]->Update();
+                }
+                for (int i = 0; i < 7; i++)
+                {
+                    padSprite_[i]->SetPosition(padPositions_[i]);
+                    padSprite_[i]->Update();
+                }
+                openPause_ = false;
+                return;
+            } else
+            {
+                fade_->StartFadeOut(0.02f);
+                isFadeStart_ = true;
+            }
+
+        }
+    }
+
+    // X軸をずらして横並びに配置 (Y = 360.0f)
+    pauseSprite_[0]->SetPosition(Vector2{ 300.0f, 360.0f });
+    pauseSprite_[1]->SetPosition(Vector2{ 990.0f, 360.0f });
+
+    Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
+    pos.y -= 0.0f; // 不要なY軸引き算を撤廃
+    pos.x -= 280.0f; // UIのすぐ左側にくるように調整
+    cursorSprite_->SetPosition(pos);
+
+    for (auto& pauseSprite : pauseSprite_)
+    {
+        pauseSprite->Update();
+    }
+    menuSprite_->Update();
+    cursorSprite_->Update();
+}
+
+void BaseGameScene::GameOver()
+{
+    if (isFadeStart_)
+    {
+        // フェードの更新
+        fade_->Update();
+
+        if (fade_->IsFinished())
+        {
+            if (pauseIndex_ == 1)
+            {
+                SceneManager::GetInstance()->ChangeScene("SelectScene");
+            } else if (pauseIndex_ == 3)
+            {
+                SceneManager::GetInstance()->ChangeScene("GameScene");
+            }
+        }
+    } else
+    {
+        // コントローラー入力を取得
+        XINPUT_STATE joyState{};
+        bool stickRightTrigger = false;
+        bool stickLeftTrigger = false;
+
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            float stickX = (float)joyState.Gamepad.sThumbLX / kStickMax;
+
+            if (std::abs(stickX) > kDeadZone) {
+                // 右に倒した瞬間
+                if (stickX > 0.5f) {
+                    if (!isStickPushed) {
+                        stickRightTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // 左に倒した瞬間
+                else if (stickX < -0.5f) {
+                    if (!isStickPushed) {
+                        stickLeftTrigger = true; // 倒した瞬間だけオン
+                        isStickPushed = true;
+                    }
+                }
+                // スティックが中央に戻ったらリセット
+                else {
+                    isStickPushed = false;
+                }
+            }
+        }
+
+        if (Input::GetInstance()->TriggerKeyDown(DIK_RIGHTARROW) || stickRightTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_D) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_RIGHT))
+        {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+            if (pauseIndex_ == 3)
+            {
+                pauseIndex_ = 1;
+            } else
+            {
+                pauseIndex_ = 3;
+            }
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_LEFTARROW) || stickLeftTrigger ||
+            Input::GetInstance()->TriggerKeyDown(DIK_A) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_DPAD_LEFT))
+        {
+            Audio::GetInstance()->PlayAudio(select_, false, 1.0f);
+            if (pauseIndex_ == 1)
+            {
+                pauseIndex_ = 3;
+            } else
+            {
+                pauseIndex_ = 1;
+            }
+        } else if (Input::GetInstance()->TriggerKeyDown(DIK_SPACE) || Input::GetInstance()->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        {
+            Audio::GetInstance()->PlayAudio(enter_, false, 1.0f);
+            fade_->StartFadeOut(0.02f);
+            isFadeStart_ = true;
+
+        }
+    }
+
+    // X軸をずらして横並びに配置 (Y = 400.0f)
+    pauseSprite_[3]->SetPosition(Vector2{ 300.0f, 400.0f });
+    pauseSprite_[1]->SetPosition(Vector2{ 990.0f, 400.0f });
+
+    Vector2 pos = pauseSprite_[pauseIndex_]->GetPosition();
+    pos.y -= 0.0f; // 不要なY軸引き算を撤廃
+    pos.x -= 280.0f; // UIのすぐ左側にくるように調整
+    cursorSprite_->SetPosition(pos);
+
+    for (auto& pauseSprite : pauseSprite_)
+    {
+        pauseSprite->Update();
+    }
+    menuSprite_->Update();
+    cursorSprite_->Update();
+
+    // 卵の更新処理
+    egg_->Update();
+}
+
+void BaseGameScene::LoadStageData()
+{
+    player_->SetPosition(CollisionMask::GetInstance()->GetStartPos());
+    egg_->SetTranslate(CollisionMask::GetInstance()->GetEggStartPos());
+    goal_->SetTranslate(CollisionMask::GetInstance()->GetGoalPos());
+    size_t i = 0;
+    for (auto itEnemy = enemies_.begin(); itEnemy != enemies_.end(); ++itEnemy)
+    {
+        (*itEnemy)->Reset(CollisionMask::GetInstance()->GetEnemyStartPos(i));
+        ++i;
+    }
+
+    for (auto itNestMaterial = nestMaterial_.begin(); itNestMaterial != nestMaterial_.end(); ++itNestMaterial)
+    {
+        (*itNestMaterial)->SetTranslate(CollisionMask::GetInstance()->GetNestMaterialPos(i));
+        ++i;
+    }
+
+    i = 0;
+    for (auto itOnWayObject = stageOneWays_.begin(); itOnWayObject != stageOneWays_.end(); ++itOnWayObject)
+    {
+        (*itOnWayObject)->SetTranslate(CollisionMask::GetInstance()->GetOneWayObjectPos(i));
+        ++i;
+    }
+
+    std::vector<Vector3> oneWayObjectPos_;
+    thread_->ClearThreads();
+}
+
+
+void BaseGameScene::UpdatePauseGray()
+{
+    menuSprite_->Update();
+}
+void BaseGameScene::DrawPauseGray()
+{
+    menuSprite_->Draw();
+}
+
+
+void BaseGameScene::InputColorSet()
+{
+    auto input = Input::GetInstance();
+    Vector4 pushColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+    Vector4 defaultColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 getUpEggColor = { 0.3f, 0.3f, 0.3f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        if (input->TriggerKeyDown(DIK_W))
+        {
+            keyboardSprite_[0]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_W))
+        {
+            keyboardSprite_[0]->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_A))
+        {
+            keyboardSprite_[1]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_A))
+        {
+            keyboardSprite_[1]->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_S))
+        {
+            keyboardSprite_[2]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_S))
+        {
+            keyboardSprite_[2]->SetColor(defaultColor);
+        }
+
+        if (input->TriggerKeyDown(DIK_D))
+        {
+            keyboardSprite_[3]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_D))
+        {
+            keyboardSprite_[3]->SetColor(defaultColor);
+        }
+
+        /*if (egg_->IsOnPlayer())
+        {
+            keyboardSprite_[5]->SetColor(getUpEggColor);
+            keyboardSprite_[6]->SetColor(getUpEggColor);
+        }
+        else
+        {
+            if (input->TriggerKeyDown(DIK_LSHIFT))
+            {
+                keyboardSprite_[5]->SetColor(pushColor);
+            } else if (input->TriggerKeyUp(DIK_LSHIFT))
+            {
+                keyboardSprite_[5]->SetColor(defaultColor);
+            }
+
+            if (input->TriggerKeyDown(DIK_B))
+            {
+                keyboardSprite_[6]->SetColor(pushColor);
+            } else if (input->TriggerKeyUp(DIK_B))
+            {
+                keyboardSprite_[6]->SetColor(defaultColor);
+            }
+        }*/
+
+        
+
+        if (input->TriggerKeyDown(DIK_SPACE))
+        {
+            keyboardSprite_[7]->SetColor(pushColor);
+        } else if (input->TriggerKeyUp(DIK_SPACE))
+        {
+            keyboardSprite_[7]->SetColor(defaultColor);
+        }
+    }
+    else
+    {
+        Vector2 padStickPosition =  padSprite_[0]->GetPosition();
+        XINPUT_STATE joyState{};
+        if (Input::GetInstance()->GetJoyStick(0, joyState)) {
+            // スティックの入力を -1.0f ～ 1.0f に正規化
+            Vector2 stick;
+            stick.x = (float)joyState.Gamepad.sThumbLX / kStickMax;
+            stick.y = (float)joyState.Gamepad.sThumbLY / kStickMax;
+
+            
+            
+            // デッドゾーンを超えていたら移動とみなす
+            if (std::abs(stick.x) > kDeadZone || std::abs(stick.y) > kDeadZone) 
+            {
+                
+                stick.y *= -1.0f;
+
+                padStickPosition_ = padStickPosition + (Normalize(stick) * kMaxPadStick);
+                padSprite_[1]->SetPosition(padStickPosition_);
+
+
+                padSprite_[1]->SetColor(pushColor);
+            }
+            else
+            {
+
+                padStickPosition_ = padStickPosition ;
+                padSprite_[1]->SetPosition(padStickPosition_);
+
+                padSprite_[1]->SetColor(defaultColor);
+            }
+        }
+
+       /* if (egg_->IsOnPlayer())
+        {
+            padSprite_[3]->SetColor(getUpEggColor);
+            padSprite_[4]->SetColor(getUpEggColor);
+        } 
+        else
+        {
+            if (input->TriggerPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))
+            {
+                padSprite_[3]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_LEFT_SHOULDER))
+            {
+                padSprite_[3]->SetColor(defaultColor);
+            }
+
+            if (input->TriggerPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))
+            {
+                padSprite_[4]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))
+            {
+                padSprite_[4]->SetColor(defaultColor);
+            }
+        }*/
+
+
+
+        if (input->TriggerPadDown(0, XINPUT_GAMEPAD_A))
+        {
+            padSprite_[5]->SetColor(pushColor);
+        } else if (input->TriggerPadUP(0, XINPUT_GAMEPAD_A))
+        {
+            padSprite_[5]->SetColor(defaultColor);
+        }
+
+        WORD dpadButtons[4] = {
+            XINPUT_GAMEPAD_DPAD_UP,
+            XINPUT_GAMEPAD_DPAD_RIGHT,
+            XINPUT_GAMEPAD_DPAD_DOWN,
+            XINPUT_GAMEPAD_DPAD_LEFT
+        };
+        for (int i = 0; i < 4; i++) {
+            if (input->TriggerPadDown(0, dpadButtons[i])) {
+                padArrowKeys_[i]->SetColor(pushColor);
+            } else if (input->TriggerPadUP(0, dpadButtons[i])) {
+                padArrowKeys_[i]->SetColor(defaultColor);
+            }
+        }
+    }
+
+    
+}
+
+void BaseGameScene::GetUpEggToSetColor()
+{
+    auto input = Input::GetInstance();
+    Vector4 getUpEggColor = { 0.3f, 0.3f, 0.3f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        
+        keyboardSprite_[5]->SetColor(getUpEggColor);
+        keyboardSprite_[6]->SetColor(getUpEggColor);
+
+        keyboardSprite_[8]->SetTextureByFilePath("Resources/Keyboard/Keyboard_EGG_1.png");
+    }
+    else
+    {
+        padSprite_[3]->SetColor(getUpEggColor);
+        padSprite_[4]->SetColor(getUpEggColor);
+
+        padSprite_[6]->SetTextureByFilePath("Resources/Pad/Pad_EGG_1.png");
+    }
+}
+
+void BaseGameScene::PutOnEggToSetColor()
+{
+    auto input = Input::GetInstance();
+    Vector4 defaultColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 pushColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+
+        if (input->PushedKeyDown(DIK_LSHIFT))
+        {
+            keyboardSprite_[5]->SetColor(pushColor);
+        }
+        else
+        {
+            keyboardSprite_[5]->SetColor(defaultColor);
+        }
+
+        if (input->PushedKeyDown(DIK_B))
+        {
+            keyboardSprite_[6]->SetColor(pushColor);
+        } 
+        else
+        {
+            keyboardSprite_[6]->SetColor(defaultColor);
+        }
+
+        keyboardSprite_[8]->SetTextureByFilePath("Resources/Keyboard/Keyboard_EGG_0.png");
+    }
+    else
+    {
+        if (input->PushPadDown(0, XINPUT_GAMEPAD_LEFT_SHOULDER))
+        {
+            padSprite_[3]->SetColor(pushColor);
+        } 
+        else
+        {
+            padSprite_[3]->SetColor(defaultColor);
+        }
+
+        if (input->PushPadDown(0, XINPUT_GAMEPAD_RIGHT_SHOULDER))
+        {
+            padSprite_[4]->SetColor(pushColor);
+        } 
+        else
+        {
+            padSprite_[4]->SetColor(defaultColor);
+        }
+
+
+        padSprite_[6]->SetTextureByFilePath("Resources/Pad/Pad_EGG_0.png");
+    }
+}
+
+void BaseGameScene::DrawMenuOperationsUI()
+{
+    if (Input::GetInstance()->GetConnectedStickNum() == 0)
+    {
+        if (keyboardMenuOperation_)
+        {
+            keyboardMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+            keyboardMenuOperation_->Draw();
+        }
+
+        // SelectScene と同じ位置を設定
+        keyboardSprite_[0]->SetPosition(Vector2{ 52.7f, 621.0f });
+        keyboardSprite_[1]->SetPosition(Vector2{ 20.0f, 653.7f });
+        keyboardSprite_[2]->SetPosition(Vector2{ 52.6f, 686.7f });
+        keyboardSprite_[3]->SetPosition(Vector2{ 86.0f, 652.7f });
+        keyboardSprite_[7]->SetPosition(Vector2{ 250.9f, 646.0f });
+
+        // 行列更新
+        keyboardSprite_[0]->Update();
+        keyboardSprite_[1]->Update();
+        keyboardSprite_[2]->Update();
+        keyboardSprite_[3]->Update();
+        keyboardSprite_[7]->Update();
+
+        // A, D キーのみの描画 (W=0, S=2 は描画しない)
+        keyboardSprite_[1]->Draw();
+        keyboardSprite_[3]->Draw();
+
+        // SPACE キーの描画
+        keyboardSprite_[7]->Draw();
+    }
+    else
+    {
+        if (padMenuOperation_)
+        {
+            padMenuOperation_->SetPosition(Vector2{ 30.0f, 620.0f });
+            padMenuOperation_->Draw();
+        }
+
+        // A ボタンの座標を SelectScene の位置で描画
+        padSprite_[5]->SetPosition(Vector2{ 290.0f, 668.0f });
+        padSprite_[5]->Update();
+        padSprite_[5]->Draw();
+
+        // D-pad 左右矢印のみの描画 (Up=0, Down=2 は描画しない)
+        if (padArrowKeys_[1]) padArrowKeys_[1]->Draw();
+        if (padArrowKeys_[3]) padArrowKeys_[3]->Draw();
+    }
+}

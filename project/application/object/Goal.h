@@ -3,9 +3,11 @@
 #include"Object3D.h"
 #include "Model.h"
 #include "Camera.h"
+#include "Sprite.h"
 
 class Egg;
 class Player;
+class BaseGameScene;
 
 class Goal
 {
@@ -27,21 +29,30 @@ public:
     // プレイヤーのポインタを取得
     void SetPlayer(Player* player) { player_ = player; }
 
+    // ゲームシーンのポインタを取得
+    void SetGameScene(BaseGameScene* gameScene) { gameScene_ = gameScene; }
+
     // ゴール判定関数
     void Clear();
 
     // ゴールに必要な素材数のsetter
     void SetNeedNestCount(int num) { needNestMaterialCount_ = num; }
+    // getter
+    int GetNeedNestCount() const { return needNestMaterialCount_; }
 
+    Vector3 GetPos() const{
+    return  object_->GetTranslate();
+    } 
 public: // 外部入出力
 
 
-
+    void SetTranslate(const Vector3& translate) { object_->SetTranslate(translate); }
 
 
 private:
 
     std::unique_ptr<Object3d> object_;
+    std::unique_ptr<Sprite> sprite_;
 
     Vector3 scale_ = { 1.0f,1.0f,1.0f };
     Vector3 rotate_ = { 0.0f,0.0f,0.0f };
@@ -51,11 +62,15 @@ private:
     Egg* egg_ = nullptr;
     // プレイヤーのポインタ
     Player* player_ = nullptr;
+    // ゲームシーンのポインタ
+    BaseGameScene* gameScene_ = nullptr;
 
     // ゴールに必要な素材の数
     int needNestMaterialCount_ = 0;
     // プレイヤーが持っている素材の数
     int playerNestMaterialCount_ = 0;
 
+    // ゴールできない警告
+    bool isWarning_ = false;
 };
 

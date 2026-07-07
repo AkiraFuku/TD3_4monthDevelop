@@ -18,7 +18,6 @@
     <ClCompile Include="application\object\player\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
-    <ClCompile Include="application\object\Egg.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
     <ClCompile Include="engine\Tool\Camera.cpp" />
     <ClCompile Include="engine\2d\Vector2.cpp" />
@@ -38,7 +37,7 @@
     <ClCompile Include="engine\Tool\Logger.cpp" />
     <ClCompile Include="engine\GAME\Framework.cpp" />
     <ClCompile Include="engine\GAME\GameEngine.cpp" />
-    <ClCompile Include="application\scene\GameScene.cpp" />
+    <ClCompile Include="application\scene\BaseGameScene.cpp" />
     <ClCompile Include="engine\Tool\LightManager.cpp" />
     <ClCompile Include="application\object\Goal.cpp" />
     <ClCompile Include="main.cpp" />
@@ -63,7 +62,6 @@
     <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
     <ClCompile Include="application\object\thread\ThreadManager.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
-    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\Mass.cpp" />
@@ -74,9 +72,23 @@
     <ClCompile Include="SpiderWebManager.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
-    <ClCompile Include="NestMaterial.cpp" />
+    <ClCompile Include="application\object\NestMaterial.cpp" />
     <ClCompile Include="application\JSONManager\JSONManager.cpp" />
-    <ClCompile Include="OneWayObject.cpp" />
+    <ClCompile Include="application\object\OneWayObject.cpp" />
+    <ClCompile Include="BrokenBlock.cpp" />
+    <ClCompile Include="application\scene\SelectScene.cpp" />
+    <ClCompile Include="application\object\Egg\Egg.cpp" />
+    <ClCompile Include="application\object\enemy\Enemy.cpp" />
+    <ClCompile Include="application\object\Egg\EggAnima.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
+    <ClCompile Include="Fade.cpp" />
+    <ClCompile Include="application\object\StageModel.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyWebEffect.cpp" />
+    <ClCompile Include="EggExplosion.cpp" />
+    <ClCompile Include="application\scene\TutorialScene.cpp" />
+    <ClCompile Include="application\scene\GameScene.cpp" />
+    <ClCompile Include="application\scene\AlphaUtility.cpp" />
+    <ClCompile Include="application\scene\WorldToScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
@@ -84,7 +96,6 @@
     <ClInclude Include="application\object\player\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
-    <ClInclude Include="application\object\Egg.h" />
     <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
     <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />
@@ -120,7 +131,7 @@
     <ClInclude Include="engine\Tool\ParicleEmitter.h" />
     <ClInclude Include="engine\GAME\Framework.h" />
     <ClInclude Include="engine\GAME\GameEngine.h" />
-    <ClInclude Include="application\scene\GameScene.h" />
+    <ClInclude Include="application\scene\BaseGameScene.h" />
     <ClInclude Include="engine\scene\Scene.h" />
     <ClInclude Include="engine\scene\SceneManager.h" />
     <ClInclude Include="application\scene\TitleScene.h" />
@@ -132,7 +143,6 @@
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\thread\ThreadManager.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
-    <ClInclude Include="Enemy.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
@@ -144,9 +154,25 @@
     <ClInclude Include="SpiderWebManager.h" />
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
-    <ClInclude Include="NestMaterial.h" />
+    <ClInclude Include="application\object\NestMaterial.h" />
     <ClInclude Include="application\JSONManager\JSONManager.h" />
-    <ClInclude Include="OneWayObject.h" />
+    <ClInclude Include="application\object\OneWayObject.h" />
+    <ClInclude Include="BrokenBlock.h" />
+    <ClInclude Include="application\scene\SelectScene.h" />
+    <ClInclude Include="application\object\Egg\Egg.h" />
+    <ClInclude Include="application\object\enemy\Enemy.h" />
+    <ClInclude Include="application\object\Egg\EggAnima.h" />
+    <ClInclude Include="application\object\enemy\EnemyAnima.h" />
+    <ClInclude Include="Fade.h" />
+    <ClInclude Include="EggExplosion.h" />
+    <ClInclude Include="application\object\StageModel.h" />
+    <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
+    <ClInclude Include="application\scene\TutorialScene.h" />
+    <ClInclude Include="application\scene\GameScene.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="engine\Tool\resource.h" />
+    <ClInclude Include="application\scene\AlphaUtility.h" />
+    <ClInclude Include="application\scene\WorldToScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d\Object3d.hlsli" />
@@ -157,5 +183,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="IconResource.rc" />
   </ItemGroup>
 </Project>

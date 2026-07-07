@@ -95,8 +95,8 @@ void SpriteCommon::Initialize()
         };
         };
     // 深度設定
-    config.depthEnable = true;
-    config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    config.depthEnable = false;
+    config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("Sprite", config);

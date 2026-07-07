@@ -44,6 +44,20 @@ public:
     const std::vector<PhysicsNode>& GetNodes() const { return nodes_; }
     std::vector<PhysicsNode>& GetNodesMutable() { return nodes_; }
 
+    /// <summary>
+    /// 指定したノードの現在の位置を取得する
+    /// </summary>
+    Vector3 GetNodePosition(int nodeIndex) const { return nodes_[nodeIndex].currentPos; }
+
+    const Vector3& GetStartPos() const { return startPos_; }
+    const Vector3& GetEndPos() const { return endPos_; }
+    bool IsAnimating() const { return isAnimating_; }
+
+    /// <summary>
+    /// 指定したノードに直接位置のオフセット（補正）を加える（交差点の引き寄せ用）
+    /// </summary>
+    void AddPositionOffset(int nodeIndex, const Vector3& offset);
+
     // 糸の剛性（0.0 ~ 1.0）。1.0で伸びない硬い糸、下げるとゴムのように弾む
     void SetStiffness(float stiffness) {
         stiffness_ = (std::max) (0.0f, (std::min) (stiffness, 1.0f));
@@ -75,6 +89,8 @@ private:
     /// </summary>
     void SolveConstraints(); // 距離の制約解決（糸の長さを保つ）
 
+    void UpdateSpawnAnimation();
+
 private:
     // ---------------------------------------------------------
     // 状態・パラメーター
@@ -89,4 +105,12 @@ private:
     float damping_ = 0.99f;          // 減衰率（空気抵抗）
     Vector3 gravity_ = {0.0f, -0.0005f, 0.0f}; // 重力
 
+    // ---------------------------------------------------------
+    // アニメーション用パラメータ
+    // ---------------------------------------------------------
+    bool isAnimating_ = false;   // アニメーション再生中か
+    float animTimer_ = 0.0f;     // アニメーションの経過時間(フレーム)
+    float animDuration_ = 30.0f; // 伸長にかかるフレーム数（好みに合わせて調整してください）
+    Vector3 startPos_;           // 始点
+    Vector3 endPos_;             // 終点
 };

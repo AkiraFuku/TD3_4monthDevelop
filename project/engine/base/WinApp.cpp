@@ -1,8 +1,10 @@
 #include "WinApp.h"
 #include "assert.h"
+#include "../../resource.h"
 #ifdef USE_IMGUI
 #include"imgui_impl_win32.h"
 #include"imgui.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif // USE_IMGUI
 
@@ -41,6 +43,7 @@ LRESULT WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 void WinApp::Initialize() {
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 
+    wc.cbSize = sizeof(WNDCLASSEX);
 
     //ウィンドウプロシージャ
     wc.lpfnWndProc = WindowProc;
@@ -50,8 +53,13 @@ void WinApp::Initialize() {
     wc.hInstance = GetModuleHandle(nullptr);
     //カーソル
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+
+    wc.hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+
+    wc.hIconSm = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+
     //ウィンドウクラスの登録
-    RegisterClass(&wc);
+    RegisterClassEx(&wc);
     // Output
 
 
@@ -66,7 +74,7 @@ void WinApp::Initialize() {
     //ウィンドウの作成
     hwnd = CreateWindow(
         wc.lpszClassName,//クラス名
-        L"CG2",
+        L"3128_クモり",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,

@@ -158,7 +158,7 @@ Vector3 operator/=(Vector3& v, float scalar)
 		);
 	}
 
-	Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate)
+	Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& traslate)
 	{
 		Matrix4x4 scaleMatrix=MakeScaleMatrix(scale);
 		Matrix4x4 rotateMatrix=Multiply(MakeRotateXMatrix( rotate.x),Multiply(MakeRotateYMatrix( rotate.y),MakeRotateZMatrix( rotate.z)));
@@ -168,7 +168,7 @@ Vector3 operator/=(Vector3& v, float scalar)
 		return result ;
 	}
 
-    Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate)
+    Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Quaternion& rotate, const Vector3& traslate)
     {
        Matrix4x4 scaleMatrix=MakeScaleMatrix(scale);
        Matrix4x4 rotateMatrix = MakeRotateMatrix(rotate);
@@ -470,7 +470,7 @@ Matrix4x4 MakeRotateZMatrix(float radian)
 		}
 		);
 	}
-	Matrix4x4 Makeidetity4x4(){
+	Matrix4x4 Makeidentity4x4(){
 		return Matrix4x4(
 			{
 				{1,0,0,0},
@@ -548,5 +548,22 @@ Matrix4x4 MakeRotateZMatrix(float radian)
            ret.z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2]
         };
 
+        return ret;
+    }
+
+	Vector3 Vector3Lerp(const Vector3& start, const Vector3& end, float t)
+    {
+        Vector3 ret;
+        ret.x = start.x + (end.x - start.x) * t;
+        ret.y = start.y + (end.y - start.y) * t;
+        ret.z = start.z + (end.z - start.z) * t;
+        return ret;
+    }
+
+    Vector2 Vector2Lerp(const Vector2& start, const Vector2& end, float t)
+    {
+        Vector2 ret;
+        ret.x = start.x + (end.x - start.x) * t;
+        ret.y = start.y + (end.y - start.y) * t;
         return ret;
     }

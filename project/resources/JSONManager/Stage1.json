@@ -1,0 +1,20 @@
+{
+    "Stage1": {
+        "eggStartPos": {
+            "x": -12.0,
+            "y": 1.0,
+            "z": 0.0
+        },
+        "goalPos": {
+            "x": 14.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "startPos": {
+            "x": -14.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "texturePass": "resources/Mask/Mask(1).png"
+    }
+}

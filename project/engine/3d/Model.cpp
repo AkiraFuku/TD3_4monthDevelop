@@ -104,7 +104,7 @@ void Model::CreateMaterialResource() {
 
     materialData_->color = Vector4{ 1.0f,1.0f,1.0f,1.0f };
     materialData_->enableLighting = false;
-    materialData_->uvTransform = Makeidetity4x4();
+    materialData_->uvTransform = Makeidentity4x4();
     materialData_->shininess=50.0f;
     materialData_->specularType=BlinnPhong;
     materialData_->diffuseType=HarfLambert;
@@ -120,7 +120,7 @@ void Model::ApplyAnimation(Node& node, float time)
         Vector3 t = animation_->CalculateValue(anim.translate.keyFrames, time);
         Quaternion r = animation_->CalculateValue(anim.rotate.keyFrames, time);
         Vector3 s = animation_->CalculateValue(anim.scale.keyFrames, time);
-        node.localMatrix = MakeAfineMatrix(s, r, t);
+        node.localMatrix = MakeAffineMatrix(s, r, t);
     }
 
     // 子供のノードにも再帰的に適用
@@ -333,6 +333,22 @@ Model* Model::CreatePlaneFromTex(const std::string& textureFilePath)
         TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
 
     // 4. バッファ等の初期化（既存メソッドを再利用）
+    model->CreateVertexBuffer();
+    model->CreateMaterialResource();
+
+    return model;
+}
+
+Model* Model::CreateDynamicModel(const std::vector<VertexData>& vertices, const std::string& textureFilePath)
+{
+    Model* model = new Model();
+
+    model->modelData_.vertices = vertices;
+
+    model->modelData_.material.textureFilePath = textureFilePath;
+    model->modelData_.material.textureIndex =
+        TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
+
     model->CreateVertexBuffer();
     model->CreateMaterialResource();
 

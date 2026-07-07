@@ -15,15 +15,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="application\scene\AlphaUtility.cpp" />
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
     <ClCompile Include="application\debugCamera\DebugCameraFunction.cpp" />
     <ClCompile Include="application\JSONManager\JSONManager.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyWebEffect.cpp" />
     <ClCompile Include="application\object\player\Player.cpp" />
     <ClCompile Include="application\object\Terrain.cpp" />
     <ClCompile Include="application\collision\CollisionMask.cpp" />
-    <ClCompile Include="application\object\Egg.cpp" />
-    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="application\object\Egg\Egg.cpp" />
+    <ClCompile Include="application\scene\TutorialScene.cpp" />
+    <ClCompile Include="application\scene\WorldToScreen.cpp" />
+    <ClCompile Include="BrokenBlock.cpp" />
+    <ClCompile Include="application\object\enemy\Enemy.cpp" />
+    <ClCompile Include="application\object\Egg\EggAnima.cpp" />
+    <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
+    <ClCompile Include="EggExplosion.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
     <ClCompile Include="engine\math\DrawFunction.cpp" />
@@ -48,9 +56,11 @@
     <ClCompile Include="engine\Tool\Logger.cpp" />
     <ClCompile Include="engine\GAME\Framework.cpp" />
     <ClCompile Include="engine\GAME\GameEngine.cpp" />
-    <ClCompile Include="application\scene\GameScene.cpp" />
+    <ClCompile Include="application\scene\BaseGameScene.cpp" />
     <ClCompile Include="engine\Tool\LightManager.cpp" />
     <ClCompile Include="application\object\Goal.cpp" />
+    <ClCompile Include="Fade.cpp" />
+    <ClCompile Include="application\scene\GameScene.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -72,8 +82,8 @@
     <ClCompile Include="engine\scene\SceneManager.cpp" />
     <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
-    <ClCompile Include="NestMaterial.cpp" />
-    <ClCompile Include="OneWayObject.cpp" />
+    <ClCompile Include="application\object\NestMaterial.cpp" />
+    <ClCompile Include="application\object\OneWayObject.cpp" />
     <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="application\object\player\PlayerState.cpp" />
     <ClCompile Include="application\object\thread\ThreadManager.cpp" />
@@ -81,18 +91,28 @@
     <ClCompile Include="application\object\thread\ThreadRenderer.cpp" />
     <ClCompile Include="application\collision\Vector4Function.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
+    <ClCompile Include="application\scene\SelectScene.cpp" />
     <ClCompile Include="SpiderWebManager.cpp" />
+    <ClCompile Include="application\object\StageModel.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="application\scene\AlphaUtility.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />
     <ClInclude Include="application\JSONManager\JSONManager.h" />
+    <ClInclude Include="application\object\enemy\EnemyWebEffect.h" />
     <ClInclude Include="application\object\player\Player.h" />
     <ClInclude Include="application\object\Terrain.h" />
     <ClInclude Include="application\collision\CollisionMask.h" />
-    <ClInclude Include="application\object\Egg.h" />
-    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="application\object\Egg\Egg.h" />
+    <ClInclude Include="application\scene\TutorialScene.h" />
+    <ClInclude Include="application\scene\WorldToScreen.h" />
+    <ClInclude Include="BrokenBlock.h" />
+    <ClInclude Include="application\object\enemy\Enemy.h" />
+    <ClInclude Include="application\object\Egg\EggAnima.h" />
+    <ClInclude Include="application\object\enemy\EnemyAnima.h" />
+    <ClInclude Include="EggExplosion.h" />
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
     <ClInclude Include="engine\math\Mass.h" />
@@ -108,6 +128,7 @@
     <ClInclude Include="engine\base\DXCommon.h" />
     <ClInclude Include="engine\audio\Audio.h" />
     <ClInclude Include="engine\Tool\ImGuiManager.h" />
+    <ClInclude Include="engine\Tool\resource.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />
     <ClInclude Include="externals\imgui\imgui.h" />
     <ClInclude Include="externals\imgui\imgui_impl_dx12.h" />
@@ -134,15 +155,17 @@
     <ClInclude Include="engine\Tool\ParicleEmitter.h" />
     <ClInclude Include="engine\GAME\Framework.h" />
     <ClInclude Include="engine\GAME\GameEngine.h" />
-    <ClInclude Include="application\scene\GameScene.h" />
+    <ClInclude Include="application\scene\BaseGameScene.h" />
     <ClInclude Include="engine\scene\Scene.h" />
     <ClInclude Include="engine\scene\SceneManager.h" />
     <ClInclude Include="application\scene\TitleScene.h" />
     <ClInclude Include="engine\scene\SceneFactory.h" />
     <ClInclude Include="engine\Tool\LightManager.h" />
     <ClInclude Include="application\object\Goal.h" />
-    <ClInclude Include="NestMaterial.h" />
-    <ClInclude Include="OneWayObject.h" />
+    <ClInclude Include="application\object\NestMaterial.h" />
+    <ClInclude Include="application\object\OneWayObject.h" />
+    <ClInclude Include="Fade.h" />
+    <ClInclude Include="application\scene\GameScene.h" />
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\player\PlayerState.h" />
@@ -151,7 +174,10 @@
     <ClInclude Include="application\object\thread\ThreadRenderer.h" />
     <ClInclude Include="application\collision\Vector4Function.h" />
     <ClInclude Include="application\object\player\PlayerAnima.h" />
+    <ClInclude Include="application\scene\SelectScene.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SpiderWebManager.h" />
+    <ClInclude Include="application\object\StageModel.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
@@ -226,6 +252,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="IconResource.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -295,7 +324,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;;$(ProjectDir)application\JSONManager</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;;$(ProjectDir)application\JSONManager;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\enemy</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -326,7 +355,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;;$(ProjectDir)application\JSONManager</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;;$(ProjectDir)application\JSONManager;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\enemy</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -360,7 +389,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\Enemy;$(ProjectDir)application\JSONManager</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\audio;$(ProjectDir)engine\2d;$(ProjectDir)engine\GAME;$(ProjectDir)engine\math;$(ProjectDir)engine\3d;$(ProjectDir)engine\base;$(ProjectDir)engine\io;$(ProjectDir)engine\scene;$(ProjectDir)engine\input;$(ProjectDir)engine\Tool;$(ProjectDir)externals\imgui;$(ProjectDir)externals\DirectXTex;$(ProjectDir);$(ProjectDir)externals\assimp\include;$(ProjectDir)application\scene;$(ProjectDir)application\object\thread;$(ProjectDir)application\object\player;$(ProjectDir)application\object;$(ProjectDir)application\debugCamera;$(ProjectDir)application\collision;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\Enemy;$(ProjectDir)application\JSONManager;$(ProjectDir)application\object\Egg;$(ProjectDir)application\object\enemy</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

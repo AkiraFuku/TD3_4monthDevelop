@@ -13,6 +13,8 @@ public:
         Walk,
         Carry,
         OnThread,
+        Clear, // ← 追加
+
     };
     
     void Initialize(Object3d* targetObject);

@@ -4,6 +4,7 @@
 #include "Egg.h"
 #include "Player.h"
 #include "SceneManager.h"
+#include "GameScene.h"
 
 void Goal::Initialize(const Vector3& pos)
 {
@@ -14,6 +15,10 @@ void Goal::Initialize(const Vector3& pos)
     object_->SetModel("goal/goal.obj");
 
     object_->SetTranslate(pos);
+
+    sprite_ = std::make_unique<Sprite>();
+    sprite_->Initialize("resources/icon/shortage.png");
+    sprite_->SetPosition({ 340.0f, 160.0f });
 }
 
 void Goal::Finalize()
@@ -49,21 +54,21 @@ void Goal::Update()
 #endif
 
     object_->Update();
+    sprite_->Update();
 }
 
 void Goal::Draw()
 {
     object_->Draw();
+
+    if (isWarning_)
+    {
+        sprite_->Draw();
+    }
 }
 
 void Goal::Clear()
 {
-    // プレイヤーの素材の回収数が必要数を下回っていたら無効
-    if (player_->GetNestMaterial() < needNestMaterialCount_)
-    {
-        return;
-    }
-
     // 卵とゴールの当たり判定
     Vector3 goalPos = object_->GetTranslate();
     Vector3 eggPos = egg_->GetWorldPosition();
@@ -71,7 +76,19 @@ void Goal::Clear()
     // 卵がゴールの真上にあったら
     if (goalPos.x - 1.0f < eggPos.x && eggPos.x < goalPos.x + 1.0f &&
         goalPos.z - 1.0f < eggPos.z && eggPos.z < goalPos.z + 1.0f) {
-        // シーン遷移
-        SceneManager::GetInstance()->ChangeScene("TitleScene");
+        // プレイヤーの素材の回収数が必要数を下回っていたら警告
+        if (player_->GetNestMaterial() < needNestMaterialCount_ || !egg_->IsOnPlayer())
+        {
+            isWarning_ = true;
+        }
+        else
+        {
+            // クリアフラグを立てる
+            gameScene_->SetClear(true);
+        }
+    }
+    else
+    {
+        isWarning_ = false;
     }
 }

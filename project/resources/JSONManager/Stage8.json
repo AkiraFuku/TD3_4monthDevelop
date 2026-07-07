@@ -1,0 +1,57 @@
+{
+    "Stage8": {
+        "eggStartPos": {
+            "x": -10.0,
+            "y": 0.0,
+            "z": -7.0
+        },
+        "enemyStartPos": [
+            {
+                "x": -10.0,
+                "y": 0.0,
+                "z": 8.0
+            }
+        ],
+        "goalPos": {
+            "x": 10.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "nestMaterialPos": [
+            {
+                "x": -10.0,
+                "y": 0.0,
+                "z": 8.0
+            },
+            {
+                "x": 6.0,
+                "y": 0.0,
+                "z": 8.0
+            }
+        ],
+         "oneWayObjectPos": [
+            {
+                "x": -4.0,
+                "y": -1.0,
+                "z": 8.0
+            }
+        ],
+        "oneWayObjectScale": [
+            {
+                "x": 8.0,
+                "y": 2.0,
+                "z": 3.0
+            }
+        ],
+        "oneWayObjectDir":[
+           1
+        ],
+
+        "startPos": {
+            "x": -10.0,
+            "y": 0.0,
+            "z": -6.0
+        },
+        "texturePass": "resources/Mask/Mask(8).png"
+    }
+}

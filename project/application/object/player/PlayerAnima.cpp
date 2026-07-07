@@ -9,15 +9,15 @@
 
 // キャッシュ用の定数
 constexpr uint32_t PART_BODY = 0;
-constexpr uint32_t PART_ARM= 1;
-//constexpr uint32_t PART_ARM = 2;
+constexpr uint32_t PART_Right_ARM= 1;
+constexpr uint32_t PART_Left_ARM = 2;
 
 // インスタンス名からパーツIDへの高速変換
 inline uint32_t GetPartId(const std::string& name)
 {
     if (name == "Body") return PART_BODY;
-    if (name == "Arm") return PART_ARM;
-  //  if (name == "Arm") return PART_ARM_L;
+    if (name == "RightArm") return PART_Right_ARM;
+    if (name == "LeftArm") return PART_Left_ARM;
     return UINT32_MAX;
 }
 
@@ -63,7 +63,7 @@ void PlayerAnima::InitializeAnimations()
             float t = std::sin(anima_->GetTimer() * 2.0f * speed) * 0.5f + 0.5f;
             
             uint32_t partId = GetPartId(instance.name);
-            if (partId == PART_BODY || partId == PART_ARM) {
+            if (partId == PART_BODY || partId == PART_Right_ARM || partId == PART_Left_ARM) {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
             }
         },
@@ -93,7 +93,7 @@ void PlayerAnima::InitializeAnimations()
                 float speed = animationSpeeds_.at(AnimationState::Carry);
                 float t = std::sin(anima_->GetTimer() * 10.0f * speed) * 0.5f + 0.5f;
 
-                if (GetPartId(instance.name) == PART_ARM) {
+                if (GetPartId(instance.name) & (PART_Right_ARM | PART_Left_ARM)) {
                     // キャッシュされたクォータニオンを使用
                     instance.transform.rotate = Slerp(cachedStart, cachedEnd, t);
                 }
@@ -104,6 +104,32 @@ void PlayerAnima::InitializeAnimations()
 
     animationMap_[AnimationState::Carry] = CreateRotationAnimation(AnimationState::Carry, false);
     animationMap_[AnimationState::OnThread] = CreateRotationAnimation(AnimationState::OnThread, true);
+
+ animationMap_[AnimationState::Clear] = Anima::AnimeMove{
+    [this](Object3d::ModelInstance& instance) {
+        // アニメーションの再生時間を取得 (0.0f ～ 1.0f に正規化される想定、または秒数)
+        // ここでは anima_->GetTimer() を使用
+        float timer = anima_->GetTimer();
+        
+        // アニメーションの長さを1秒とする場合、1.0fでクランプ
+        float t = std::min(timer / 1.0f, 1.0f); 
+
+        // イージングをかけるとより自然になります（任意）
+        // t = t * t * (3.0f - 2.0f * t); 
+
+        uint32_t partId = GetPartId(instance.name);
+        
+        // 開始ポーズ（正面）と終了ポーズ（万歳）を定義
+        Quaternion startRot = MakeQuaternionFromEuler({ 0.0f, 0.0f, 0.0f });
+        Quaternion endRot = MakeQuaternionFromEuler({ -0.5f, 0.0f, 0.0f }); // 上に上げる
+
+        if (partId == PART_Right_ARM) {
+            // 球面線形補間（Slerp）を使用して回転を補間
+            instance.transform.rotate = Slerp(startRot, endRot, t);
+        } 
+    },
+    false // ループさせない（一回切り）
+};
 }
 
 void PlayerAnima::Update()

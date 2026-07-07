@@ -1,0 +1,34 @@
+{
+    "Stage2": {
+        "eggStartPos": {
+            "x": -14.0,
+            "y": 0.0,
+            "z": -6.0
+        },
+        "enemyStartPos": [
+            {
+                "x": -10.0,
+                "y": 0.0,
+                "z": 7.0
+            }
+        ],
+        "goalPos": {
+            "x": 14.0,
+            "y": 0.0,
+            "z": 5.0
+        },
+        "nestMaterialPos": [
+            {
+                "x": 10.0,
+                "y": 0.0,
+                "z": -4.0
+            }
+        ],
+        "startPos": {
+            "x": -14.0,
+            "y": 0.0,
+            "z": -5.0
+        },
+        "texturePass": "resources/Mask/Mask(2).png"
+    }
+}
