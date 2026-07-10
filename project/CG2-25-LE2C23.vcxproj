@@ -16,7 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application\scene\AlphaUtility.cpp" />
-    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="engine\Tool\Animation.cpp" />
     <ClCompile Include="application\debugCamera\DebugCamera.cpp" />
     <ClCompile Include="application\debugCamera\DebugCameraFunction.cpp" />
     <ClCompile Include="application\JSONManager\JSONManager.cpp" />
@@ -27,14 +27,14 @@
     <ClCompile Include="application\object\Egg\Egg.cpp" />
     <ClCompile Include="application\scene\TutorialScene.cpp" />
     <ClCompile Include="application\scene\WorldToScreen.cpp" />
-    <ClCompile Include="BrokenBlock.cpp" />
+    <ClCompile Include="application\object\BrokenBlock.cpp" />
     <ClCompile Include="application\object\enemy\Enemy.cpp" />
     <ClCompile Include="application\object\Egg\EggAnima.cpp" />
     <ClCompile Include="application\object\enemy\EnemyAnima.cpp" />
-    <ClCompile Include="EggExplosion.cpp" />
+    <ClCompile Include="application\object\Egg\EggExplosion.cpp" />
     <ClCompile Include="engine\3d\Anima.cpp" />
     <ClCompile Include="engine\base\PSOManager.cpp" />
-    <ClCompile Include="engine\math\DrawFunction.cpp" />
+    <ClCompile Include="engine\math\CoriderFunction.cpp" />
     <ClCompile Include="engine\math\Mass.cpp" />
     <ClCompile Include="engine\math\Quanternion.cpp" />
     <ClCompile Include="engine\math\RotateFunction.cpp" />
@@ -59,7 +59,7 @@
     <ClCompile Include="application\scene\BaseGameScene.cpp" />
     <ClCompile Include="engine\Tool\LightManager.cpp" />
     <ClCompile Include="application\object\Goal.cpp" />
-    <ClCompile Include="Fade.cpp" />
+    <ClCompile Include="application\object\Fade.cpp" />
     <ClCompile Include="application\scene\GameScene.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
@@ -84,7 +84,7 @@
     <ClCompile Include="engine\scene\SceneFactory.cpp" />
     <ClCompile Include="application\object\NestMaterial.cpp" />
     <ClCompile Include="application\object\OneWayObject.cpp" />
-    <ClCompile Include="PathFinder.cpp" />
+    <ClCompile Include="application\object\thread\PathFinder.cpp" />
     <ClCompile Include="application\object\player\PlayerState.cpp" />
     <ClCompile Include="application\object\thread\ThreadManager.cpp" />
     <ClCompile Include="application\object\thread\ThreadPhysics.cpp" />
@@ -92,12 +92,12 @@
     <ClCompile Include="application\collision\Vector4Function.cpp" />
     <ClCompile Include="application\object\player\PlayerAnima.cpp" />
     <ClCompile Include="application\scene\SelectScene.cpp" />
-    <ClCompile Include="SpiderWebManager.cpp" />
+    <ClCompile Include="application\object\thread\SpiderWebManager.cpp" />
     <ClCompile Include="application\object\StageModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\scene\AlphaUtility.h" />
-    <ClInclude Include="Animation.h" />
+    <ClInclude Include="engine\Tool\Animation.h" />
     <ClInclude Include="application\debugCamera\DebugCamera.h" />
     <ClInclude Include="application\debugCamera\DebugCameraFunction.h" />
     <ClInclude Include="application\JSONManager\JSONManager.h" />
@@ -108,19 +108,19 @@
     <ClInclude Include="application\object\Egg\Egg.h" />
     <ClInclude Include="application\scene\TutorialScene.h" />
     <ClInclude Include="application\scene\WorldToScreen.h" />
-    <ClInclude Include="BrokenBlock.h" />
+    <ClInclude Include="application\object\BrokenBlock.h" />
     <ClInclude Include="application\object\enemy\Enemy.h" />
     <ClInclude Include="application\object\Egg\EggAnima.h" />
     <ClInclude Include="application\object\enemy\EnemyAnima.h" />
-    <ClInclude Include="EggExplosion.h" />
+    <ClInclude Include="application\object\Egg\EggExplosion.h" />
     <ClInclude Include="engine\3d\Anima.h" />
     <ClInclude Include="engine\base\PSOManager.h" />
+    <ClInclude Include="engine\math\CoriderFunction.h" />
     <ClInclude Include="engine\math\Mass.h" />
     <ClInclude Include="engine\math\Quanternion.h" />
     <ClInclude Include="engine\math\RotateFunction.h" />
     <ClInclude Include="engine\math\Transform.h" />
     <ClInclude Include="engine\scene\AbstractSceneFactory.h" />
-    <ClInclude Include="engine\math\DrawFunction.h" />
     <ClInclude Include="engine\Tool\Camera.h" />
     <ClInclude Include="engine\2d\Vector2.h" />
     <ClInclude Include="engine\3d\Vector3.h" />
@@ -164,9 +164,9 @@
     <ClInclude Include="application\object\Goal.h" />
     <ClInclude Include="application\object\NestMaterial.h" />
     <ClInclude Include="application\object\OneWayObject.h" />
-    <ClInclude Include="Fade.h" />
+    <ClInclude Include="application\object\Fade.h" />
     <ClInclude Include="application\scene\GameScene.h" />
-    <ClInclude Include="PathFinder.h" />
+    <ClInclude Include="application\object\thread\PathFinder.h" />
     <ClInclude Include="application\object\thread\PhysicsNode.h" />
     <ClInclude Include="application\object\player\PlayerState.h" />
     <ClInclude Include="application\object\thread\ThreadManager.h" />
@@ -176,7 +176,7 @@
     <ClInclude Include="application\object\player\PlayerAnima.h" />
     <ClInclude Include="application\scene\SelectScene.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="SpiderWebManager.h" />
+    <ClInclude Include="application\object\thread\SpiderWebManager.h" />
     <ClInclude Include="application\object\StageModel.h" />
   </ItemGroup>
   <ItemGroup>

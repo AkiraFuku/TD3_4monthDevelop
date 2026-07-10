@@ -3,7 +3,7 @@
 #include "Object3d.h"
 #include <cmath>
 #include <numbers>
-#include "DrawFunction.h"
+#include "CoriderFunction.h"
 
 class OneWayObject
 {

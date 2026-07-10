@@ -1,5 +1,5 @@
 #include "Mass.h"
-#include "DrawFunction.h"
+#include "CoriderFunction.h"
 #include "MathFunction.h"
 std::pair<Vector3, Vector3> ComputeCollisionVelocities(
 	float mass1, const Vector3& velocity1, float mass2, const Vector3& velocity2,float coefficientOfRestitution,const Vector3& normal)

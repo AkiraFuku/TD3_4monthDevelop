@@ -13,7 +13,6 @@ void GameEngine::Initialize() {
 
    
   SceneManager::GetInstance()->ChangeScene("TitleScene");
-  //SceneManager::GetInstance()->ChangeScene("SelectScene");
 
 };
 void GameEngine::Finalize() {  

@@ -2,7 +2,7 @@
 #include "Camera.h"
 #include "Model.h"
 #include "Object3D.h"
-#include "DrawFunction.h"
+#include "CoriderFunction.h"
 #include "JSONManager.h"
 
 #include "StageModel.h"
