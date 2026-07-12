@@ -9,10 +9,10 @@ void Sprite::Initialize(std::string textureFilePath) {
 
 
     vertexResourse_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(VertexData) * 4);
     indexResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(uint32_t) * 6);
     vertexBufferView_.BufferLocation =
         vertexResourse_.Get()->GetGPUVirtualAddress();
@@ -29,7 +29,7 @@ void Sprite::Initialize(std::string textureFilePath) {
 
     //
     materialResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(Material));
     materialResource_->
         Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
@@ -39,7 +39,7 @@ void Sprite::Initialize(std::string textureFilePath) {
     materialData_->uvTransform = Makeidentity4x4();
     //座標変換
     transformationMatrixResourse_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResourse_.Get()->
         Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixData_));
@@ -121,32 +121,32 @@ void Sprite::Draw()
 {
     SpriteCommon::GetInstance()->SpriteCommonDraw();
     //Object3dCommon::GetInstance()->Object3dCommonDraw();
-    auto psoSet = PSOManager::GetInstance()->GetPso("Sprite", blendMode_, fillMode_);
+    auto psoSet = PipelineStateManager::GetInstance()->GetOrCreatePipelineState("Sprite", blendMode_, fillMode_);
 
     // PSOをセット
-    DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
+    DirectXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
     //パイプラインステートとルートシグネチャの設定
-    DXCommon::GetInstance()->
+    DirectXCommon::GetInstance()->
         GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
     //インデックスバッファの設定
-    DXCommon::GetInstance()->
+    DirectXCommon::GetInstance()->
         GetCommandList()->IASetIndexBuffer(&indexBufferView_);
     //マテリアルの設定
-    DXCommon::GetInstance()->
+    DirectXCommon::GetInstance()->
         GetCommandList()->
         SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
     // SRVのディスクプリプターテーブルの先頭を設定
-    DXCommon::GetInstance()->
+    DirectXCommon::GetInstance()->
         GetCommandList()->
         SetGraphicsRootDescriptorTable(2,
             TextureManager::GetInstance()->GetSrvHandleGPU(textureIndex_));
 
     //座標変換行列の設定
-    DXCommon::GetInstance()->
+    DirectXCommon::GetInstance()->
         GetCommandList()->
         SetGraphicsRootConstantBufferView(1, transformationMatrixResourse_->GetGPUVirtualAddress());
 
-    DXCommon::GetInstance()->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    DirectXCommon::GetInstance()->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
 
 void Sprite::SetTextureByFilePath(const std::string& textureFilePath)

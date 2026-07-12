@@ -6,7 +6,7 @@
 #include"DirectXTex.h"
 #include"d3dx12.h"
 
-class DXCommon;
+class DirectXCommon;
 
 class TextureManager
 {

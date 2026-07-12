@@ -14,9 +14,9 @@ void ParticleManager::Initialize() {
     randomEngine_.seed(seedGen_());
     //パイプラインステート生成
 
-    PsoConfig psoConfig{};
-    psoConfig.vsPath = L"resources/shaders/Particle/Particle.vs.hlsl";
-    psoConfig.psPath = L"resources/shaders/Particle/Particle.ps.hlsl";
+    PipelineStateConfig psoConfig{};
+    psoConfig.vertexShaderPath = L"resources/shaders/Particle/Particle.vs.hlsl";
+    psoConfig.pixelShaderPath = L"resources/shaders/Particle/Particle.ps.hlsl";
     psoConfig.rootSignatureGenerator = []() -> Microsoft::WRL::ComPtr<ID3D12RootSignature> {
         // ルートシグネチャの生成
         D3D12_DESCRIPTOR_RANGE descriptorRange[1]{};
@@ -60,7 +60,7 @@ void ParticleManager::Initialize() {
             // エラー処理（ログ出力など）
             return nullptr;
         }
-        ID3D12Device* device = DXCommon::GetInstance()->GetDevice().Get();
+        ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice().Get();
         hr = device->CreateRootSignature(
             0,
             signatureBlob->GetBufferPointer(),
@@ -74,14 +74,14 @@ void ParticleManager::Initialize() {
         return rootSignature;
         };
 
-    PsoConfig configCylinder{};
-    configCylinder.vsPath = L"resources/shaders/Cylinder/ParticleCylinder.vs.hlsl";
-    configCylinder.psPath = L"resources/shaders/Cylinder/ParticleCylinder.ps.hlsl";
+    PipelineStateConfig configCylinder{};
+    configCylinder.vertexShaderPath = L"resources/shaders/Cylinder/ParticleCylinder.vs.hlsl";
+    configCylinder.pixelShaderPath = L"resources/shaders/Cylinder/ParticleCylinder.ps.hlsl";
     configCylinder.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
         D3D12_STATIC_SAMPLER_DESC sampler{};
-        sampler = PSOManager::GetInstance()->StaticSamplers();
+        sampler = PipelineStateManager::GetInstance()->CreateDefaultStaticSamplerDescription();
 
         sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 
@@ -144,7 +144,7 @@ void ParticleManager::Initialize() {
         }
 
         Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        hr = DirectXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
         assert(SUCCEEDED(hr));
 
 
@@ -167,18 +167,18 @@ void ParticleManager::Initialize() {
     configCylinder.cullMode = D3D12_CULL_MODE_NONE; // パーティクルは両面描画することが多いので、カリングなしに設定
 
     // PSOManagerに名前を付けて登録
-    PSOManager::GetInstance()->RegisterPsoGenerator("ParticleCylinder", configCylinder);
+    PipelineStateManager::GetInstance()->RegisterConfiguration("ParticleCylinder", configCylinder);
 
-    PsoConfig config{};
-    config.vsPath = L"resources/shaders/Particle/Particle.vs.hlsl";
-    config.psPath = L"resources/shaders/Particle/Particle.ps.hlsl";
+    PipelineStateConfig config{};
+    config.vertexShaderPath = L"resources/shaders/Particle/Particle.vs.hlsl";
+    config.pixelShaderPath = L"resources/shaders/Particle/Particle.ps.hlsl";
 
 
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
         D3D12_STATIC_SAMPLER_DESC sampler{};
-        sampler = PSOManager::GetInstance()->StaticSamplers();
+        sampler = PipelineStateManager::GetInstance()->CreateDefaultStaticSamplerDescription();
 
         staticSamplers.push_back(sampler);
         D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
@@ -239,7 +239,7 @@ void ParticleManager::Initialize() {
         }
 
         Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        hr = DirectXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
         assert(SUCCEEDED(hr));
 
 
@@ -259,7 +259,7 @@ void ParticleManager::Initialize() {
     config.cullMode = D3D12_CULL_MODE_NONE; // パーティクルは両面描画することが多いので、カリングなしに設定
 
     // PSOManagerに名前を付けて登録
-    PSOManager::GetInstance()->RegisterPsoGenerator("Particle", config);
+    PipelineStateManager::GetInstance()->RegisterConfiguration("Particle", config);
   
      //  CreatePSO();
        //頂点データの初期化（座標等）
@@ -334,8 +334,8 @@ void ParticleManager::Update() {
 
 
             /* float alpha = 1.0f - ((*particleIterator).currentTime / (*particleIterator).lifeTime);
-             (*particleIterator).transform.translate += (*particleIterator).velocity * DXCommon::kDeltaTime;
-             (*particleIterator).currentTime += DXCommon::kDeltaTime;*/
+             (*particleIterator).transform.translate += (*particleIterator).velocity * DirectXCommon::kDeltaTime;
+             (*particleIterator).currentTime += DirectXCommon::kDeltaTime;*/
 
             if (numInstance < kMaxNumInstance)
             {
@@ -344,7 +344,7 @@ void ParticleManager::Update() {
                 Matrix4x4 worldMatrix = {};
 
                 if (particleGroup.update) {
-                    particleGroup.update(*particleIterator, DXCommon::kDeltaTime);
+                    particleGroup.update(*particleIterator, DirectXCommon::kDeltaTime);
                 }
 
                 if (particleGroup.effectType == EffectType::Plane)
@@ -377,7 +377,7 @@ void ParticleManager::Update() {
     }
 }
 void ParticleManager::Draw() {
-    PsoSet psoSet{};
+    PipelineStateSet psoSet{};
 
     //VBVの設定
    
@@ -388,31 +388,31 @@ void ParticleManager::Draw() {
             const auto& primitive = primitiveResources_[particleGroup.effectType];
             if (particleGroup.effectType == EffectType::Cylinder)
             {
-                psoSet = PSOManager::GetInstance()->GetPso("ParticleCylinder", BlendMode::Add);
+                psoSet = PipelineStateManager::GetInstance()->GetOrCreatePipelineState("ParticleCylinder", BlendMode::Add);
             } else
             {
-                psoSet = PSOManager::GetInstance()->GetPso("Particle", BlendMode::Add);
+                psoSet = PipelineStateManager::GetInstance()->GetOrCreatePipelineState("Particle", BlendMode::Add);
             }
 
             // RootSignatureの設定
-            DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootSignature(psoSet.rootSignature.Get());
+            DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootSignature(psoSet.rootSignature.Get());
             //PSOの設定
-            DXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
-            DXCommon::GetInstance()->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            DXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &primitive.vbv);
+            DirectXCommon::GetInstance()->GetCommandList()->SetPipelineState(psoSet.pipelineState.Get());
+            DirectXCommon::GetInstance()->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            DirectXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &primitive.vbv);
 
 
             // とりあえずコードの意図を汲んで修正すると：
-            DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_.Get()->GetGPUVirtualAddress());
+            DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_.Get()->GetGPUVirtualAddress());
 
             // [1] Descriptor Table (Instancing Data): インスタンシング用SRV
-            DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(1, SrvManager::GetInstance()->GetGPUDescriptorHandle(particleGroup.instancingSrvIndex));
+            DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(1, SrvManager::GetInstance()->GetGPUDescriptorHandle(particleGroup.instancingSrvIndex));
 
             // [2] Descriptor Table (Texture): テクスチャ用SRV
-            DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(2, SrvManager::GetInstance()->GetGPUDescriptorHandle(particleGroup.materialData.textureIndex));
+            DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(2, SrvManager::GetInstance()->GetGPUDescriptorHandle(particleGroup.materialData.textureIndex));
             // DrawCall
             // 後述するトポロジーの修正に合わせて頂点数を変更 (6 -> 4)
-            DXCommon::GetInstance()->GetCommandList()->DrawInstanced(primitive.vertexCount, particleGroup.kNumInstance, 0, 0);
+            DirectXCommon::GetInstance()->GetCommandList()->DrawInstanced(primitive.vertexCount, particleGroup.kNumInstance, 0, 0);
         }
     }
 }
@@ -439,7 +439,7 @@ void ParticleManager::CreateParticleGroup(
     newParticle.kNumInstance = kMaxNumInstance;
     newParticle.materialData.textureIndex = newParticle.materialData.textureIndex =
         TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilepath);
-    newParticle.instancingResource = DXCommon::GetInstance()->CreateBufferResource(sizeof(ParticleForGPU) * newParticle.kNumInstance);
+    newParticle.instancingResource = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(ParticleForGPU) * newParticle.kNumInstance);
 
     newParticle.instancingSrvIndex = SrvManager::GetInstance()->AllocateSRV();
 
@@ -590,7 +590,7 @@ void ParticleManager::CreateVertexBuffer(EffectType type) {
 
     size_t sizeVB = sizeof(VertexData) * vertices.size();
     PrimitiveResource res;
-    res.resource = DXCommon::GetInstance()->CreateBufferResource(sizeVB);
+    res.resource = DirectXCommon::GetInstance()->CreateBufferResource(sizeVB);
     res.vertexCount = static_cast<uint32_t>(vertices.size());
 
     res.vbv.BufferLocation = res.resource->GetGPUVirtualAddress();
@@ -609,7 +609,7 @@ void ParticleManager::CreateMaterialBuffer()
     //データの設定
 
     materialResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(Material));
     materialResource_->
         Map(0, nullptr, reinterpret_cast<void**>(&materialData_));

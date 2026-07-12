@@ -10,7 +10,7 @@ ParicleEmitter::ParicleEmitter(const  std::string name, EulerTransform transfom,
 
 }
 void ParicleEmitter::Update() {
-    frequencyTime_ += DXCommon::kDeltaTime;
+    frequencyTime_ += DirectXCommon::kDeltaTime;
     if (frequency_ <= frequencyTime_)
     {
        ParticleManager::GetInstance()->Emit(name_,transform_.translate,count_);

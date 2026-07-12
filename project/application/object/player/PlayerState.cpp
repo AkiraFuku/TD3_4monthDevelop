@@ -93,7 +93,7 @@ void PlayerStateMove::Update(Player* player) {
 
     // 歩行音の再生
     // 一秒ごとに歩行音を再生する
-    SEWalkTimer_ += DXCommon::kDeltaTime;
+    SEWalkTimer_ += DirectXCommon::kDeltaTime;
     if (SEWalkTimer_ >= 0.5f) {
         Audio::GetInstance()->PlayAudio(player->GetWalkSoundHandle(), false, 1.0f);
         SEWalkTimer_ = 0.0f;

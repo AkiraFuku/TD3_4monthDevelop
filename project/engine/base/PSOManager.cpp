@@ -11,34 +11,33 @@
 
 using namespace Microsoft::WRL;
 
-std::unique_ptr<PSOManager> PSOManager::instance_ = nullptr;
+std::unique_ptr<PipelineStateManager> PipelineStateManager::instance_ = nullptr;
 
-PSOManager* PSOManager::GetInstance() {
+PipelineStateManager* PipelineStateManager::GetInstance() {
     if (!instance_) {
-        instance_.reset(new PSOManager());
+        instance_.reset(new PipelineStateManager());
     }
     return instance_.get();
 }
 
 
 
-void PSOManager::Initialize() {
-    psoCache_.clear();
-    rootSigCache_.clear();
-    psoConfigs_.clear();
+void PipelineStateManager::Initialize() {
+    pipelineStateCache_.clear();
+    rootSignatureCache_.clear();
+    configurations_.clear();
+    shaderCache_.clear();
 }
 
-void PSOManager::Finalize() {
-    psoCache_.clear();
-    rootSigCache_.clear();
-    psoConfigs_.clear();
+void PipelineStateManager::Finalize() {
+    Initialize();
 }
 
-void PSOManager::RegisterPsoGenerator(const std::string& name, const PsoConfig& psoConfig) {
-    psoConfigs_[name] = psoConfig;
+void PipelineStateManager::RegisterConfiguration(const std::string& name, const PipelineStateConfig& configuration) {
+    configurations_[name] = configuration;
 }
 
-D3D12_STATIC_SAMPLER_DESC PSOManager::StaticSamplers()
+D3D12_STATIC_SAMPLER_DESC PipelineStateManager::CreateDefaultStaticSamplerDescription()
 {
 
     D3D12_STATIC_SAMPLER_DESC sampler{};
@@ -53,38 +52,39 @@ D3D12_STATIC_SAMPLER_DESC PSOManager::StaticSamplers()
     return sampler;
 }
 
-const PsoSet& PSOManager::GetPso(const std::string& name, BlendMode blend, FillMode fill) {
+const PipelineStateSet& PipelineStateManager::GetOrCreatePipelineState(const std::string& name, BlendMode blend, FillMode fill) {
     CacheKey key{ name, blend, fill };
-    if (psoCache_.contains(key)) {
-        return psoCache_[key];
+
+    // キャッシュに存在すればそれを返す
+    if (pipelineStateCache_.contains(key)) {
+        return pipelineStateCache_[key];
     }
-    CreatePso(name, blend, fill);
-    return psoCache_.at(key);
+
+    // 存在しなければ新しく生成してキャッシュに登録
+    CreatePipelineState(name, blend, fill);
+    return pipelineStateCache_.at(key);
 }
 
 
 // -------------------------------------------------------------------------
 // シェーダー管理（重複コンパイル防止）
 // -------------------------------------------------------------------------
-// 修正内容: contains()にはキー（name）を渡す必要がある
-void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<IDxcBlob>& outVS, Microsoft::WRL::ComPtr<IDxcBlob>& outPS) {
+void PipelineStateManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<IDxcBlob>& outVertexShader, Microsoft::WRL::ComPtr<IDxcBlob>& outPixelShader) {
     // 既にキャッシュにあればそれを返す
     if (shaderCache_.contains(name)) {
-        outVS = shaderCache_[name].vs;
-        outPS = shaderCache_[name].ps;
+        outVertexShader = shaderCache_[name].vertexShader;
+        outPixelShader = shaderCache_[name].ps;
         return;
     }
 
-    // 新規コンパイル
-    Microsoft::WRL::ComPtr<IDxcBlob> vs = nullptr;
-    Microsoft::WRL::ComPtr<IDxcBlob> ps = nullptr;
 
-    auto dxCommon = DXCommon::GetInstance();
 
-    psoConfigs_[name];
+    auto dxCommon = DirectXCommon::GetInstance();
 
-    vs = dxCommon->CompileShader(psoConfigs_[name].vsPath, L"vs_6_0");
-    ps = dxCommon->CompileShader(psoConfigs_[name].psPath, L"ps_6_0");
+    configurations_[name];
+
+    ComPtr<IDxcBlob> vs = dxCommon->CompileShader(configurations_[name].vertexShaderPath, L"vs_6_0");
+    ComPtr<IDxcBlob> ps = dxCommon->CompileShader(configurations_[name].pixelShaderPath, L"ps_6_0");
 
 
 
@@ -93,26 +93,22 @@ void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<I
     // キャッシュに保存
     shaderCache_[name] = { vs, ps };
 
-    outVS = vs;
-    outPS = ps;
+    outVertexShader = vs;
+    outPixelShader = ps;
 
 
 }
 
-
-// -------------------------------------------------------------------------
-// PSO 生成
-// -------------------------------------------------------------------------
- void PSOManager::CreatePso(const std::string& name, BlendMode blend, FillMode fill) {
-    auto device = DXCommon::GetInstance()->GetDevice();
-    const auto& config = psoConfigs_.at(name);
+void PipelineStateManager::CreatePipelineState(const std::string& name, BlendMode blendMode, FillMode fillMode) {
+    auto device = DirectXCommon::GetInstance()->GetDevice();
+    const auto& config = configurations_.at(name);
 
     // 1. RootSignature のキャッシュ確認と生成
-    if (!rootSigCache_.contains(name)) {
+    if (!rootSignatureCache_.contains(name)) {
         assert(config.rootSignatureGenerator && "RootSignatureGenerator is null");
-        rootSigCache_[name] = config.rootSignatureGenerator();
+        rootSignatureCache_[name] = config.rootSignatureGenerator();
     }
-    auto rootSignature = rootSigCache_[name];
+    auto rootSignature = rootSignatureCache_[name];
 
     // 2. InputLayout の取得
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
@@ -121,26 +117,22 @@ void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<I
     }
 
     // 3. Shader の取得
-    Microsoft::WRL::ComPtr<IDxcBlob> vsBlob, psBlob;
+    ComPtr<IDxcBlob> vsBlob, psBlob;
     EnsureShaders(name, vsBlob, psBlob);
 
     // 4. PSO構築
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     psoDesc.pRootSignature = rootSignature.Get();
-
-    // InputLayout
     psoDesc.InputLayout = { inputElements.data(), static_cast<UINT>(inputElements.size()) };
-
-    // Shaders
     psoDesc.VS = { vsBlob->GetBufferPointer(), vsBlob->GetBufferSize() };
     psoDesc.PS = { psBlob->GetBufferPointer(), psBlob->GetBufferSize() };
 
-    // Blend State
-    psoDesc.BlendState = CreateBlendDesc(blend);
+    // 各種ステートの設定
+    psoDesc.BlendState = CreateBlendDesc(blendMode);
 
     // Rasterizer State
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    psoDesc.RasterizerState.FillMode = (fill == FillMode::kWireFrame) ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
+    psoDesc.RasterizerState.FillMode = (fillMode == FillMode::kWireFrame) ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
     psoDesc.RasterizerState.CullMode = config.cullMode;
     psoDesc.RasterizerState.DepthClipEnable = TRUE;
 
@@ -149,7 +141,7 @@ void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<I
     psoDesc.DepthStencilState.DepthEnable = config.depthEnable;
     psoDesc.DepthStencilState.DepthWriteMask = config.depthWriteMask;
     // 深度比較関数が設定されていない場合のデフォルト
-    if(psoDesc.DepthStencilState.DepthFunc == 0) {
+    if (psoDesc.DepthStencilState.DepthFunc == 0) {
         psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
     }
 
@@ -161,18 +153,18 @@ void PSOManager::EnsureShaders(const std::string& name, Microsoft::WRL::ComPtr<I
     psoDesc.SampleDesc.Count = 1;
     psoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 
-    PsoSet psoSet;
+    PipelineStateSet psoSet;
     psoSet.rootSignature = rootSignature;
     HRESULT hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoSet.pipelineState));
     assert(SUCCEEDED(hr) && "Failed to create Pipeline State");
 
-    psoCache_[{name, blend, fill}] = psoSet;
+    pipelineStateCache_[{name, blendMode, fillMode}] = psoSet;
 }
 
-D3D12_BLEND_DESC PSOManager::CreateBlendDesc(BlendMode mode) {
+D3D12_BLEND_DESC PipelineStateManager::CreateBlendDesc(BlendMode mode) {
     D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-    blendDesc.RenderTarget[0].BlendEnable = TRUE;
+    blendDesc.RenderTarget[0].BlendEnable = (mode != BlendMode::None);
 
     // 共通初期値
     blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
@@ -180,9 +172,6 @@ D3D12_BLEND_DESC PSOManager::CreateBlendDesc(BlendMode mode) {
     blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
 
     switch (mode) {
-    case BlendMode::None:
-        blendDesc.RenderTarget[0].BlendEnable = FALSE;
-        break;
     case BlendMode::Normal:
         blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
         blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
@@ -207,6 +196,8 @@ D3D12_BLEND_DESC PSOManager::CreateBlendDesc(BlendMode mode) {
         blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
         blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
         blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+        break;
+    default:
         break;
     }
     return blendDesc;

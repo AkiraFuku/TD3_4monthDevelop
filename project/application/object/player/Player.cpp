@@ -468,16 +468,16 @@ void Player::FireThread() {
 }
 
 void Player::CreatePSO() {
-    PsoConfig config{};
-    config.vsPath = L"resources/shaders/PLayer/Player.vs.hlsl";
-    config.psPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
+    PipelineStateConfig config{};
+    config.vertexShaderPath = L"resources/shaders/PLayer/Player.vs.hlsl";
+    config.pixelShaderPath = L"resources/shaders/PLayer/PLayer.ps.hlsl";
 
 
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
         D3D12_STATIC_SAMPLER_DESC sampler{};
-        sampler = PSOManager::GetInstance()->StaticSamplers();
+        sampler = PipelineStateManager::GetInstance()->CreateDefaultStaticSamplerDescription();
 
         staticSamplers.push_back(sampler);
         D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
@@ -557,7 +557,7 @@ void Player::CreatePSO() {
         }
 
         Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        hr = DirectXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
         assert(SUCCEEDED(hr));
 
 
@@ -576,7 +576,7 @@ void Player::CreatePSO() {
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 
     // PSOManagerに名前を付けて登録
-    PSOManager::GetInstance()->RegisterPsoGenerator("PLayer", config);
+    PipelineStateManager::GetInstance()->RegisterConfiguration("PLayer", config);
     object_->SetPsoName("PLayer");
 }
 

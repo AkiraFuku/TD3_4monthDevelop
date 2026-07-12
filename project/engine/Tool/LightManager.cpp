@@ -152,13 +152,13 @@ void LightManager::Update() {
 void LightManager::Draw(UINT rootParameterIndex) {
 
     // Dir (Index 3)
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootShaderResourceView(rootParameterIndex + 0, dirLightBuff_->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootShaderResourceView(rootParameterIndex + 0, dirLightBuff_->GetGPUVirtualAddress());
     // Point (Index 4)
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootShaderResourceView(rootParameterIndex + 1, pointLightBuff_->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootShaderResourceView(rootParameterIndex + 1, pointLightBuff_->GetGPUVirtualAddress());
     // Spot (Index 5)
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootShaderResourceView(rootParameterIndex + 2, spotLightBuff_->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootShaderResourceView(rootParameterIndex + 2, spotLightBuff_->GetGPUVirtualAddress());
     // Count (Index 6)
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(rootParameterIndex + 3, countBuff_->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(rootParameterIndex + 3, countBuff_->GetGPUVirtualAddress());
 }
 
 
@@ -166,10 +166,10 @@ void LightManager::CreateStructuredBuffer(size_t sizeInBytes, Microsoft::WRL::Co
     // DXCommonのCreateBufferResourceはConstantBuffer用(256アライメント)になっている場合が多いですが、
     // StructuredBufferもUploadHeapで作るなら基本同じ関数でOKです。
     // ただしサイズは構造体サイズ * 個数でOK（256倍数である必要はないが、あっても問題ない）
-    resource = DXCommon::GetInstance()->CreateBufferResource(sizeInBytes);
+    resource = DirectXCommon::GetInstance()->CreateBufferResource(sizeInBytes);
 }
 
 void LightManager::CreateConstBuffer(size_t sizeInBytes, Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
 {
-    resource = DXCommon::GetInstance()->CreateBufferResource(sizeInBytes);
+    resource = DirectXCommon::GetInstance()->CreateBufferResource(sizeInBytes);
 }

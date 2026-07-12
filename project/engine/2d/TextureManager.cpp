@@ -29,7 +29,7 @@ void TextureManager::LoadTexture(const std::string& filePath) {
     if (textureDates.contains(filePath)) {
         return;
     }
-    assert(SrvManager::GetInstance()->IsMax());
+    assert(SrvManager::GetInstance()->HasReachedMaxCount());
 
 
     //テクスチャの読み込み
@@ -57,14 +57,14 @@ void TextureManager::LoadTexture(const std::string& filePath) {
     //テクスチャデータ追加
     TextureData& textureData = textureDates[filePath];
     textureData.metadata = mipImages.GetMetadata();//メタデータ
-    textureData.resource = DXCommon::GetInstance()->CreateTextureResourse(textureData.metadata);//テクスチャリソース
+    textureData.resource = DirectXCommon::GetInstance()->CreateTextureResourse(textureData.metadata);//テクスチャリソース
     //SRVインデックス
     textureData.srvIndex = SrvManager::GetInstance()->AllocateSRV();
     textureData.srvHandleCPU = SrvManager::GetInstance()->GetCPUDescriptorHandle(textureData.srvIndex);
     textureData.srvHandleGPU = SrvManager::GetInstance()->GetGPUDescriptorHandle(textureData.srvIndex);
   
     SrvManager::GetInstance()->CreateSRVForTexture2D(textureData.srvIndex, textureData.resource.Get(), textureData.metadata.format, UINT(textureData.metadata.mipLevels));
-    textureData.intermediateResource = DXCommon::GetInstance()->UploadTextureData(textureData.resource, mipImages);
+    textureData.intermediateResource = DirectXCommon::GetInstance()->UploadTextureData(textureData.resource, mipImages);
 
 }
 void TextureManager::ReleaseIntermediateResources()

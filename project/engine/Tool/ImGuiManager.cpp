@@ -32,8 +32,8 @@ void ImGuiManager::Initialize() {
 
     // descriptorHeap_=;
     ImGui_ImplDX12_Init(
-        DXCommon::GetInstance()->GetDevice().Get(),
-        static_cast<int>(DXCommon::GetInstance()->GetSwapChainBufferCount()),
+        DirectXCommon::GetInstance()->GetDevice().Get(),
+        static_cast<int>(DirectXCommon::GetInstance()->GetSwapChainBufferCount()),
         DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
         SrvManager::GetInstance()->GetDescriptorHeap().Get(),
         SrvManager::GetInstance()->GetCPUDescriptorHandle(fontSrvIndex),
@@ -71,7 +71,7 @@ void ImGuiManager::End() {
 void ImGuiManager::Draw() {
     #ifdef USE_IMGUI
 
-    ID3D12GraphicsCommandList* commandList = DXCommon::GetInstance()->GetCommandList().Get();
+    ID3D12GraphicsCommandList* commandList = DirectXCommon::GetInstance()->GetCommandList().Get();
 
     ID3D12DescriptorHeap* ppHeaps[] = { SrvManager::GetInstance()->GetDescriptorHeap().Get() };
     commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);

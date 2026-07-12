@@ -12,16 +12,16 @@
 #include <chrono>
 #include <memory>
 
-class DXCommon
+class DirectXCommon
 {
 public:
     // シングルトンインスタンス取得
-    static DXCommon* GetInstance();
+    static DirectXCommon* GetInstance();
 
     // コピー禁止
-    DXCommon(const DXCommon& obj) = delete;
-    DXCommon& operator=(const DXCommon& obj) = delete;
-    friend struct std::default_delete<DXCommon>;
+    DirectXCommon(const DirectXCommon& obj) = delete;
+    DirectXCommon& operator=(const DirectXCommon& obj) = delete;
+    friend struct std::default_delete<DirectXCommon>;
 
 
     void Initialize();
@@ -64,10 +64,12 @@ public:
 
 private:
     // コンストラクタ・デストラクタをprivateにして外部生成を禁止
-    DXCommon() = default;
-    ~DXCommon() = default;
+    DirectXCommon() = default;
+    ~DirectXCommon() = default;
+    // シングルトンインスタンス
+    static std::unique_ptr<DirectXCommon> instance;
 
-    static std::unique_ptr<DXCommon> instance;
+   
 
     //FPS固定
     void InitializeFixFPS();
@@ -99,7 +101,6 @@ private:
     Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain_;
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc_{};
 
-    /*WinApp* winApp_ = nullptr;*/
     //深度バッファ
     Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource_;
     void CreateDepthStencilTextureResource();
@@ -124,7 +125,6 @@ private:
     //フェンス
     void CreateFence();
     Microsoft::WRL::ComPtr<ID3D12Fence> fence_ = nullptr;
-    //HANDLE fenceEvent_ = nullptr;
     //ビューポート矩形
     void CreateViewport();
     D3D12_VIEWPORT viewport_{};

@@ -52,18 +52,18 @@ void ThreadRenderer::Draw() {
     }
 
     // マテリアルと行列をセット
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
 
     // テクスチャをセット
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetSrvHandleGPU(textureHandle_));
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetSrvHandleGPU(textureHandle_));
 
     // 頂点バッファと描画方式の設定
-    DXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &vbView_);
-    DXCommon::GetInstance()->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    DirectXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &vbView_);
+    DirectXCommon::GetInstance()->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // 描画実行
-    DXCommon::GetInstance()->GetCommandList()->DrawInstanced(currentVertexCount_, 1, 0, 0);
+    DirectXCommon::GetInstance()->GetCommandList()->DrawInstanced(currentVertexCount_, 1, 0, 0);
 }
 
 void ThreadRenderer::SetColor(const Vector4& color) {
@@ -89,7 +89,7 @@ void ThreadRenderer::CreateVertexBuffer(int maxThreads, int nodesPerThread) {
     ringsCache_.reserve(nodesPerThread * (radialSegments_ + 1));
 
     // 動的頂点バッファの作成
-    vertexBuffer_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(VertexData) * maxVertices_);
+    vertexBuffer_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(VertexData) * maxVertices_);
 
     // ビューの設定
     vbView_.BufferLocation = vertexBuffer_->GetGPUVirtualAddress();
@@ -102,7 +102,7 @@ void ThreadRenderer::CreateVertexBuffer(int maxThreads, int nodesPerThread) {
 /// </summary>
 void ThreadRenderer::CreateConstantBuffers() {
     // 行列バッファの作成とマッピング
-    transformationMatrixResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
+    transformationMatrixResource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&wvpResource_));
 
     wvpResource_->WVP = Makeidentity4x4();
@@ -110,7 +110,7 @@ void ThreadRenderer::CreateConstantBuffers() {
     wvpResource_->WorldInverseTranspose = Makeidentity4x4();
 
     // マテリアルバッファの作成とマッピング
-    materialResource_ = DXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialData));
+    materialResource_ = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(MaterialData));
     materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 
     // デフォルト値 (白・ライティング無効)

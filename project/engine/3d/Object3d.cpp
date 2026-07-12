@@ -66,10 +66,10 @@ void Object3d::Draw()
 
     Object3dCommon::GetInstance()->Object3dCommonDraw();
 
-    auto commandList = DXCommon::GetInstance()->GetCommandList();
+    auto commandList = DirectXCommon::GetInstance()->GetCommandList();
 
     // ★重要: PSO の設定は全体で一度だけ
-    auto psoSet = PSOManager::GetInstance()->GetPso(psoName_, blendMode_, fillMode_);
+    auto psoSet = PipelineStateManager::GetInstance()->GetOrCreatePipelineState(psoName_, blendMode_, fillMode_);
     commandList->SetGraphicsRootSignature(psoSet.rootSignature.Get());
     commandList->SetPipelineState(psoSet.pipelineState.Get());
 
@@ -118,7 +118,7 @@ void Object3d::AddModel(const std::string& modelPath, const std::string& name, c
 
 
     // インスタンス専用の定数バッファを作成 (DXCommonの機能を利用)
-    newInst->resource = DXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
+    newInst->resource = DirectXCommon::GetInstance()->CreateBufferResource(sizeof(TransformationMatrix));
 
     // 書き込み用アドレスを取得(Map)し、構造体のポインタに保存しておく
     newInst->resource->Map(0, nullptr, reinterpret_cast<void**>(&newInst->mappedData));
@@ -166,7 +166,7 @@ void Object3d::CreateWVPResource()
 {
     //座標変換
     transformationMatrixResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(TransformationMatrix));
     transformationMatrixResource_.Get()->
         Map(0, nullptr, reinterpret_cast<void**>(&wvpResource_));
@@ -183,7 +183,7 @@ void Object3d::CreateWVPResource()
 void Object3d::CreateCameraResource()
 {
     cameraResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource((sizeof(CameraForGPU) + 0xff) & ~0xff);
     cameraResource_.Get()->
         Map(0, nullptr, reinterpret_cast<void**>(&cameraData_));

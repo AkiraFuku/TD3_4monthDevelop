@@ -38,7 +38,7 @@ private:
 
     D3DResourceLeakChecker LeakCheck;
     
-    /*std::unique_ptr<DXCommon> dxCommon;*/
+    /*std::unique_ptr<DirectXCommon> dxCommon;*/
   
 
     AbstractSceneFactory* sceneFactory = nullptr;

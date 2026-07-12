@@ -38,6 +38,8 @@ private: // プライベートメソッド
     WinApp() = default;
     ~WinApp() = default;
 
+
+
 private: // メンバ変数
     // シングルトンインスタンス
     static std::unique_ptr<WinApp> instance;

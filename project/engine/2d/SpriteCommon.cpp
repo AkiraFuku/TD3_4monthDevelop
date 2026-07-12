@@ -20,16 +20,16 @@ void SpriteCommon::Finalize() {
 void SpriteCommon::Initialize()
 {
 
-    PsoConfig config{};
-    config.vsPath = L"resources/shaders/Sprite/Sprite.vs.hlsl";
-    config.psPath = L"resources/shaders/Sprite/Sprite.ps.hlsl";
+    PipelineStateConfig config{};
+    config.vertexShaderPath = L"resources/shaders/Sprite/Sprite.vs.hlsl";
+    config.pixelShaderPath = L"resources/shaders/Sprite/Sprite.ps.hlsl";
 
 
     config.rootSignatureGenerator = []() {
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
         D3D12_STATIC_SAMPLER_DESC sampler{};
-        sampler = PSOManager::GetInstance()->StaticSamplers();
+        sampler = PipelineStateManager::GetInstance()->CreateDefaultStaticSamplerDescription();
 
         staticSamplers.push_back(sampler);
         D3D12_DESCRIPTOR_RANGE descRangeTexture[1]{};
@@ -80,7 +80,7 @@ void SpriteCommon::Initialize()
         }
 
         Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-        hr = DXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        hr = DirectXCommon::GetInstance()->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
         assert(SUCCEEDED(hr));
 
 
@@ -99,8 +99,8 @@ void SpriteCommon::Initialize()
     config.depthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
     // PSOManagerに名前を付けて登録
-    PSOManager::GetInstance()->RegisterPsoGenerator("Sprite", config);
-    auto psoSet = PSOManager::GetInstance()->GetPso("Sprite");
+    PipelineStateManager::GetInstance()->RegisterConfiguration("Sprite", config);
+    auto psoSet = PipelineStateManager::GetInstance()->GetOrCreatePipelineState("Sprite");
     rootSignature_ = psoSet.rootSignature;
     graphicsPipelineState_ = psoSet.pipelineState;
     //CreatePSO();
@@ -110,12 +110,12 @@ void SpriteCommon::Initialize()
 void SpriteCommon::SpriteCommonDraw()
 {
     // RootSignatureの設定
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootSignature(rootSignature_.Get());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootSignature(rootSignature_.Get());
     //  //PSOの設定
-    DXCommon::GetInstance()->GetCommandList()->SetPipelineState(graphicsPipelineState_.Get());
+    DirectXCommon::GetInstance()->GetCommandList()->SetPipelineState(graphicsPipelineState_.Get());
 
     //プリミティブトポロジーのセット
-    DXCommon::GetInstance()->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    DirectXCommon::GetInstance()->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 }
 

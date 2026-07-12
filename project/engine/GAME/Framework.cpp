@@ -83,10 +83,10 @@ void Framework::Initialize()
 
   
     // 引数には生のポインタが必要なので .get() を使用
-    DXCommon::GetInstance()->Initialize();
+    DirectXCommon::GetInstance()->Initialize();
  
     SrvManager::GetInstance()->Initialize();
-PSOManager::GetInstance()->Initialize();
+PipelineStateManager::GetInstance()->Initialize();
 
   
 
@@ -112,8 +112,8 @@ void Framework::Finalize()
     LightManager::GetInstance()->Finalize();
     SrvManager::GetInstance()->Finalize();
     SceneManager::GetInstance()->Finalize();
-    DXCommon::GetInstance()->Finalize();
-    PSOManager::GetInstance()->Finalize();
+    DirectXCommon::GetInstance()->Finalize();
+    PipelineStateManager::GetInstance()->Finalize();
     Audio::GetInstance()->Finalize();
     Input::GetInstance()->Finalize();
     Object3dCommon::GetInstance()->Finalize();
@@ -141,7 +141,7 @@ void Framework::Update()
     Input::GetInstance()->Update();
     Audio::GetInstance()-> Update();
     LightManager::GetInstance()->Update();
-    DXCommon::GetInstance()->PreDraw();
+    DirectXCommon::GetInstance()->PreDraw();
     SrvManager::GetInstance()->PreDraw();
   
 }
@@ -150,7 +150,7 @@ void Framework::Draw()
 {
     ImGuiManager::GetInstance()->End();
     ImGuiManager::GetInstance()->Draw();
-    DXCommon::GetInstance()->PostDraw();
+    DirectXCommon::GetInstance()->PostDraw();
     TextureManager::GetInstance()->ReleaseIntermediateResources();
 
     // 基底クラスの描画処理（純粋仮想関数として宣言されているため、必ずオーバーライドする必要があります）

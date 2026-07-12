@@ -2,7 +2,6 @@
 #include "DXCommon.h"
 
 std::unique_ptr<SrvManager> SrvManager::instance = nullptr;
-const uint32_t SrvManager::kMaxSRVCount = 512;
 // インスタンス取得の実装
 SrvManager* SrvManager::GetInstance() {
     if (instance == nullptr) {
@@ -14,18 +13,17 @@ SrvManager* SrvManager::GetInstance() {
 void SrvManager::Initialize() {
     
    
-    descriptorHeap_=DXCommon::GetInstance()->CreateDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kMaxSRVCount, true);
-    descriptorSize_=DXCommon::GetInstance()->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    descriptorHeap_=DirectXCommon::GetInstance()->CreateDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kMaxSRVCount, true);
+    descriptorSize_=DirectXCommon::GetInstance()->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 void SrvManager::Finalize() {
-    // インスタンスを破棄（デストラクタが呼ばれ、ComPtrも解放される）
     instance.reset();
 }
 void SrvManager::PreDraw() {
     ID3D12DescriptorHeap* descritptorHeaps[] = { descriptorHeap_.Get() };
-    DXCommon::GetInstance()->GetCommandList()->SetDescriptorHeaps(1, descritptorHeaps);
+    DirectXCommon::GetInstance()->GetCommandList()->SetDescriptorHeaps(1, descritptorHeaps);
 }
-bool SrvManager::IsMax()
+bool SrvManager::HasReachedMaxCount()
 {
     if (useIndex > kMaxSRVCount)
     {
@@ -57,7 +55,7 @@ void SrvManager::CreateSRVForTexture2D(uint32_t srvIndex, ID3D12Resource* pResou
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2Dテクスチャ
     srvDesc.Texture2D.MipLevels = UINT(MipLevels);//最初のミップマップ
     // SRV
-    DXCommon::GetInstance()->GetDevice()->CreateShaderResourceView(
+    DirectXCommon::GetInstance()->GetDevice()->CreateShaderResourceView(
         pResource,
         &srvDesc,
         GetCPUDescriptorHandle(srvIndex)
@@ -74,9 +72,9 @@ void SrvManager::CreateSRVForStructuredBuffer(uint32_t srvIndex, ID3D12Resource*
     srvDesc.Buffer.StructureByteStride = structureByteStride;
     D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvIndex);
     D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU = GetGPUDescriptorHandle(srvIndex);
-    DXCommon::GetInstance()->GetDevice()->CreateShaderResourceView(pResource, &srvDesc, instancingSrvHandleCPU);
+    DirectXCommon::GetInstance()->GetDevice()->CreateShaderResourceView(pResource, &srvDesc, instancingSrvHandleCPU);
 
 }
 void SrvManager::SetGraphicsRootDescriptorTable(UINT RootParameterIndex, uint32_t srvIndex) {
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(RootParameterIndex, GetGPUDescriptorHandle(srvIndex));
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootDescriptorTable(RootParameterIndex, GetGPUDescriptorHandle(srvIndex));
 }

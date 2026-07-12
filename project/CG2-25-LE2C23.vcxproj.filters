@@ -116,7 +116,7 @@
       <Filter>Engine\Base\DirectX</Filter>
     </ClCompile>
     <ClCompile Include="engine\base\PSOManager.cpp">
-      <Filter>Engine\Base\PSO</Filter>
+      <Filter>Engine\Base\PipelineState</Filter>
     </ClCompile>
     <ClCompile Include="engine\base\SrvManager.cpp">
       <Filter>Engine\Base\SRV</Filter>
@@ -346,7 +346,7 @@
       <Filter>Engine\Base\DirectX</Filter>
     </ClInclude>
     <ClInclude Include="engine\base\PSOManager.h">
-      <Filter>Engine\Base\PSO</Filter>
+      <Filter>Engine\Base\PipelineState</Filter>
     </ClInclude>
     <ClInclude Include="engine\base\SrvManager.h">
       <Filter>Engine\Base\SRV</Filter>
@@ -616,9 +616,6 @@
     <Filter Include="Engine\Base\DirectX">
       <UniqueIdentifier>{477e92c0-2d4a-4318-b3f9-fc9d3d84713b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Base\PSO">
-      <UniqueIdentifier>{a1cc228c-d1fc-464a-b90e-1582d4259af4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Base\SRV">
       <UniqueIdentifier>{af083245-b5c0-4dcf-876e-5a49e217e802}</UniqueIdentifier>
     </Filter>
@@ -687,6 +684,9 @@
     </Filter>
     <Filter Include="App\Stage">
       <UniqueIdentifier>{5b3af9b8-f703-4b2f-8a71-206bad14bd6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Base\PipelineState">
+      <UniqueIdentifier>{a1cc228c-d1fc-464a-b90e-1582d4259af4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

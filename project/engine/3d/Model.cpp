@@ -65,23 +65,23 @@ void Model::Update()
 }
 void Model::Draw() {
     //VBVの設定
-    DXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
+    DirectXCommon::GetInstance()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
     //マテリアルリソースの設定
-    DXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_.Get()->GetGPUVirtualAddress());
+    DirectXCommon::GetInstance()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_.Get()->GetGPUVirtualAddress());
     //SRVのディスクリプタテーブルの設定
-    DXCommon::GetInstance()->
+    DirectXCommon::GetInstance()->
         GetCommandList()->
         SetGraphicsRootDescriptorTable(2,
             TextureManager::GetInstance()->GetSrvHandleGPU(modelData_.material.textureIndex));
     //描画コマンド
-    DXCommon::GetInstance()->GetCommandList()->DrawInstanced(UINT(modelData_.vertices.size()), 1, 0, 0);
+    DirectXCommon::GetInstance()->GetCommandList()->DrawInstanced(UINT(modelData_.vertices.size()), 1, 0, 0);
 
 }
 
 void Model::CreateVertexBuffer() {
     //頂点リソースの作成
     vertexResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(VertexData) * modelData_.vertices.size());
     //頂点バッファビューの設定
     vertexBufferView_.BufferLocation =
@@ -97,7 +97,7 @@ void Model::CreateVertexBuffer() {
 void Model::CreateMaterialResource() {
     //マテリアルリソースの作成
     materialResource_ =
-        DXCommon::GetInstance()->
+        DirectXCommon::GetInstance()->
         CreateBufferResource(sizeof(Material));
     materialResource_->
         Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
