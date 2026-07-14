@@ -20,7 +20,18 @@ CollisionMask* CollisionMask::GetInstance()
 
 void CollisionMask::Finalize()
 {
+    ReleaseStageResources();
     instance_.reset();
+}
+
+void CollisionMask::ReleaseStageResources()
+{
+    stageDatas_.clear();
+    stageDatas_.shrink_to_fit();
+    stageGroup_.items.clear();
+    stageGroup_.itemVector.clear();
+    currentStageID_ = StageID::Unknown;
+    stageChangeRequest_ = StageID::Unknown;
 }
 
 void CollisionMask::Initialize()

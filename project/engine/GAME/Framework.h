@@ -6,6 +6,7 @@
 #pragma comment(lib,"Dbghelp.lib")
 #pragma comment(lib,"dxguid.lib")
 #include <memory>
+#include "PerformanceMonitor.h"
 #include"D3DResourceLeakChecker.h"//フレームワークに移植
 
 
@@ -35,6 +36,8 @@ public:
 
 private:
     bool endReqest_ = false;
+
+    PerformanceMonitor performanceMonitor_;
 
     D3DResourceLeakChecker LeakCheck;
     

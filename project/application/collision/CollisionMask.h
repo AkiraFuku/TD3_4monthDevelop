@@ -73,6 +73,7 @@ public:
     /// 終了
     /// </summary>
     void Finalize();
+    void ReleaseStageResources();
 
 public:
 

@@ -54,6 +54,7 @@
     <ClCompile Include="externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="engine\input\Input.cpp" />
     <ClCompile Include="engine\Tool\Logger.cpp" />
+    <ClCompile Include="engine\Tool\PerformanceMonitor.cpp" />
     <ClCompile Include="engine\GAME\Framework.cpp" />
     <ClCompile Include="engine\GAME\GameEngine.cpp" />
     <ClCompile Include="application\scene\BaseGameScene.cpp" />
@@ -142,6 +143,7 @@
     <ClInclude Include="engine\input\Input.h" />
     <ClInclude Include="engine\base\WinApp.h" />
     <ClInclude Include="engine\Tool\Logger.h" />
+    <ClInclude Include="engine\Tool\PerformanceMonitor.h" />
     <ClInclude Include="engine\2d\SpriteCommon.h" />
     <ClInclude Include="engine\2d\Sprite.h" />
     <ClInclude Include="engine\3d\Object3d.h" />

@@ -549,9 +549,9 @@ void BaseGameScene::Finalize() {
 
     ParticleManager::GetInstance()->ReleaseParticleGroup("Test");
 
-    //CollisionMask::GetInstance()->Finalize();
+    CollisionMask::GetInstance()->ReleaseStageResources();
 
-    Audio::GetInstance()->StopAudio(handle_);
+    Audio::GetInstance()->UnloadAllAudio();
 
 #ifdef _DEBUG
 

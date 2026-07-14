@@ -148,7 +148,7 @@ void SelectScene::Initialize()
 
 void SelectScene::Finalize()
 {
-    Audio::GetInstance()->StopAudio(handle_);
+    Audio::GetInstance()->UnloadAllAudio();
 }
 
 void SelectScene::Update()

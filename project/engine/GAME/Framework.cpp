@@ -103,11 +103,15 @@ PSOManager::GetInstance()->Initialize();
     Object3dCommon::GetInstance()->Initialize();
     Audio::GetInstance()->Initialize();
 
+    performanceMonitor_.Start();
+
 
 }
 
 void Framework::Finalize()
 {
+    performanceMonitor_.Stop();
+
     CollisionMask::GetInstance()->Finalize();
     LightManager::GetInstance()->Finalize();
     SrvManager::GetInstance()->Finalize();
@@ -159,11 +163,18 @@ void Framework::Run()
 {
     Initialize();
     while (true) {
+        const auto frameStart = std::chrono::steady_clock::now();
+        performanceMonitor_.SetSceneName(
+            SceneManager::GetInstance()->GetMonitoringSceneName());
         Update();
         if (IsEnd()) {
             break;
         }
         Draw();
+        const auto frameEnd = std::chrono::steady_clock::now();
+        const double frameTimeMs =
+            std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+        performanceMonitor_.NotifyFrameCompleted(frameTimeMs);
     }
     Finalize();
 }

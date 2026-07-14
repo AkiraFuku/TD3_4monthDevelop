@@ -47,6 +47,7 @@ public:
 
     // 音声データの解放
     void UnloadAudio(SoundHandle soundHandle);
+    void UnloadAllAudio();
     void Update();
     // 音声再生
     // handle: LoadWaveで取得したハンドル

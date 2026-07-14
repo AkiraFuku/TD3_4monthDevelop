@@ -36,6 +36,7 @@ void SceneManager::Update() {
         }
 
         scene_ = std::move(nextScene_);
+        currentSceneName_ = std::move(nextSceneName_);
 
         scene_->SetSceneManager(this);
         scene_->Initialize();
@@ -67,6 +68,7 @@ void SceneManager::ChangeScene(const std::string& sceneName)
     }
 
     nextScene_ = sceneFactory_->CreateScene(sceneName);
+    nextSceneName_ = sceneName;
 
 
 }

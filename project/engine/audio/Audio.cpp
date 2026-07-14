@@ -157,6 +157,24 @@ void Audio::UnloadAudio(SoundHandle soundHandle)
     soundDatas_.erase(soundHandle);
 }
 
+void Audio::UnloadAllAudio()
+{
+    for (auto& voice : activeVoices_)
+    {
+        if (voice.sourceVoice)
+        {
+            voice.sourceVoice->Stop();
+            voice.sourceVoice->FlushSourceBuffers();
+            voice.sourceVoice->DestroyVoice();
+            voice.sourceVoice = nullptr;
+        }
+    }
+    activeVoices_.clear();
+    soundDatas_.clear();
+    nextHandle_ = 0;
+    nextVoiceHandle_ = 0;
+}
+
 void Audio::PlayAudio(SoundHandle soundHandle, bool loop, float volume)
 {
     if (soundDatas_.find(soundHandle) == soundDatas_.end()) return;

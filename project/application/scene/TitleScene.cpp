@@ -78,7 +78,7 @@ void TitleScene::Initialize() {
     fade_->StartFadeIn(0.05f); // シーン生成時にフェードインを開始
 }
 void TitleScene::Finalize() {
-    Audio::GetInstance()->StopAudio(handle_);
+    Audio::GetInstance()->UnloadAllAudio();
 }
 void TitleScene::Update() {
 

@@ -31,9 +31,15 @@ public:
         sceneFactory_ = sceneFactory;
     }
     void ChangeScene(const std::string& sceneName);
+    const std::string& GetCurrentSceneName() const { return currentSceneName_; }
+    const std::string& GetMonitoringSceneName() const {
+        return nextScene_ ? nextSceneName_ : currentSceneName_;
+    }
 private:
     std::unique_ptr<Scene> scene_ = nullptr;
     std::unique_ptr<Scene> nextScene_ = nullptr;
+    std::string currentSceneName_ = "Unknown";
+    std::string nextSceneName_;
 
     AbstractSceneFactory* sceneFactory_ = nullptr;
 
