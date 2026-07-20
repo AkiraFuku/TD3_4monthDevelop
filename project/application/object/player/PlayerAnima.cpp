@@ -9,7 +9,7 @@
 
 // キャッシュ用の定数
 constexpr uint32_t PART_BODY = 0;
-constexpr uint32_t PART_Right_ARM= 1;
+constexpr uint32_t PART_Right_ARM = 1;
 constexpr uint32_t PART_Left_ARM = 2;
 
 // インスタンス名からパーツIDへの高速変換
@@ -28,7 +28,7 @@ void PlayerAnima::Initialize(Object3d* targetObject)
 
     InitializeAnimations();
     InitializeAnimationSpeeds();
-    
+
     // 現在のアニメーションをキャッシュ
     currentAnimationIt_ = animationMap_.find(AnimationState::Idle);
     ChangeAnimation(AnimationState::Idle);
@@ -61,7 +61,7 @@ void PlayerAnima::InitializeAnimations()
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Idle);
             float t = std::sin(anima_->GetTimer() * 2.0f * speed) * 0.5f + 0.5f;
-            
+
             uint32_t partId = GetPartId(instance.name);
             if (partId == PART_BODY || partId == PART_Right_ARM || partId == PART_Left_ARM) {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
@@ -75,7 +75,7 @@ void PlayerAnima::InitializeAnimations()
         [this](Object3d::ModelInstance& instance) {
             float speed = animationSpeeds_.at(AnimationState::Walk);
             float t = std::sin(anima_->GetTimer() * 10.0f * speed);
-            
+
             if (GetPartId(instance.name) == PART_BODY) {
                 instance.transform.translate.y = Lerp(0.0f, 0.2f, t);
             }
@@ -85,8 +85,8 @@ void PlayerAnima::InitializeAnimations()
     // --- 3. キャリーモーション & OnThread（共通化） ---
     auto CreateRotationAnimation = [this](AnimationState state, bool isLoop) {
         // ★パフォーマンス最適化: クォータニオン計算のキャッシュ
-        Quaternion cachedStart = MakeRotateAxisAngleQuaternion({1, 0, 0}, -0.5f);
-        Quaternion cachedEnd = MakeRotateAxisAngleQuaternion({1, 0, 0}, 0.5f);
+        Quaternion cachedStart = MakeRotateAxisAngleQuaternion({ 1, 0, 0 }, -0.5f);
+        Quaternion cachedEnd = MakeRotateAxisAngleQuaternion({ 1, 0, 0 }, 0.5f);
 
         return Anima::AnimeMove{
             [this, cachedStart, cachedEnd](Object3d::ModelInstance& instance) {
@@ -100,51 +100,89 @@ void PlayerAnima::InitializeAnimations()
             },
             isLoop, false, false, 2.0f
         };
-    };
+        };
 
     animationMap_[AnimationState::Carry] = CreateRotationAnimation(AnimationState::Carry, false);
     animationMap_[AnimationState::OnThread] = CreateRotationAnimation(AnimationState::OnThread, true);
 
- animationMap_[AnimationState::Clear] = Anima::AnimeMove{
-    [this](Object3d::ModelInstance& instance) {
-        // アニメーションの再生時間を取得 (0.0f ～ 1.0f に正規化される想定、または秒数)
-        // ここでは anima_->GetTimer() を使用
-        float timer = anima_->GetTimer();
-        
-        // アニメーションの長さを1秒とする場合、1.0fでクランプ
-        float t = std::min(timer / 1.0f, 1.0f); 
+    animationMap_[AnimationState::Clear] = Anima::AnimeMove{
+       [this](Object3d::ModelInstance& instance) {
+            // アニメーションの再生時間を取得 (0.0f ～ 1.0f に正規化される想定、または秒数)
+            // ここでは anima_->GetTimer() を使用
+            float timer = anima_->GetTimer();
 
-        // イージングをかけるとより自然になります（任意）
-        // t = t * t * (3.0f - 2.0f * t); 
+            // アニメーションの長さを1秒とする場合、1.0fでクランプ
+            float t = std::min(timer / 1.0f, 1.0f);
 
-        uint32_t partId = GetPartId(instance.name);
-        
-        // 開始ポーズ（正面）と終了ポーズ（万歳）を定義
-        Quaternion startRot = MakeQuaternionFromEuler({ 0.0f, 0.0f, 0.0f });
-        Quaternion endRot = MakeQuaternionFromEuler({ -0.5f, 0.0f, 0.0f }); // 上に上げる
+            // イージングをかけるとより自然になります（任意）
+            // t = t * t * (3.0f - 2.0f * t); 
 
-        if (partId == PART_Right_ARM) {
-            // 球面線形補間（Slerp）を使用して回転を補間
-            instance.transform.rotate = Slerp(startRot, endRot, t);
-        } 
-    },
-    false // ループさせない（一回切り）
-};
+            uint32_t partId = GetPartId(instance.name);
+
+            // 開始ポーズ（正面）と終了ポーズ（万歳）を定義
+            Quaternion startRot = MakeQuaternionFromEuler({ 0.0f, 0.0f, 0.0f });
+            Quaternion endRot = MakeQuaternionFromEuler({ -0.5f, 0.0f, 0.0f }); // 上に上げる
+
+            if (partId == PART_Right_ARM) {
+                // 球面線形補間（Slerp）を使用して回転を補間
+                instance.transform.rotate = Slerp(startRot, endRot, t);
+            }
+        },
+        false // ループさせない（一回切り）
+    };
 }
 
 void PlayerAnima::Update()
 {
 #ifdef USE_IMGUI
     ImGui::Begin("Animation State");
-    ImGui::Text("Current State: %s", 
+    ImGui::Text("Current State: %s",
         (currentState_ == AnimationState::Idle) ? "Idle" :
         (currentState_ == AnimationState::Walk) ? "Walk" :
         (currentState_ == AnimationState::Carry) ? "Carry" :
         (currentState_ == AnimationState::OnThread) ? "OnThread" : "Default");
-     ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
-     // アニメーション速度の調整
+    ImGui::Text("Can Change Animation: %s", canChangeAnimation_ ? "Yes" : "No");
+    // アニメーション速度の調整
+    // 2. アニメーション再生速度の調整 (SliderFloat)
+   // 現在の状態に対応するスピードを取得して調整できるようにする
+    auto speedIt = animationSpeeds_.find(currentState_);
+    if (speedIt != animationSpeeds_.end()) {
+        float speed = speedIt->second;
+        if (ImGui::SliderFloat("Animation Speed", &speed, 0.1f, 3.0f, "%.1f x")) {
+            SetAnimationSpeed(currentState_, speed); // 変更があったら関数を呼ぶ
+        }
+    }
 
-     ImGui::End();
+    // 3. ワンショット終了後の遷移先表示
+    ImGui::Text("OneShot Finish State: %s",
+        (oneShotFinishState_ == AnimationState::Idle) ? "Idle" : "Other");
+
+    ImGui::Separator();
+
+    // 4. アニメーションの手動切り替えボタン (テスト用)
+    ImGui::Text("Test Change State:");
+    if (ImGui::Button("Idle")) {
+        ChangeAnimation(AnimationState::Idle);
+    } ImGui::SameLine();
+    if (ImGui::Button("Walk")) {
+        ChangeAnimation(AnimationState::Walk);
+    } ImGui::SameLine();
+    if (ImGui::Button("Carry")) {
+        ChangeAnimation(AnimationState::Carry);
+    }
+    if (ImGui::Button("OnThread")) {
+        ChangeAnimation(AnimationState::OnThread);
+    } ImGui::SameLine();
+    if (ImGui::Button("Clear")) {
+        ChangeAnimation(AnimationState::Clear);
+    }
+
+    // 5. タイマーの可視化
+    float currentTimer = anima_->GetTimer();
+    ImGui::Text("Animation Timer: %.2f", currentTimer);
+
+    
+        ImGui::End();
 
 #endif //  USE_IMGUI
 
@@ -154,12 +192,12 @@ void PlayerAnima::Update()
     if (isInDefaultTransition_) {
         isInDefaultTransition_ = false;
         currentState_ = pendingState_;
-        
+
         currentAnimationIt_ = animationMap_.find(currentState_);
         if (currentAnimationIt_ != animationMap_.end()) {
             anima_->SetCurrentMove(currentAnimationIt_->second);
             anima_->Play();
-            
+
             if (!currentAnimationIt_->second.isLoop) {
                 canChangeAnimation_ = false;
                 oneShotFinishState_ = AnimationState::Idle;
@@ -167,7 +205,7 @@ void PlayerAnima::Update()
         }
         return;
     }
-    
+
     // 一回きりアニメーション終了判定
     if (!anima_->IsAnimationPlaying() && !canChangeAnimation_) {
         ResetOneShotAnimation();
