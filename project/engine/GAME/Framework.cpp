@@ -86,7 +86,7 @@ void Framework::Initialize()
     DXCommon::GetInstance()->Initialize();
  
     SrvManager::GetInstance()->Initialize();
-PSOManager::GetInstance()->Initialize();
+    PSOManager::GetInstance()->Initialize();
 
   
 

@@ -54,9 +54,9 @@ void StageModel::Create(float wallHeight)
     // --- 1. 蓋 (道ピクセルを埋める) ---
     for (int z = 0; z < h; ++z) {
         for (int x = 0; x < w; ++x) {
-            if (data[z * w + x] >= 128) { // 白＝道
+            if (data[x][z] >= 128) { // 白＝道
                 int startX = x;
-                while (x + 1 < w && data[z * w + (x + 1)] >= 128) x++;
+                while (x + 1 < w && data[x + 1][z] >= 128) x++;
                 AddCeilingPanel((float)startX, (float)z, (float)x + 1, (float)z + 1, wallHeight, verticesFloor);
             }
         }
@@ -67,9 +67,9 @@ void StageModel::Create(float wallHeight)
     // 北向きの壁 (上が奈落)
     for (int z = 0; z < h; ++z) {
         for (int x = 0; x < w; ++x) {
-            if (data[z * w + x] >= 128 && (z == 0 || data[(z - 1) * w + x] < 128)) {
+            if (data[x][z] >= 128 && (z == 0 || data[x][(z - 1)] < 128)) {
                 int startX = x;
-                while (x + 1 < w && data[z * w + (x + 1)] >= 128 && (z == 0 || data[(z - 1) * w + (x + 1)] < 128)) x++;
+                while (x + 1 < w && data[(x + 1)][z] >= 128 && (z == 0 || data[(x + 1)][(z - 1)] < 128)) x++;
                 AddWallPanel((float)startX, (float)z, (float)x + 1, (float)z, wallHeight, verticesWall);
 
             }
@@ -79,9 +79,9 @@ void StageModel::Create(float wallHeight)
     // 南向きの壁 (下が奈落)
     for (int z = 0; z < h; ++z) {
         for (int x = 0; x < w; ++x) {
-            if (data[z * w + x] >= 128 && (z == h - 1 || data[(z + 1) * w + x] < 128)) {
+            if (data[x][z] >= 128 && (z == h - 1 || data[x][(z + 1)] < 128)) {
                 int startX = x;
-                while (x + 1 < w && data[z * w + (x + 1)] >= 128 && (z == h - 1 || data[(z + 1) * w + (x + 1)] < 128)) x++;
+                while (x + 1 < w && data[(x + 1)][z] >= 128 && (z == h - 1 || data[(x + 1)][(z + 1)] < 128)) x++;
                 AddWallPanel((float)startX, (float)z + 1, (float)x + 1, (float)z + 1, wallHeight, verticesWall, true);
 
             }
@@ -91,9 +91,9 @@ void StageModel::Create(float wallHeight)
     // 東向きの壁 (右が奈落)
     for (int x = 0; x < w; ++x) {
         for (int z = 0; z < h; ++z) {
-            if (data[z * w + x] >= 128 && (x == w - 1 || data[z * w + (x + 1)] < 128)) {
+            if (data[x][z] >= 128 && (x == w - 1 || data[(x + 1)][z] < 128)) {
                 int startZ = z;
-                while (z + 1 < h && data[(z + 1) * w + x] >= 128 && (x == w - 1 || data[(z + 1) * w + (x + 1)] < 128)) z++;
+                while (z + 1 < h && data[x][(z + 1)] >= 128 && (x == w - 1 || data[(x + 1)][(z + 1)] < 128)) z++;
                 AddWallPanel((float)x + 1, (float)startZ, (float)x + 1, (float)z + 1, wallHeight, verticesWall);
 
             }
@@ -103,9 +103,9 @@ void StageModel::Create(float wallHeight)
     // 西向きの壁 (左が奈落)
     for (int x = 0; x < w; ++x) {
         for (int z = 0; z < h; ++z) {
-            if (data[z * w + x] >= 128 && (x == 0 || data[z * w + (x - 1)] < 128)) {
+            if (data[x][z] >= 128 && (x == 0 || data[(x - 1)][z] < 128)) {
                 int startZ = z;
-                while (z + 1 < h && data[(z + 1) * w + x] >= 128 && (x == 0 || data[(z + 1) * w + (x - 1)] < 128)) z++;
+                while (z + 1 < h && data[x][(z + 1)] >= 128 && (x == 0 || data[(x - 1)][(z + 1)] < 128)) z++;
                 AddWallPanel((float)x, (float)startZ, (float)x, (float)z + 1, wallHeight, verticesWall, true);
             }
         }
