@@ -20,7 +20,6 @@ public:
     struct MaskData
     {
         // 名前
-        std::unique_ptr<Object3d> object;
         TextureData textureData;
         Vector4 min_, max_;
         std::vector<float> sdfData;

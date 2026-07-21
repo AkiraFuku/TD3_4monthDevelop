@@ -40,15 +40,9 @@ void CollisionMask::Initialize()
     {
 
         std::unique_ptr<StageData> stageData{};
-
-        std::unique_ptr<Object3d>object = std::make_unique<Object3d>();
-        object->Initialize();
-        object->SetRotate(Vector3{ -90.0f / 180.0f * PI, 0.0f, 0.0f });
-        object->SetTranslate(translate_);
         
         stageData = std::make_unique<StageData>();
         stageData->maskData_ = std::make_unique<MaskData>();
-        stageData->maskData_->object = std::move(object);
         
         stageData->startPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
         stageData->eggStartPos_ = Vector3{ 0.0f, 0.0f, 0.0f };
@@ -64,34 +58,6 @@ void CollisionMask::Initialize()
         LoadJsonData(i);
     }
 
-   /* LoadFromFile("resources/Mask/Mask.png", stageDatas_[0]->maskData_->textureData);
-    stageDatas_[0]->maskData_->name = "mapMaskData";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[0]->maskData_->name, "resources/Mask/Mask.png");
-    
-    LoadFromFile("resources/Mask/Mask(1).png", stageDatas_[1]->maskData_->textureData);
-    stageDatas_[1]->maskData_->name = "mapMaskData1";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[1]->maskData_->name, "resources/Mask/Mask(1).png");
-    
-    LoadFromFile("resources/Mask/Mask(2).png", stageDatas_[2]->maskData_->textureData);
-    stageDatas_[2]->maskData_->name = "mapMaskData2";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[2]->maskData_->name, "resources/Mask/Mask(2).png");
-    
-    LoadFromFile("resources/Mask/Mask(3).png", stageDatas_[3]->maskData_->textureData);
-    stageDatas_[3]->maskData_->name = "mapMaskData3";
-    ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[3]->maskData_->name, "resources/Mask/Mask(3).png");*/
-
-    /*for (size_t i = 0; i < 4; i++)
-    {
-        GenerateSDF(stageDatas_[i]->maskData_.get());
-
-        stageDatas_[i]->maskData_->object->SetModel(stageDatas_[i]->maskData_->name);
-
-        auto model = ModelManager::GetInstance()->findModel(stageDatas_[i]->maskData_->name);
-
-        stageDatas_[i]->maskData_->max_ = model->GetModelData().vertices[1].position;
-        stageDatas_[i]->maskData_->min_ = model->GetModelData().vertices[2].position;
-    }*/
-    
     currentStageID_ = static_cast<StageID>(stageID_);
 
     LoadJsonData(static_cast<int>(currentStageID_));
@@ -208,11 +174,6 @@ void CollisionMask::Initialize()
 
     // PSOManagerに名前を付けて登録
     PSOManager::GetInstance()->RegisterPsoGenerator("MaskMap", config);
-
-    for (size_t i = 0; i < 12; i++)
-    {
-        stageDatas_[i]->maskData_.get()->object->SetPsoName("MaskMap");
-    }
 }
 
 void CollisionMask::Update() 
@@ -256,46 +217,35 @@ void CollisionMask::Update()
 
 #endif // _DEBUG
     
-
-    stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Update();
 }
 
 void CollisionMask::Draw() 
 {
-    //stageDatas_[static_cast<int>(currentStageID_)]->maskData_->object->Draw();
+   
 }
 
 bool CollisionMask::LoadFromFile(const std::string& filePath, TextureData& textureData)
 {
-    DirectX::ScratchImage scrachImage{};
+    DirectX::ScratchImage scratchImage{};
     std::wstring filePathW = StringUtility::ConvertString(filePath);
 
     // 1. ロード
-    HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scrachImage);
+    HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scratchImage);
     if (FAILED(hr)) return false;
 
-    TextureManager::GetInstance()->LoadTexture(filePath);
-
-    // WICで強制デコードして直接convertedに
-    DirectX::ScratchImage converted{};
-    hr = DirectX::LoadFromWICFile(filePathW.c_str(),
-        DirectX::WIC_FLAGS_FORCE_RGB,
-        nullptr,
-        converted);
-    assert(SUCCEEDED(hr));
-
-    // DXGI_FORMAT_R8G8B8A8_UNORM に変換
-    const DirectX::Image* img = converted.GetImage(0, 0, 0);
-    if (img && img->format != DXGI_FORMAT_R8G8B8A8_UNORM) {
+    // 2. DXGI_FORMAT_R8G8B8A8_UNORM に変換
+    const DirectX::Image* image = scratchImage.GetImage(0, 0, 0);
+    if (image && image->format != DXGI_FORMAT_R8G8B8A8_UNORM) {
         DirectX::ScratchImage tmp;
-        hr = DirectX::Convert(*img, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, 0, tmp);
+        hr = DirectX::Convert(*image, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, 0, tmp);
         assert(SUCCEEDED(hr));
-        converted = std::move(tmp);
+       scratchImage = std::move(tmp);
     }
 
-    const DirectX::Image* image = converted.GetImage(0, 0, 0);
+    image = scratchImage.GetImage(0, 0, 0);
     textureData.widthX = static_cast<int>(image->width);
     textureData.widthZ = static_cast<int>(image->height);
+    textureData.data.reserve(textureData.widthX * textureData.widthZ);
     textureData.data.assign(textureData.widthX * textureData.widthZ, 0);
 
     for (size_t y = 0; y < image->height; ++y) {
@@ -623,8 +573,6 @@ void CollisionMask::LoadJsonData(int stageID)
     ModelManager::GetInstance()->CreatePlaneFromTex(stageDatas_[stageID]->texturePass_, stageDatas_[stageID]->texturePass_);
 
     GenerateSDF(stageDatas_[stageID]->maskData_.get());
-
-    stageDatas_[stageID]->maskData_->object->SetModel(stageDatas_[stageID]->texturePass_);
 
     auto model = ModelManager::GetInstance()->findModel(stageDatas_[stageID]->texturePass_);
 
