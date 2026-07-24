@@ -327,7 +327,7 @@ void Player::IsCollisionSDF() {
         // 衝突判定（この頂点が壁にめり込んでいる場合）
         if (d < 0.075f) {
             // めり込んでいる点の法線を取得
-            Vector2 normal = CollisionMask::GetInstance()->GetSDFNormal(corner.x, corner.y);
+            Vector2 normal = CollisionMask::GetInstance()->GetWallDistNormal(corner.x, corner.y);
 
             if (std::abs(normal.x) > 0.0001f || std::abs(normal.y) > 0.0001f) {
                 // 押し戻し量

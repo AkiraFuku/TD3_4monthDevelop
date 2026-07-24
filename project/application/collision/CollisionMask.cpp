@@ -268,14 +268,7 @@ void CollisionMask::GenerateSDF(MaskData* mask)
     int h = mask->textureData.widthZ;
     mask->sdfData.resize(w * h); // float型の配列を用意
 
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            // 全ピクセルを走査して最短距離を計算
-            // (本来は 8-point SSEDT 等の高速アルゴリズムを使いますが、まずは二重ループで)
-            float minDist = FindNearestWallDist(x, y, mask);
-            mask->sdfData[y * w + x] = minDist;
-        }
-    }
+    GenerateChamferDistance(mask->textureData, mask->sdfData);
 }
 
 float CollisionMask::FindNearestWallDist(int startX, int startZ, MaskData* mask)
@@ -317,6 +310,106 @@ float CollisionMask::FindNearestWallDist(int startX, int startZ, MaskData* mask)
     return found ? std::sqrt(minSqDist) : static_cast<float>(maxSearchRange);
 }
 
+void CollisionMask::GenerateChamferDistance(const CollisionMask::TextureData& texture, std::vector<float>& distance)
+{
+    const int width = texture.widthX;
+    const int height = texture.widthZ;
+
+    constexpr float kInfinity =
+        std::numeric_limits<float>::max();
+
+    constexpr float kStraightCost = 1.0f;
+    constexpr float kDiagonalCost = 1.41421356f;
+
+    distance.resize(width * height);
+
+    // ピクセルデータが黒なら0、白なら無限で初期化
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            const int index = y * width + x;
+
+            distance[index] =
+                texture.data[index] < 128
+                ? 0.0f
+                : kInfinity;
+        }
+    }
+
+    // 左上から右下
+    for (int y = 0; y < height; ++y) 
+    {
+        for (int x = 0; x < width; ++x) 
+        {
+            const int index = y * width + x;
+
+            // 左
+            if (x > 0) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index - 1] + kStraightCost);
+            }
+
+            // 上
+            if (y > 0) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index - width] + kStraightCost);
+            }
+
+            // 左上
+            if (x > 0 && y > 0) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index - width - 1] + kDiagonalCost);
+            }
+
+            // 右上
+            if (x + 1 < width && y > 0) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index - width + 1] + kDiagonalCost);
+            }
+        }
+    }
+
+    // 右下から左上
+    for (int y = height - 1; y >= 0; --y) 
+    {
+        for (int x = width - 1; x >= 0; --x) 
+        {
+            const int index = y * width + x;
+
+            // 右
+            if (x + 1 < width) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index + 1] + kStraightCost);
+            }
+
+            // 下
+            if (y + 1 < height) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index + width] + kStraightCost);
+            }
+
+            // 右下
+            if (x + 1 < width && y + 1 < height) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index + width + 1] + kDiagonalCost);
+            }
+
+            // 左下
+            if (x > 0 && y + 1 < height) {
+                distance[index] = std::min(
+                    distance[index],
+                    distance[index + width - 1] + kDiagonalCost);
+            }
+        }
+    }
+}
+
 float CollisionMask::GetSDFValue(float worldX, float worldZ)
 {
     auto& maskData = stageDatas_[static_cast<int>(currentStageID_)]->maskData_;
@@ -356,7 +449,7 @@ float CollisionMask::GetSDFValue(float worldX, float worldZ)
     return pixelDist * worldPerPixel;
 }
 
-Vector2 CollisionMask::GetSDFNormal(float worldX, float worldZ)
+Vector2 CollisionMask::GetWallDistNormal(float worldX, float worldZ)
 {
     const float delta = 1.0f;
 

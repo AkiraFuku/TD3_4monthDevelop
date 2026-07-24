@@ -103,11 +103,15 @@ public:
 
     float FindNearestWallDist(int startX, int startZ, MaskData* mask);
 
+    void GenerateChamferDistance(
+        const CollisionMask::TextureData& texture,
+        std::vector<float>& distance);
+
     MaskData* GetMaskData(int num) { return stageDatas_[num]->maskData_.get(); }
 
     float GetSDFValue(float worldX, float worldZ);
 
-    Vector2 GetSDFNormal(float worldX, float worldZ);
+    Vector2 GetWallDistNormal(float worldX, float worldZ);
 
     // 特定座標が壁かどうかを判定
     bool IsWall(float x, float z) const;
