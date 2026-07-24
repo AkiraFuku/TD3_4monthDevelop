@@ -437,12 +437,12 @@ void SpiderWebManager::AddSegmentAsThread(const Vector3& start, const Vector3& e
     PhysicsNode n0{};
     n0.currentPos = start;
     n0.previousPos = start;
-    n0.mass = 0.0f;
+    n0.isFixed = true;
 
     PhysicsNode n1{};
     n1.currentPos = end;
     n1.previousPos = end;
-    n1.mass = 0.0f;
+    n1.isFixed = true;
 
     webNodes_.push_back({n0, n1});
 }

@@ -27,20 +27,20 @@ void ThreadPhysics::Initialize(const Vector3& startPos, const Vector3& endPos, i
     float totalLength = Length(difference);
     segmentLength_ = totalLength / static_cast<float>(nodeCount - 1);
 
-    // ★ 追加: アニメーションの初期設定
+    // アニメーションの初期設定
     startPos_ = startPos;
     endPos_ = endPos;
     isAnimating_ = true;
     animTimer_ = 0.0f;
 
-    // ★ 変更: ノードを一旦すべて始点（startPos）付近にまとめて配置
+    // ノードを一旦すべて始点（startPos）付近にまとめて配置
     for (int i = 0; i < nodeCount; ++i) {
         PhysicsNode node;
         node.currentPos = startPos;
         node.previousPos = startPos;
 
-        // 両端は固定(質量0)、それ以外は動く(質量1)
-        node.mass = (i == 0 || i == nodeCount - 1) ? 0.0f : 1.0f;
+        // 両端は固定、それ以外は動く
+        node.isFixed = (i == 0 || i == nodeCount - 1);
 
         nodes_.push_back(node);
     }
@@ -79,7 +79,7 @@ void ThreadPhysics::ApplyForce(const Vector3& pos, float radius, const Vector3& 
 
     for (auto& node : nodes_) {
         // 固定ノードは無視
-        if (node.mass <= 0.0f) continue;
+        if (node.isFixed) continue;
 
         Vector3 diff = node.currentPos - pos;
         float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
@@ -114,7 +114,7 @@ void ThreadPhysics::AddPositionOffset(int nodeIndex, const Vector3& offset) {
 void ThreadPhysics::Integrate() {
     for (auto& node : nodes_) {
         // 固定ノードは無視
-        if (node.mass <= 0.0f) continue;
+        if (node.isFixed) continue;
 
         // 現在の速度を算出（Verlet積分）
         Vector3 velocity = node.currentPos - node.previousPos;
@@ -142,7 +142,7 @@ void ThreadPhysics::SolveConstraints() {
             PhysicsNode& n2 = nodes_[j + 1];
 
             // 両方固定なら何もしない
-            if (n1.mass <= 0.0f && n2.mass <= 0.0f) continue;
+            if (n1.isFixed && n2.isFixed) continue;
 
             Vector3 diff = n1.currentPos - n2.currentPos;
             float currentDist = Length(diff);
@@ -153,14 +153,14 @@ void ThreadPhysics::SolveConstraints() {
             // 本来あるべき距離との差分（押し引きする割合）
             float fraction = (targetLength - currentDist) / currentDist;
 
-            // ★変更箇所：ここで Stiffness（剛性）を掛けて力の伝わり具合を調整する
+            // ここで Stiffness（剛性）を掛けて力の伝わり具合を調整する
             Vector3 push = diff * fraction * stiffness_;
 
-            // ▼ ここが最重要：固定されているノードは動かさない ▼
-            if (n1.mass <= 0.0f) {
+            // 固定されているノードは動かさない ▼
+            if (n1.isFixed) {
                 // n1が固定なら、n2だけを100%動かす
                 n2.currentPos -= push;
-            } else if (n2.mass <= 0.0f) {
+            } else if (n2.isFixed) {
                 // n2が固定なら、n1だけを100%動かす
                 n1.currentPos += push;
             } else {

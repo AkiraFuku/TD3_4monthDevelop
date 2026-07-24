@@ -613,11 +613,11 @@ void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllN
 
         Vector3 diff = (centerB - centerA) * 0.5f * kIntersectionPullStiffness;
 
-        if (nA0.mass > 0.0f) nA0.currentPos += diff;
-        if (nA1.mass > 0.0f) nA1.currentPos += diff;
+        if (!nA0.isFixed) nA0.currentPos += diff;
+        if (!nA1.isFixed) nA1.currentPos += diff;
 
-        if (nB0.mass > 0.0f) nB0.currentPos -= diff;
-        if (nB1.mass > 0.0f) nB1.currentPos -= diff;
+        if (!nB0.isFixed) nB0.currentPos -= diff;
+        if (!nB1.isFixed) nB1.currentPos -= diff;
     }
 
     for (auto& physics : physicsList_) {
@@ -654,12 +654,12 @@ void ThreadManager::UpdatePhysics(std::vector<std::vector<PhysicsNode>>& outAllN
         //physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
 
         // =========================================================
-        // ノードが壁に固定されていない（mass > 0.0f）場合のみ動かす！
+        // ノードが壁に固定されていない場合のみ動かす！
         // =========================================================
-        if (physicsA->GetNodes()[nodeIndexA].mass > 0.0f) {
+        if (!physicsA->GetNodes()[nodeIndexA].isFixed) {
             physicsA->AddPositionOffset(nodeIndexA, pullForce * 0.5f);
         }
-        if (physicsB->GetNodes()[nodeIndexB].mass > 0.0f) {
+        if (!physicsB->GetNodes()[nodeIndexB].isFixed) {
             physicsB->AddPositionOffset(nodeIndexB, pullForce * -0.5f);
         }
     }

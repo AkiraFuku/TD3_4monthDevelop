@@ -64,7 +64,7 @@ void EnemyWebEffect::Update(const Vector3& targetPos, Camera* camera)
 
                 PhysicsNode node;
                 node.currentPos = pos;
-                node.mass = 0.0f;
+                node.isFixed = true;
 
                 nodes_.push_back(node);
                 totalGeneratedNodes_++; // 総生成数をカウント
